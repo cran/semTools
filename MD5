@@ -1,0 +1,13 @@
+bb53dea3a98eb06b8caa5a77ef40ff8d *DESCRIPTION
+6dbe4ed9e1b69690e0c0563e5bd4de4d *NAMESPACE
+f2ac7dbb7f22bc4f390258887d79fb39 *R/dataDiagnosis.R
+25729ab4c054c038ba624e75281a83b2 *R/fitIndices.R
+f144bbd0f22192a824dea4ab87963f2d *R/measurementInvariance.R
+7f42bc1c35fd4970402254838331d5a0 *R/orthogonalize.R
+3392887a21e2b30c3ffcc2717a839198 *R/runMI.R
+931bc54c20687b32c06ad6c4bfd0c888 *man/kurtosis.Rd
+79fb2a444b3c6f1f7e26034fb5a64dda *man/measurementInvariance.Rd
+fceddb47718fb8170996a7db0dbfc0e1 *man/moreFitIndices.Rd
+f53850f60c7f160a4e8df104ffc75880 *man/orthogonalize.Rd
+05001a66ea744352bdfbe4c7112b05a1 *man/runMI.Rd
+10d98db95575cfadab0bc6768cf97fbb *man/skew.Rd
