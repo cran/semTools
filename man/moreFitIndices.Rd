@@ -85,7 +85,11 @@ Preacher, K. J. (2006). Quantifying parsimony in structural equation modeling. \
 West, S. G., Taylor, A. B., & Wu, W. (2012). Model fit and model selection in structural equation modeling. In R. H. Hoyle (Ed.), \emph{Handbook of Structural Equation Modeling.} New York: Guilford.
 }
 \author{
-    Sunthud Pornprasertmanit <psunthud@ku.edu>, Aaron Boulton <aboulton@ku.edu>
+    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+	Aaron Boulton (University of Kansas; \email{aboulton@ku.edu})
+}
+\seealso{
+	\code{\link{miPowerFit}} For the modification indices and their power approach for model fit evaluation
 }
 \examples{
 HS.model <- ' visual  =~ x1 + x2 + x3
