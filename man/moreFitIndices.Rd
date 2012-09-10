@@ -31,11 +31,13 @@ Gamma Hat (gfi*; West, Taylor, & Wu, 2012) is one of the relative fit indices wh
 
 \deqn{ gfi* =\frac{p}{p + 2 \times \frac{\chi^{2}_{k} - df_{k}}{N - 1}},}
 
-where \eqn{N} is the sample size, \eqn{p} is the number of variables in the model. 
+where \eqn{N} is the sample size, \eqn{p} is the number of variables in the model. This formula assumes equal number of indicators across groups.
 
 Adjusted Gamma Hat (agfi*; West, Taylor, & Wu, 2012) is one of the relative fit indices which can be computed by
 
-\deqn{ agfi* = \left(1 - \frac{p \times (p + 1)}{2 \times df_{k}} \right) \times \left( 1 - gfi* \right) ,}
+\deqn{ agfi* = \left(1 - \frac{K \times p \times (p + 1)}{2 \times df_{k}} \right) \times \left( 1 - gfi* \right) ,}
+
+where \eqn{K} is the number of group (please refer to Dudgeon, 2004 for the multiple-group adjustment for agfi*).
 
 Corrected Akaike Information Criterion (AICc; Burnham & Anderson, 2003) is the corrected version of aic for small sample size:
 
@@ -47,7 +49,7 @@ Expected Value of Cross-Validation Index (ECVI; West, Taylor, & Wu, 2012) is the
 
 \deqn{ ecvi = f + \frac{2 \times k}{N},}
 
-Stochastic information criterion (sic; Preacher, 2006) is similar to aic or bic. This index will account for model complexity in the model's function form, in addition to the number of free parameters. sic can be computed by
+Stochastic information criterion (sic; Preacher, 2006) is similar to aic or bic. This index will account for model complexity in the model's function form, in addition to the number of free parameters. This index will be provided only the chi-square value is not scaled. sic can be computed by
 
 \deqn{ sic = \frac{1}{2}\left(f - \log{\det{I(\hat{\theta})}}\right),}
 
@@ -60,6 +62,8 @@ Corrected Bayesian Information Criterion (BIC*; Kuha, 2004) is similar to bic bu
 Hannan-Quinn Information Criterion (hqc; Hannan & Quinn, 1979) is used for model selection similar to aic or bic.
 
 \deqn{ hqc = f + 2k\log{(\log{N})},}
+
+Note that if Satorra-Bentler or Yuan-Bentler's method is used, the fit indices using the scaled chi-square values are also provided. 
 }
 
 \value{
@@ -73,10 +77,16 @@ Hannan-Quinn Information Criterion (hqc; Hannan & Quinn, 1979) is used for model
   \item{sic} Stochastic Information Criterion
   \item{bic*} Bayesian Information Criterion with specifying the prior sample size
   \item{hqc} Hannan-Quinn Information Criterion
+  \item{nfi.scaled} Normed Fit Index using Scaled Chi-square
+  \item{ifi.scaled} Incremental Fit Index using Scaled Chi-square
+  \item{gfi*.scaled} Gamma Hat using Scaled Chi-square
+  \item{agfi*.scaled} Adjusted Gamma Hat using Scaled Chi-square
 }
 }
 \references{
 Burnham, K., & Anderson, D. (2003). \emph{Model selection and multimodel inference: A practical-theoretic approach.} New York, NY: Springer-Verlag.
+
+Dudgeon, P. (2004). A note on extending Steiger's (1998) multiple sample RMSEA adjustment to other noncentrality parameter-based statistic. \emph{Structural Equation Modeling, 11}, 305-319.
 
 Kuha, J. (2004). AIC and BIC: Comparisons of assumptions and performance. \emph{Sociological Methods Research, 33,} 188-229.
 
@@ -98,4 +108,7 @@ HS.model <- ' visual  =~ x1 + x2 + x3
 
 fit <- cfa(HS.model, data=HolzingerSwineford1939)
 moreFitIndices(fit)
+
+fit2 <- cfa(HS.model, data=HolzingerSwineford1939, estimator="mlr")
+moreFitIndices(fit2)
 }
