@@ -1,4 +1,4 @@
-0dc7d46b7838325b423ee41dd3967b55 *DESCRIPTION
+d134dac80389ebd90127706e4ee85c5f *DESCRIPTION
 f77460a5bee977f3129209c396dbf787 *NAMESPACE
 430bba47e03b2202c9c1d8a26a591b11 *R/auxiliary.R
 9b3e59bd36ab2334eed534d536d7dba0 *R/clipboard.R
@@ -37,7 +37,7 @@ bee08d8e8ac0af4056b2c3549025ed30 *man/lavaanStar-class.Rd
 fe2e26faab63d8067016ee0d693d64a4 *man/mardiaSkew.Rd
 d9f8719e9906eac1322cdbc84baccc43 *man/measurementInvariance.Rd
 ee3de252be5e7ebb0044a490dce0a2a8 *man/miPowerFit.Rd
-84434f9716e89bbf88e07697bc78cfd0 *man/monteCarloMed.Rd
+932937d6df224cad976f37d0aa528c6f *man/monteCarloMed.Rd
 599c6ba3832fdb6ee70c4f2704fc3e07 *man/moreFitIndices.Rd
 bcb04d4cea1fe7aa166cda094f0b89d8 *man/parcelAllocation.Rd
 1279ca8861171196aa4a5b4c8afb79dc *man/plotProbe.Rd
@@ -48,7 +48,7 @@ c4dbc74fdba2d077f5d9f52b80baee95 *man/plotRMSEApower.Rd
 eba051bc18bf62365602f861c0401f02 *man/probe3WayMC.Rd
 a3e76813258103129c1ad478a725e9b6 *man/probe3WayRC.Rd
 bd7d7c0a2cdccb8a33821ea4225614d3 *man/residualCovariate.Rd
-0ae9ca39bda6c6e43649465438e300f3 *man/runMI.Rd
+e8e83858a6b2bd7a55620c886956484f *man/runMI.Rd
 294f47407d2037d94c2b1d955edeaa08 *man/simParcel.Rd
 41dac5ecb2944885cb8b9452b5ee28e1 *man/skew.Rd
 1508ae12f548586009e1a4be18f059f6 *man/splitSample.Rd
