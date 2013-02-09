@@ -1,8 +1,8 @@
 Package: semTools
 Type: Package
 Title: Useful tools for structural equation modeling.
-Version: 0.2-12
-Date: 2013-01-01
+Version: 0.3-0
+Date: 2013-02-09
 Authors@R: c(person("Sunthud", "Pornprasertmanit", role = c("aut",
         "cre"), email = "psunthud@ku.edu"), person("Patrick", "Miller",
         role = "aut", email="patr1ckm@ku.edu"), person("Alexander",
@@ -20,22 +20,26 @@ Authors@R: c(person("Sunthud", "Pornprasertmanit", role = c("aut",
         email="mijke@ku.edu"), person("Alexander", "Robitzsch", role =
         "ctb", email="a.robitzsch@bifie.at"), person("Craig", "Enders",
         role = "ctb", email="Craig.Enders@asu.edu"), person("Ruber",
-        "Arslan", role = "ctb", email="rubenarslan@gmail.com") )
+        "Arslan", role = "ctb", email="rubenarslan@gmail.com"),
+        person("Bell", "Clinton", role = "ctb",
+        email="clintonbell@ku.edu"), person("Pavel", "Panko", role =
+        "ctb", email="pavel@ku.edu") )
 Author: Sunthud Pornprasertmanit [aut, cre], Patrick Miller [aut], Alex
         Schoemann [aut], Yves Rosseel [aut], Corbin Quick [ctb],
         Mauricio Garnier-Villarreal [ctb], James Selig [ctb], Aaron
         Boulton [ctb], Kristopher Preacher [ctb], Donna Coffman [ctb],
         Mijke Rhemtulla [ctb], Alexander Robitzsch [ctb], Craig Enders
-        [ctb], Ruber Arslan [ctb]
+        [ctb], Ruber Arslan [ctb], Bell Clinton [ctb], Pavel Panko
+        [ctb]
 Maintainer: Sunthud Pornprasertmanit <psunthud@ku.edu>
 Depends: R(>= 2.15), MASS, lavaan, methods
-Suggests: parallel, Amelia, mice, foreign
+Suggests: parallel, Amelia, mice, foreign, OpenMx
 Description: This package provide useful tools for structural equation
         modeling analysis.
 License: GPL (>= 2)
 LazyLoad: yes
 LazyData: yes
 URL: https://github.com/simsem/semTools/wiki
-Packaged: 2013-01-01 20:14:08 UTC; sunthud
+Packaged: 2013-02-10 05:54:07 UTC; sunthud
 Repository: CRAN
-Date/Publication: 2013-01-02 07:54:53
+Date/Publication: 2013-02-10 20:17:01
