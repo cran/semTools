@@ -5,8 +5,9 @@ export(
 	moreFitIndices, miPowerFit, nullRMSEA, 
 	skew, kurtosis, mardiaSkew, mardiaKurtosis, 
 	orthogonalize, 
-	runMI, cfa.mi, sem.mi, growth.mi, lavaan.mi, 
-	plotRMSEApower, plotRMSEAdist, findRMSEApower, findRMSEAsamplesize, 
+	runMI, cfa.mi, sem.mi, growth.mi, lavaan.mi, fmi,
+	plotRMSEApower, plotRMSEAdist, findRMSEApower, findRMSEAsamplesize,
+	findRMSEApowernested, findRMSEAsamplesizenested, plotRMSEApowernested,
 	parcelAllocation, 
 	monteCarloMed, 
 	splitSample, 
@@ -15,8 +16,11 @@ export(
 	probe2WayMC, probe2WayRC, probe3WayMC, probe3WayRC, 
 	plotProbe, 
 	clipboard, saveFile, 
-	auxiliary, 
+	auxiliary, cfa.auxiliary, sem.auxiliary, growth.auxiliary, lavaan.auxiliary, 
 	loadingFromAlpha, 
 	reliability, reliabilityL2, 
-	impliedFactorMean, impliedFactorCov, impliedFactorStat
+	impliedFactorMean, impliedFactorCov, impliedFactorStat,
+	tukeySEM,
+	nullMx, saturateMx, fitMeasuresMx, standardizeMx,
+	lisrel2lavaan
 )
