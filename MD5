@@ -1,5 +1,5 @@
-fe1125363de074f6334ed9c2d6089b3d *DESCRIPTION
-09174bd447187662bcc1808cd7f14bb7 *NAMESPACE
+27da588ea2b54638ec0be7e16ac2be48 *DESCRIPTION
+88d577ece431d5d1fa7c227415cbb2f2 *NAMESPACE
 27f724d27bc295638c236e07053c5e4a *R/auxiliary.R
 9b3e59bd36ab2334eed534d536d7dba0 *R/clipboard.R
 2238ed58e8e0d4b316d0823ba6fb19d4 *R/dataDiagnosis.R
@@ -8,7 +8,7 @@ bd875a4ca8cd66f5211045f985547844 *R/fitOpenMx.R
 4ddd87044519d16ba1d43b62ac4b704c *R/fmi.R
 bc51a03adb6aee67701af4bc36cf3d2e *R/impliedStat.R
 6949454d013ddd84cdb18eeb9c634817 *R/indProd.R
-bfb97d695f0985441b7fee9d61372e70 *R/lisrel2lavaan.R
+3ae24f110368368d8cb3b95b9d72b896 *R/lisrel2lavaan.R
 790eaff9a6273ea89950601ae88b91c0 *R/loadingFromAlpha.R
 35aaabf3585240b9d29860e2dbb48051 *R/longInvariance.R
 b2db0b3667726bde517a81499ac9db0c *R/measurementInvariance.R
@@ -23,6 +23,7 @@ b584e947e3756eaa162557a59c7b7b78 *R/powerAnalysis.R
 b948e094531e0014febd2569166ac32c *R/runMI.R
 c5ac8fe58608716ffd3d7c74fe7f0966 *R/splitSample.R
 ede879d9a4214ff2946f86e5646a37ef *R/tukeySEM.R
+fb83af36a49dd1ce12016f83f30701c1 *R/wald.R
 e904e225cae6d4ce1644b84f2b2cd843 *R/zzz.R
 4d1090db8b160303f235075ebbda16d7 *data/dat2way.rda
 c56c2358c6e4d82c4cd7855e4df37282 *data/dat3way.rda
@@ -73,3 +74,4 @@ bd3c95a0d43618d4e0cad4a853dc9ed3 *man/saturateMx.Rd
 1508ae12f548586009e1a4be18f059f6 *man/splitSample.rd
 5ba28535678febdc2eff97bf098dbc69 *man/standardizeMx.Rd
 a25fa9db9a29f5545e802f2b5ca67c8f *man/tukeySEM.rd
+63456c36c47e8207857d87cf42494c71 *man/wald.Rd
