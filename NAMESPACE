@@ -1,5 +1,5 @@
 importFrom("lavaan", summary, inspect)
-exportClasses(lavaanStar)
+exportClasses(lavaanStar, FitDiff, EFA)
 export(
 	measurementInvariance, longInvariance, 
 	moreFitIndices, miPowerFit, nullRMSEA, 
@@ -23,5 +23,7 @@ export(
 	tukeySEM,
 	nullMx, saturateMx, fitMeasuresMx, standardizeMx,
 	lisrel2lavaan,
-	wald
+	wald, imposeStart,
+	compareFit,
+	efaUnrotate, orthRotate, oblqRotate, funRotate
 )
