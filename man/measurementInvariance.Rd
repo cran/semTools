@@ -9,11 +9,12 @@ Testing measurement invariance across groups using a typical sequence of
 model comparison tests.
 }
 \usage{
-measurementInvariance(..., strict = FALSE, quiet = FALSE)
+measurementInvariance(..., std.lv = FALSE, strict = FALSE, quiet = FALSE)
 }
 \arguments{
   \item{...}{The same arguments as for any lavaan model.
     See \code{\link{cfa}} for more information.}
+  \item{std.lv}{If \code{TRUE}, the fixed-factor method of scale identification is used. If \code{FALSE}, the first variable for each factor is used as marker variable.}
   \item{strict}{If \code{TRUE}, the sequence requires `strict' invariance.
     See details for more information.}
   \item{quiet}{If \code{TRUE}, a summary is printed out containing an
@@ -56,7 +57,6 @@ Satorra-Bentler or Yuan-Bentler test statistic), a special version of the
 chi-square difference test is used as described in
 \url{http://www.statmodel.com/chidiff.shtml}
 }
-
 \value{
 Invisibly, all model fits in the sequence are returned as a list.
 }
@@ -64,10 +64,11 @@ Invisibly, all model fits in the sequence are returned as a list.
 Vandenberg, R. J., and Lance, C. E. (2000). A review and synthesis of the measurement invariance literature: Suggestions, practices, and recommendations for organizational research. \emph{Organizational Research Methods, 3,} 4-70.
 }
 \author{
-    Yves Rosseel <Yves.Rosseel@UGent.be>
+    Yves Rosseel (Ghent University; \email{Yves.Rosseel@UGent.be}); 
+	Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \seealso{
-	\code{\link{longInvariance}} For the measurement invariance test within person
+	\code{\link{longInvariance}} for the measurement invariance test within person; \code{partialInvariance} for the automated function for finding partial invariance models
 }
 \examples{
 HW.model <- ' visual =~ x1 + x2 + x3

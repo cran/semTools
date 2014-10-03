@@ -34,9 +34,11 @@ funRotate(object, fun, ...)
 	An \code{linkS4class{EFA}} object that saves the rotated EFA solution.
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \examples{
+library(lavaan)
+
 unrotated <- efaUnrotate(HolzingerSwineford1939, nf=3, varList=paste0("x", 1:9), estimator="mlr")
 
 # Orthogonal varimax

@@ -22,7 +22,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 	# Get the lavaan parameter table
     if(is.character(model)) {
         lavaanParTable <- 
-            lavaanify(model           = model,
+            lavaan::lavaanify(model           = model,
                       meanstructure   = TRUE, 
                       int.ov.free     = TRUE,
                       int.lv.free     = FALSE,
@@ -77,7 +77,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 	}
 	
 	# Fit configural invariance
-	fitConfigural <- lavaan(lavaanParTable, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
+	fitConfigural <- lavaan::lavaan(lavaanParTable, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
 	
 	# Create the parameter table for metric invariance
 	ptMetric <- lavaanParTable
@@ -101,7 +101,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 			}
 		}
 	}
-	fitMetric <- lavaan(ptMetric, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
+	fitMetric <- lavaan::lavaan(ptMetric, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
 	
 	# Create the parameter table for scalar invariance
 	ptScalar <- ptMetric
@@ -115,7 +115,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 		}
 	}
 	ptScalar$ustart[(ptMetric$op == "~1") & (ptMetric$rhs %in% facName)] <- 0
-	fitScalar <- lavaan(ptScalar, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
+	fitScalar <- lavaan::lavaan(ptScalar, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
 	
 	ptMeans <- ptScalar
 	
@@ -131,7 +131,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 				ptStrict <- constrainParTable(ptStrict, name, "~~", name, k)
 			}
 		}
-		fitStrict <- lavaan(ptStrict, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
+		fitStrict <- lavaan::lavaan(ptStrict, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
 		ptMeans <- ptStrict
 	} 
 	
@@ -141,7 +141,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
 	for(k in 1:ngroups) {
 		ptMeans <- fixParTable(ptMeans, facName[-1], "~1", "", k, ustart = 0)
 	}
-	fitMeans <- lavaan(ptMeans, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
+	fitMeans <- lavaan::lavaan(ptMeans, ..., group=group, group.equal=group.equal, group.partial=group.partial, warn=TRUE, debug=FALSE)
 	
 	# Modify these functions from measurementInvariance function
 	if(!quiet) {
@@ -193,7 +193,7 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE, 
             difftest(fitScalar, fitMeans)
         }
 	}
-	return(invisible(list(configural = fitConfigural, metric = fitMetric, scalar = fitScalar, strict = fitStrict, means = fitMeans)))
+	return(invisible(list(fit.configural = fitConfigural, fit.loadings = fitMetric, fit.intercepts = fitScalar, fit.residuals = fitStrict, fit.means = fitMeans)))
 }
 
 # freeParTable: Free elements in parameter table
@@ -269,7 +269,11 @@ constrainParTable <- function(parTable, lhs, op, rhs, group) {
 # matchElement: Find the number of row that have the specification in vec (lhs, op, rhs, group)
 
 matchElement <- function(parTable, vec) {
-	which((parTable$lhs == vec[1]) & (parTable$op == vec[2]) & (parTable$rhs == vec[3]) & (parTable$group == vec[4]))
+	if(is.null(parTable$group)) {
+		return(which((parTable$lhs == vec[1]) & (parTable$op == vec[2]) & (parTable$rhs == vec[3])))
+	} else {
+		return(which((parTable$lhs == vec[1]) & (parTable$op == vec[2]) & (parTable$rhs == vec[3]) & (parTable$group == vec[4])))
+	}
 }
 
 # rearrangeFreeElement: Rearrange the number listed in 'free' or 'unco' in parameter tables 
@@ -282,4 +286,13 @@ rearrangeFreeElement <- function(vec) {
 	vec2[vec2 != 0] <- newvec[match(vec, uvec)]
 	class(vec2) <- "integer"
 	return(vec2)
+}
+
+getValue <- function(parTable, est, lhs, op, rhs, group) {
+	target <- cbind(lhs, op, rhs, group)
+	element <- apply(target, 1, matchElement, parTable=parTable)
+	free <- parTable$free[element]
+	out <- parTable$ustart[element]
+	out[free != 0] <- est[free[free != 0]]
+	out
 }

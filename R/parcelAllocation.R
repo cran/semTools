@@ -1,12 +1,10 @@
 ##Parcel Allocation
 ##Corbin Quick & Alex Schoemann
 ##6/4/12
+##Bug fix 1/30/2014 - works with single factor in the model
 ##Vector of numbers of indicators in each parcel, vector assigning each indicator to its factor, Number allocations, lavaan syntax, Data set, parcel names, variables left out of parceling, additional arguments to be passed to lavaan
 
 parcelAllocation <- function(nPerPar,facPlc,nAlloc=100,syntax,dataset,names='default',leaveout=0, ...) {
-  
-  require(lavaan)
-  
   if(is.character(dataset)){
     dataset <- read.csv(dataset)
   }  
@@ -95,10 +93,13 @@ if(is.list(nPerPar)){
   if(length(Locate)!=length(Npp)){
     stop('** WARNING! ** Parcels incorrectly specified. Check input!')}
   
+if(Maxv > 0){
+  ##Bug was here. With 1 factor Maxv=0. Skip this with a single factor
   for (i in 1:Maxv){
     Mat <- match(i+1, Locate)
     if(Npp[Mat] == Npp[Mat-1]){ 
       stop('** WARNING! ** Parcels incorrectly specified. Check input!')} 
+  }
   }
     ## warning message if parcel crosses into multiple factors
           ## vector, parcel to which each variable belongs
@@ -235,11 +236,11 @@ if(is.list(nPerPar)){
   for (i in 1:nAlloc){
     data <- as.data.frame(Allocations[[i]], row.names = NULL, optional = FALSE)
     ## convert allocation matrix to dataframe for model estimation 
-    fit <- sem(syntax, data=data, ...)
+    fit <- lavaan::sem(syntax, data=data, ...)
     ## estimate model in lavaan
-    Param[[i]] <- parameterEstimates(fit)
+    Param[[i]] <- lavaan::parameterEstimates(fit)
     ## assign allocation parameter estimates to list
-    Fitind[[i]] <- fitMeasures(fit,  c("chisq", "df", "cfi", "tli", "rmsea", "srmr"))
+    Fitind[[i]] <- lavaan::fitMeasures(fit,  c("chisq", "df", "cfi", "tli", "rmsea", "srmr"))
     ## assign allocation parameter estimates to list
   }
   
@@ -327,4 +328,4 @@ if(is.list(nPerPar)){
   
 }}
 
-#parcelAllocation(list(c(3,3,3),c(3,3,3)), list(name1, name2), nAlloc=20, syntax=syntax, dataset=simParcel)
+#parcelAllocation(list(c(3,3,3)), list(name1), nAlloc=20, syntax=syntax, dataset=simParcel)

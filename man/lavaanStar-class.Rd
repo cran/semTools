@@ -27,12 +27,16 @@ about the data.}
       results of fitting the model}
 	\item{\code{nullfit}:}{The fit-indices information from the null model}
 	\item{\code{imputed}:}{The list of information from running multiple imputation. The first element is the convergence rate of the target and null models. The second element is the fraction missing information. The first estimate of FMI (FMI.1) is asymptotic FMI and the second estimate of FMI (FMI.2) is corrected for small numbers of imputation. The third element is the fit values of the target model by the specified chi-squared methods. The fourth element is the fit values of the null model by the specified chi-square methods.}
+	\item{\code{auxNames}:}{The list of auxiliary variables in the analysis.}
   }
 }
 \references{
-see \code{linkS4class{lavaan}}}
+see \code{\linkS4class{lavaan}}}
 \seealso{
 \code{\link{auxiliary}}; \code{\link{runMI}}
+}
+\author{
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \examples{
 HS.model <- ' visual  =~ x1 + x2 + x3

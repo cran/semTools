@@ -1,16 +1,20 @@
+importFrom("methods", show)
 importFrom("lavaan", summary, inspect)
-exportClasses(lavaanStar, FitDiff, EFA)
+
+importFrom("graphics", hist)
+exportClasses(lavaanStar, FitDiff, EFA, Net, BootMiss)
+exportMethods(hist)
 export(
-	measurementInvariance, longInvariance, 
+	measurementInvariance, longInvariance, measurementInvarianceCat,
 	moreFitIndices, miPowerFit, nullRMSEA, 
 	skew, kurtosis, mardiaSkew, mardiaKurtosis, 
 	orthogonalize, 
 	runMI, cfa.mi, sem.mi, growth.mi, lavaan.mi, fmi,
-	plotRMSEApower, plotRMSEAdist, findRMSEApower, findRMSEAsamplesize,
+	plotRMSEApower, plotRMSEAdist, findRMSEApower, findRMSEAsamplesize, SSpower,
 	findRMSEApowernested, findRMSEAsamplesizenested, plotRMSEApowernested,
 	parcelAllocation, 
 	monteCarloMed, 
-	splitSample, 
+	splitSample, mvrnonnorm,
 	indProd, 
 	residualCovariate, 
 	probe2WayMC, probe2WayRC, probe3WayMC, probe3WayRC, 
@@ -18,12 +22,16 @@ export(
 	clipboard, saveFile, 
 	auxiliary, cfa.auxiliary, sem.auxiliary, growth.auxiliary, lavaan.auxiliary, 
 	loadingFromAlpha, 
-	reliability, reliabilityL2, 
+	reliability, reliabilityL2, maximalRelia,
 	impliedFactorMean, impliedFactorCov, impliedFactorStat,
 	tukeySEM,
 	nullMx, saturateMx, fitMeasuresMx, standardizeMx,
 	lisrel2lavaan,
 	wald, imposeStart,
 	compareFit,
-	efaUnrotate, orthRotate, oblqRotate, funRotate
+	efaUnrotate, orthRotate, oblqRotate, funRotate,
+	kd, bsBootMiss, net, 
+	singleParamTest,
+	partialInvariance, partialInvarianceCat,
+	quark, combinequark
 )

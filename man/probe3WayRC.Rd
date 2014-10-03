@@ -18,7 +18,7 @@ probe3WayRC(fit, nameX, nameY, modVar, valProbe1, valProbe2)
   \item{valProbe2}{The values of the second moderator that will be used to probe the effect of the independent factor.}
 }
 \details{
-Before using this function, researchers need to make the products of the indicators between the first-order factors and residualize the products by the original indicators (Lance, 1988; Little, Bovaird, & Widaman, 2006). The process can be automated by the \code{\link{indProd}} function. Note that the indicator products can be made for all possible combination or matched-pair approach (Marsh et al., 2004). Next, the hypothesized model with the regression with latent interaction will be used to fit all original indicators and the product terms (Geldhof, Pornprasertmanit,  Schoemann, & Little, in press). See the example for how to fit the product term below. Once the lavaan result is obtained, this function will be used to probe the interaction.
+Before using this function, researchers need to make the products of the indicators between the first-order factors and residualize the products by the original indicators (Lance, 1988; Little, Bovaird, & Widaman, 2006). The process can be automated by the \code{\link{indProd}} function. Note that the indicator products can be made for all possible combination or matched-pair approach (Marsh et al., 2004). Next, the hypothesized model with the regression with latent interaction will be used to fit all original indicators and the product terms (Geldhof, Pornprasertmanit,  Schoemann, & Little, in press). To use this function the model must be fit with a mean structure. See the example for how to fit the product term below. Once the lavaan result is obtained, this function will be used to probe the interaction.
 
 The probing process on residual-centered latent interaction is based on transforming the residual-centered result into the no-centered result. See Pornprasertmanit, Schoemann, Geldhof, and Little (submitted) for further details. Note that this approach based on a strong assumption that the first-order latent variables are normally distributed. The probing process is applied after the no-centered result (parameter estimates and their covariance matrix among parameter estimates) has been computed See the \code{\link{probe3WayMC}} for further details.
 }
@@ -43,7 +43,7 @@ Pornprasertmanit, S., Schoemann, A. M., Geldhof, G. J., & Little, T. D. (submitt
 
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \seealso{
 	\itemize{
@@ -102,6 +102,7 @@ f4 ~ NA*1
 fitRC3way <- sem(model3, data=dat3wayRC, meanstructure=TRUE, std.lv=FALSE)
 summary(fitRC3way)
 
-result3wayRC <- probe3WayRC(fitRC3way, c("f1", "f2", "f3", "f12", "f13", "f23", "f123"), "f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
+result3wayRC <- probe3WayRC(fitRC3way, c("f1", "f2", "f3", "f12", "f13", "f23", "f123"), 
+	"f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
 result3wayRC
 }

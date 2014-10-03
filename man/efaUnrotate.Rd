@@ -7,7 +7,7 @@
 This function will analyze unrotated exploratory factor analysis model. The unrotated solution can be rotated by the \code{\link{orthRotate}} and \code{\link{oblqRotate}} functions.
 }
 \usage{
-efaUnrotate(data, nf, varList=NULL, start=TRUE, ...)
+efaUnrotate(data, nf, varList=NULL, start=TRUE, aux=NULL, ...)
 }
 \arguments{
   \item{data}{
@@ -22,6 +22,9 @@ efaUnrotate(data, nf, varList=NULL, start=TRUE, ...)
   \item{start}{
 	Use starting values in the analysis from the \code{\link{factanal}} function. If \code{FALSE}, the starting values from the \code{lavaan} package will be used.
 }
+  \item{aux}{
+	The list of auxiliary variables. These variables will be included in the model by the saturated-correlates approach to account for missing information.
+}
   \item{\dots}{
 	Other arguments in the \code{\link[lavaan]{cfa}} function in the \code{lavaan} package, such as \code{ordered}, \code{se}, or \code{estimator}
 }
@@ -33,10 +36,13 @@ efaUnrotate(data, nf, varList=NULL, start=TRUE, ...)
 	A \code{lavaan} output of unrotated exploratory factor analysis solution.
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \examples{
 unrotated <- efaUnrotate(HolzingerSwineford1939, nf=3, varList=paste0("x", 1:9), estimator="mlr")
 summary(unrotated, std=TRUE)
-inspect(unrotated, "standardized")
+inspect(unrotated, "std")
+
+dat <- data.frame(HolzingerSwineford1939, z=rnorm(nrow(HolzingerSwineford1939), 0, 1))
+unrotated2 <- efaUnrotate(dat, nf=2, varList=paste0("x", 1:9), aux="z")
 }

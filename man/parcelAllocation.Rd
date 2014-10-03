@@ -7,7 +7,8 @@ Random Allocation of Items to Parcels in a Structural Equation Model
 This function generates a given number of randomly generated item-to-parcel allocations, fits a model to each allocation, and provides averaged results over all allocations. 
 }
 \usage{
-parcelAllocation(nPerPar, facPlc, nAlloc=100, syntax, dataset, names='default', leaveout=0, ...)
+parcelAllocation(nPerPar, facPlc, nAlloc=100, syntax, dataset, names='default', 
+	leaveout=0, ...)
 }
 \arguments{
   \item{nPerPar}{A list in which each element is a vector corresponding to each factor indicating sizes of parcels. If variables are left out of parceling, they should not be accounted for here (there should NOT be parcels of size "1").}
@@ -33,18 +34,21 @@ Sterba, S.K. (2011). Implications of parcel-allocation variability for comparing
 Sterba, S.K. & MacCallum, R.C. (2010). Variability in parameter estimates and model fit across random allocations of items to parcels. \emph{Multivariate Behavioral Research, 45,} 322-358.
 }
 \author{
-    Corbin Quick (University of Kansas; \email{corbinq@ku.edu})
-	Alexander M. Schoemann (University of Kansas; \email{schoemann@ku.edu})
+    Corbin Quick (University of Michigan; \email{corbinq@umich.edu})
+	Alexander M. Schoemann (East Carolina University; \email{schoemanna@ecu.edu})
 }
 \examples{
 #Fit 3 factor CFA to simulated data.
 #Each factor has 9 indicators that are randomly parceled into 3 parcels
 #Lavaan syntax for the model to be fit to parceled data
+library(lavaan)
+
 syntax <- 'La =~ V1 + V2 + V3 
            Lb =~ V4 + V5 + V6
 '
 #Parcel and fit data 20 times. The actual parcel number should be higher than 20 times.
 name1 <- colnames(simParcel)[1:9]
 name2 <- colnames(simParcel)[10:18]
-parcelAllocation(list(c(3,3,3),c(3,3,3)), list(name1, name2), nAlloc=20, syntax=syntax, dataset=simParcel)
+parcelAllocation(list(c(3,3,3),c(3,3,3)), list(name1, name2), nAlloc=20, syntax=syntax, 
+	dataset=simParcel)
 }

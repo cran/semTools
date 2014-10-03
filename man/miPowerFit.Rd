@@ -8,7 +8,8 @@ Modification indices and their power approach for model fit evaluation
 The model fit evaluation approach using modification indices and their power proposed by Saris, Satorra, and van der Veld (2009, pp. 570-573).
 }
 \usage{
-miPowerFit(lavaanObj, stdLoad=0.4, cor=0.1, stdBeta=0.1, intcept=0.2, stdDelta=NULL, delta=NULL)
+miPowerFit(lavaanObj, stdLoad=0.4, cor=0.1, stdBeta=0.1, intcept=0.2, stdDelta=NULL, 
+	delta=NULL)
 }
 \arguments{
   \item{lavaanObj}{The lavaan model object used to evaluate model fit}
@@ -38,6 +39,7 @@ A data frame with these variables:
   \item{high.power} Represents whether the power is enough to detect the target expected parameter change
   \item{decision} The decision whether the parameter is misspecified or not: \code{"M"} represents the parameter is misspecified, \code{"NM"} represents the parameter is not misspecified, \code{"EPC:M"} represents the parameter is misspecified decided by checking the expected parameter change value, \code{"EPC:NM"} represents the parameter is not misspecified decided by checking the expected parameter change value, and \code{"I"} represents the decision is inconclusive.
 }
+The row numbers matches with the results obtained from the \code{inspect(object, "mi")} function.
 }
 \references{
 Cohen, J. (1988). \emph{Statistical power analysis for the behavioral sciences} (2nd ed.). Hillsdale, NJ: Erlbaum.
@@ -47,7 +49,7 @@ Cohen, J. (1992). A power primer. \emph{Psychological Bulletin, 112}, 155-159.
 Saris, W. E., Satorra, A., & van der Veld, W. M. (2009). Testing structural equation models or detection of misspecifications? \emph{Structural Equation Modeling, 16}, 561-582.
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \seealso{
 	\code{\link{moreFitIndices}} For the additional fit indices information

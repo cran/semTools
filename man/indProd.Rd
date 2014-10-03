@@ -52,8 +52,8 @@ orthogonalize(data, var1, var2, var3=NULL, match=TRUE, namesProd=NULL)
 	Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of orthogonalizing powered and product terms: Implications for modeling interactions among latent variables. \emph{Structural Equation Modeling, 13}, 497-519.
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
-	Alex Schoemann (University of Kansas; \email{schoemann@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
+	Alexander Schoemann (East Carolina University; \email{schoemanna@ecu.edu})
 }
 \seealso{
 	\itemize{
@@ -69,17 +69,21 @@ orthogonalize(data, var1, var2, var3=NULL, match=TRUE, namesProd=NULL)
 dat <- indProd(attitude[,-1], var1=1:3, var2=4:6)
 
 # Residual centering / two-way interaction / match-paired
-dat2 <- indProd(attitude[,-1], var1=1:3, var2=4:6, match=FALSE, meanC=FALSE, residualC=TRUE, doubleMC=FALSE)
+dat2 <- indProd(attitude[,-1], var1=1:3, var2=4:6, match=FALSE, meanC=FALSE, 
+	residualC=TRUE, doubleMC=FALSE)
 
 # Double-mean centering / two-way interaction / match-paired
-dat3 <- indProd(attitude[,-1], var1=1:3, var2=4:6, match=FALSE, meanC=TRUE, residualC=FALSE, doubleMC=TRUE)
+dat3 <- indProd(attitude[,-1], var1=1:3, var2=4:6, match=FALSE, meanC=TRUE, 
+	residualC=FALSE, doubleMC=TRUE)
 
 # Mean centering / three-way interaction / match-paired
 dat4 <- indProd(attitude[,-1], var1=1:2, var2=3:4, var3=5:6)
 
 # Residual centering / three-way interaction / match-paired
-dat5 <- indProd(attitude[,-1], var1=1:2, var2=3:4, var3=5:6, match=FALSE, meanC=FALSE, residualC=TRUE, doubleMC=FALSE)
+dat5 <- indProd(attitude[,-1], var1=1:2, var2=3:4, var3=5:6, match=FALSE, meanC=FALSE, 
+	residualC=TRUE, doubleMC=FALSE)
 
 # Double-mean centering / three-way interaction / match-paired
-dat6 <- indProd(attitude[,-1], var1=1:2, var2=3:4, var3=5:6, match=FALSE, meanC=TRUE, residualC=TRUE, doubleMC=TRUE)
+dat6 <- indProd(attitude[,-1], var1=1:2, var2=3:4, var3=5:6, match=FALSE, meanC=TRUE, 
+	residualC=TRUE, doubleMC=TRUE)
 }

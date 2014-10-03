@@ -24,10 +24,10 @@ residualCovariate(data, targetVar, covVar)
 	The data that the target variables replaced by the residuals
 }
 \references{
-Geldhof, G. J., Pornprasertmanit, S., Schoemann, A. M., & Little, T. D. (in press). Orthogonalizing through residual centering: Applications and caveats. \emph{Educational and Psychological Measurement.}
+Geldhof, G. J., Pornprasertmanit, S., Schoemann, A. M., & Little, T. D. (2013). Orthogonalizing through residual centering: Applications and caveats. \emph{Educational and Psychological Measurement, 73}, 27-46.
 }
 \author{
-    Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
+    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
 }
 \seealso{
 	\code{\link{indProd}} For creating the indicator products with no centering, mean centering, double-mean centering, or residual centering.	

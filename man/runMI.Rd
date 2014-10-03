@@ -8,7 +8,7 @@
 Multiply impute and analyze data using lavaan
 }
 \description{
-This function takes data with missing observations, multiple imputes the data, runs a SEM using lavaan and combines the results using Rubin's rules. Note that parmeter estimates and standard errors are pooled by the Rubin's (1987) rule. The chi-square statistics and the related fit indices are pooled by the method described in \code{"chi"} argument. SRMR is calculated based on the average model-implied means and covariance matrices across imputations.
+This function takes data with missing observations, multiple imputes the data, runs a SEM using lavaan and combines the results using Rubin's rules. Note that parameter estimates and standard errors are pooled by the Rubin's (1987) rule. The chi-square statistics and the related fit indices are pooled by the method described in \code{"chi"} argument. SRMR is calculated based on the average model-implied means and covariance matrices across imputations.
 }
 \usage{
 runMI(model, data, m, miArgs=list(), chi="all", miPackage="Amelia", 
@@ -24,7 +24,7 @@ lavaan.mi(model, data, m, miArgs=list(), miPackage="Amelia", chi="all",
 }
 \arguments{
   \item{model}{
-lavaan syntax for the the model to be analyzed. 
+lavaan syntax for the model to be analyzed. 
 }
   \item{data}{
 Data frame with missing observations or a list of data frames where each data frame is one imputed data set (for imputed data generated outside of the function). If a list of data frames is supplied, then other options can be left at the default.
@@ -63,10 +63,10 @@ Meng, X.L. & Rubin, D.B. (1992). Performing likelihood ratio tests with multiply
 
 Rubin, D.B. (1987) \emph{Multiple Imputation for Nonresponse in Surveys.} J. Wiley & Sons, New York.
 }
-\author{Alexander M. Schoemann (University of Kansas;  \email{schoemann@ku.edu})
-Patrick Miller (University of Kansas; \email{patr1ckm@ku.edu})
-Sunthud Pornprasertmanit (University of Kansas; \email{psunthud@ku.edu})
-Mijke Rhemtulla (University of Kansas; \email{mijke@ku.edu})
+\author{Alexander M. Schoemann (East Carolina University;  \email{schoemanna@ecu.edu})
+Patrick Miller (University of Notre Dame; \email{pmille13@nd.edu})
+Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
+Mijke Rhemtulla (University of Amsterdam; \email{M.T.Rhemtulla@uva.nl})
 Alexander Robitzsch (Federal Institute for Education Research, Innovation, and Development of the Austrian School System, Salzburg, Austria; \email{a.robitzsch@bifie.at})
 Craig Enders (Arizona State University; \email{Craig.Enders@asu.edu})
 Mauricio Garnier Villarreal (University of Kansas; \email{mgv@ku.edu})
@@ -126,7 +126,8 @@ inspect(out3, "impute")
 dat <- simulateData(popModel, sample.nobs  = 200L)
 miss.pat <- matrix(as.logical(rbinom(prod(dim(dat)), 1, 0.2)), nrow(dat), ncol(dat))
 dat[miss.pat] <- NA
-out5 <- cfa.mi(analyzeModel, data=dat, ordered=paste0("y", 1:4), m = 3, miArgs=list(ords = c("y1", "y2", "y3", "y4")))
+out5 <- cfa.mi(analyzeModel, data=dat, ordered=paste0("y", 1:4), m = 3, 
+	miArgs=list(ords = c("y1", "y2", "y3", "y4")))
 summary(out5)
 inspect(out5, "fit")
 inspect(out5, "impute")

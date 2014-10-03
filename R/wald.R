@@ -1,7 +1,5 @@
 
 wald <- function(object, syntax) {
-	library(lavaan)
-	
 	model <- unlist( strsplit(syntax, "\n") )
 	
     # remove comments starting with '#' or '!'
@@ -65,11 +63,16 @@ wald <- function(object, syntax) {
 		}
 		contrast[i,posmatch] <- num
 	}
+	result <- waldContrast(object, contrast)
+	print(round(result, 6))
+	invisible(result)
+}
+
+waldContrast <- function(object, contrast) {
+	beta <- coef(object)
 	acov <- vcov(object)
 	chisq <- t(contrast %*% beta) %*%  solve(contrast %*% as.matrix(acov) %*% t(contrast)) %*% (contrast %*% beta)
 	df <- nrow(contrast)
 	p <- pchisq(chisq, df, lower.tail=FALSE)
-	result <- c(chisq = chisq, df = df, p = p)
-	print(round(result, 6))
-	invisible(result)
+	c(chisq = chisq, df = df, p = p)
 }
