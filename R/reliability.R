@@ -44,8 +44,8 @@ reliability <- function(object) {
 			impliedTotal[j] <- sum(SigmaHat[[i]][index, index])
 			trueitem <- diag(truevar[index, index])
 			erritem <- diag(te[[i]][index, index])
-			avevar[j] <- mean(trueitem / (trueitem + erritem))
-			if(categorical) {
+			avevar[j] <- sum(trueitem) / sum(trueitem + erritem)
+			if(categorical) {				
 				omega1[j] <- omegaCat(truevar[index, index], SigmaHat[[i]][index, index], threshold[[i]][index], truevar[index, index] + te[[i]][index, index])
 				omega2[j] <- omegaCat(truevar[index, index], SigmaHat[[i]][index, index], threshold[[i]][index], SigmaHat[[i]][index, index])
 				omega3[j] <- omegaCat(truevar[index, index], SigmaHat[[i]][index, index], threshold[[i]][index], sigma)
@@ -66,7 +66,7 @@ reliability <- function(object) {
 			omega2 <- c(omega2, total = sum(truevar) / (sum(SigmaHat[[i]])))
 			omega3 <- c(omega3, total = sum(truevar) / (sum(S[[i]])))
 		}
-		avevar <- c(avevar, total = mean(diag(truevar) / (diag(truevar) + diag(te[[i]]))))
+		avevar <- c(avevar, total = sum(diag(truevar))/ sum((diag(truevar) + diag(te[[i]]))))
 		singleIndicator <- apply(ly[[i]], 2, function(x) sum(x != 0)) %in% 0:1
 		result[[i]] <- rbind(alpha=alpha, omega=omega1, omega2=omega2,omega3=omega3, avevar = avevar)[,!singleIndicator]
 	}
@@ -140,7 +140,6 @@ reliabilityL2 <- function(object, secondFactor) {
 
 omegaCat <- function(truevar, implied, threshold, denom) {
 	# denom could be polychoric correlation, model-implied correlation, or model-implied without error correlation
-	library(mnormt)
 	polyc <- truevar
 	invstdvar <- 1 / sqrt(diag(implied))
 	polyr <- diag(invstdvar) %*% polyc %*% diag(invstdvar)

@@ -1,7 +1,5 @@
 
 saturateMx <- function(data, groupLab = NULL) {
-	library(OpenMx)
-
 	multipleGroup <- FALSE
 	if(is.data.frame(data) && !is.null(groupLab) && groupLab %in% colnames(data)) multipleGroup <- TRUE
 	if(is.list(data) && !is.data.frame(data)) multipleGroup <- TRUE
@@ -18,17 +16,18 @@ saturateMx <- function(data, groupLab = NULL) {
 		}
 		temp <- mapply(saturateMxSingleGroup, data = data.l, title = paste0("group", 1:ngroups), groupnum = 1:ngroups, SIMPLIFY=FALSE)
 		title <- "Multiple group Saturate Model"
-		algebra <- OpenMx::mxAlgebra("", name="allobjective")
+		asdf <- NULL
+		algebra <- OpenMx::mxAlgebra(asdf, name="allobjective")
 		groupnames <- paste0("group", 1:ngroups)
 		groupnames <- paste0(groupnames, ".objective")
 		groupnames <- lapply(groupnames, as.name)
 		algebra@formula <- as.call(c(list(as.name("sum")), groupnames))
-		objective <- OpenMx::mxAlgebraObjective("allobjective")
+		objective <- OpenMx::mxFitFunctionAlgebra("allobjective")
 		Saturate <- OpenMx::mxModel(title, unlist(temp), algebra, objective)
 	} else {
 		Saturate <- saturateMxSingleGroup(data, title = "Saturate Model")
 	}
-	capture.output(fit <- OpenMx::mxRun(Saturate, suppressWarnings = FALSE))
+	capture.output(fit <- OpenMx::mxRun(Saturate, suppressWarnings = FALSE, silent = TRUE))
 	fit
 }
 
@@ -57,22 +56,6 @@ saturateMxSingleGroup <- function(data, title = "Saturate Model", groupnum = NUL
 	}
 	startCor <- diag(p)
 
-	# library(polycor)
-	# for(i in seq_len(p)) {
-		# for(j in seq_len(i - 1)) {
-			# if(categorical[i] & categorical[j]) {
-				# startCor[i, j] <- polychor(data@observed[,i], data@observed[,j])
-			# } else if (categorical[i] & !categorical[j]) {
-				# startCor[i, j] <- polyserial(data@observed[,j], data@observed[,i])
-			# } else if (!categorical[i] & categorical[j]) {
-				# startCor[i, j] <- polyserial(data@observed[,i], data@observed[,j])
-			# } else {
-				# startCor[i, j] <- cor(sapply(data@observed[,c(i,j)], as.numeric), use="pairwise.complete.obs")[2,1]
-			# }
-			# startCor[j, i] <- startCor[i, j]
-		# }
-	# }
-	
 	startVar[categorical] <- 1
 	startMeans[categorical] <- 0
 	startCov <- lavaan::cor2cov(startCor, sqrt(startVar))
@@ -131,16 +114,17 @@ saturateMxSingleGroup <- function(data, title = "Saturate Model", groupnum = NUL
 				name="S"
 			),
 			T,
-			OpenMx::mxFIMLObjective(
+			OpenMx::mxExpectationNormal(
 				covariance="S",
 				means="M",
 				dimnames=colnames(data@observed),
 				thresholds = "thresh"				
-			)
+			),
+			OpenMx::mxFitFunctionML()
 		)
 	} else {
 		if(data@type == "raw") {
-			obj <- OpenMx::mxFIMLObjective(
+			obj <- OpenMx::mxExpectationNormal(
 				covariance="S",
 				means="M",
 				dimnames=colnames(data@observed)
@@ -165,14 +149,14 @@ saturateMxSingleGroup <- function(data, title = "Saturate Model", groupnum = NUL
 					labels=paste0("mean", 1:p, "_", groupnum),
 					name="M"
 				)
-				obj <- OpenMx::mxMLObjective(
+				obj <- OpenMx::mxExpectationNormal(
 					covariance="S",
 					means="M",
 					dimnames=colnames(data@observed)
 				)
 			} else {
 				modelMean <- NULL
-				obj <- OpenMx::mxMLObjective(
+				obj <- OpenMx::mxExpectationNormal(
 					covariance="S",
 					dimnames=colnames(data@observed)
 				)
@@ -194,14 +178,14 @@ saturateMxSingleGroup <- function(data, title = "Saturate Model", groupnum = NUL
 				byrow=TRUE,
 				name="S"
 			),
-			obj
+			obj,
+			OpenMx::mxFitFunctionML()
 		)
 	}
 	Saturate
 }
 
 nullMx <- function(data, groupLab = NULL) {
-	library(OpenMx)
 	multipleGroup <- FALSE
 	if(is.data.frame(data) && !is.null(groupLab) && groupLab %in% colnames(data)) multipleGroup <- TRUE
 	if(is.list(data) && !is.data.frame(data)) multipleGroup <- TRUE
@@ -218,17 +202,18 @@ nullMx <- function(data, groupLab = NULL) {
 		}
 		temp <- mapply(nullMxSingleGroup, data = data.l, title = paste0("group", 1:ngroups), groupnum = 1:ngroups, SIMPLIFY=FALSE)
 		title <- "Multiple group Null Model"
-		algebra <- OpenMx::mxAlgebra("", name="allobjective")
+		asdf <- NULL
+		algebra <- OpenMx::mxAlgebra(asdf, name="allobjective")
 		groupnames <- paste0("group", 1:ngroups)
 		groupnames <- paste0(groupnames, ".objective")
 		groupnames <- lapply(groupnames, as.name)
 		algebra@formula <- as.call(c(list(as.name("sum")), groupnames))
-		objective <- OpenMx::mxAlgebraObjective("allobjective")
+		objective <- OpenMx::mxFitFunctionAlgebra("allobjective")
 		Null <- OpenMx::mxModel(title, unlist(temp), algebra, objective)
 	} else {
 		Null <- nullMxSingleGroup(data, title = "Null Model")
 	}
-	capture.output(fit <- OpenMx::mxRun(Null, suppressWarnings = FALSE))
+	capture.output(fit <- OpenMx::mxRun(Null, suppressWarnings = FALSE, silent = TRUE))
 	fit
 }
 
@@ -308,16 +293,17 @@ nullMxSingleGroup <- function(data, title = "Null Model", groupnum = NULL) {
 				name="S"
 			),
 			T,
-			OpenMx::mxFIMLObjective(
+			OpenMx::mxExpectationNormal(
 				covariance="S",
 				means="M",
 				dimnames=colnames(data@observed),
 				thresholds = "thresh"				
-			)
+			),
+			OpenMx::mxFitFunctionML()
 		)
 	} else {
 		if(data@type == "raw") {
-			obj <- OpenMx::mxFIMLObjective(
+			obj <- OpenMx::mxExpectationNormal(
 				covariance="S",
 				means="M",
 				dimnames=colnames(data@observed)
@@ -342,14 +328,14 @@ nullMxSingleGroup <- function(data, title = "Null Model", groupnum = NULL) {
 					labels=paste0("mean", 1:p, "_", groupnum),
 					name="M"
 				)
-				obj <- OpenMx::mxMLObjective(
+				obj <- OpenMx::mxExpectationNormal(
 					covariance="S",
 					means="M",
 					dimnames=colnames(data@observed)
 				)
 			} else {
 				modelMean <- NULL
-				obj <- OpenMx::mxMLObjective(
+				obj <- OpenMx::mxExpectationNormal(
 					covariance="S",
 					dimnames=colnames(data@observed)
 				)
@@ -371,7 +357,8 @@ nullMxSingleGroup <- function(data, title = "Null Model", groupnum = NULL) {
 				byrow=TRUE,
 				name="S"
 			),
-			obj
+			obj,
+			OpenMx::mxFitFunctionML()
 		)
 	}
 	NullModel
@@ -382,8 +369,6 @@ checkConvergence <- function(object) {
 }
 
 fitMeasuresMx <- function(object, fit.measures="all") {
-	library(OpenMx)
-	
 	mxMixture <- FALSE
 	if(length(object@submodels) > 1) {
 		if(is.null(object@submodels[[1]]@data)) mxMixture <- TRUE
@@ -391,7 +376,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 	
 	if(length(object@submodels) > 1 & !mxMixture) {
 		varnames <- lapply(object@submodels, function(x) {
-			out <- x@objective@dims
+			out <- x@expectation@dims
 			if(any(is.na(out))) out <- x@manifestVars
 			out
 		})
@@ -406,7 +391,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 	} else {
 		dat <- object@data
 		if(!mxMixture) {
-			varnames <- object@objective@dims
+			varnames <- object@expectation@dims
 			if(any(is.na(varnames))) varnames <- object@manifestVars
 			dat@observed <- dat@observed[,intersect(varnames, colnames(dat@observed)), drop=FALSE]
 		}
@@ -434,31 +419,30 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 	} else {
 		N <- dat@numObs
 	}
-    #q <- length(vnames(object@ParTable, "ov.x"))
-    #p <- nvar - q
+    
+	# Does not account for equality constraints imposed in MxAlgebra
     npar <- length(object@output$estimate)
-    #fx <- object@Fit@fx
-    #fx.group <- object@Fit@fx.group
+    
 	
     multigroup    <- length(object@submodels) > 1
     G <- length(object@submodels) # number of groups
 	if(G == 0) G <- 1 # Correct when there is no submodel
 
 	if(multigroup) {
-		if(is(object@submodels[[1]]@objective, "MxRAMObjective")) {
-			meanstructure <- !all(is.na(object@submodels[[1]]@objective@M)) # Only ML objective
-			categorical   <- !all(is.na(object@submodels[[1]]@objective@thresholds)) # Only ML objective	
+		if(is(object@submodels[[1]]@expectation, "MxExpectationRAM")) {
+			meanstructure <- !all(is.na(object@submodels[[1]]@expectation@M)) # Only ML objective
+			categorical   <- !all(is.na(object@submodels[[1]]@expectation@thresholds)) # Only ML objective	
 		} else {
-			meanstructure <- !all(is.na(object@submodels[[1]]@objective@means)) # Only ML objective
-			categorical   <- !all(is.na(object@submodels[[1]]@objective@thresholds)) # Only ML objective	
+			meanstructure <- !all(is.na(object@submodels[[1]]@expectation@means)) # Only ML objective
+			categorical   <- !all(is.na(object@submodels[[1]]@expectation@thresholds)) # Only ML objective	
 		}
 	} else {
-		if(is(object@objective, "MxRAMObjective")) {
-			meanstructure <- !all(is.na(object@objective@M)) # Only ML objective
-			categorical   <- !all(is.na(object@objective@thresholds)) # Only ML objective		
+		if(is(object@expectation, "MxExpectationRAM")) {
+			meanstructure <- !all(is.na(object@expectation@M)) # Only ML objective
+			categorical   <- !all(is.na(object@expectation@thresholds)) # Only ML objective		
 		} else {
-			meanstructure <- !all(is.na(object@objective@means)) # Only ML objective
-			categorical   <- !all(is.na(object@objective@thresholds)) # Only ML objective
+			meanstructure <- !all(is.na(object@expectation@means)) # Only ML objective
+			categorical   <- !all(is.na(object@expectation@thresholds)) # Only ML objective
 		}
 	}
 	# define 'sets' of fit measures:
@@ -477,7 +461,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
                          "ifi", "rni")
     
     # likelihood based measures
-    fit.logl <- c("logl", "unrestricted.logl", "npar", "aic", "bic",
+    fit.logl <- c("logl", "npar", "aic", "bic",
                   "ntotal", "bic2")
 
     # rmsea
@@ -485,11 +469,15 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 
     # srmr
     if(categorical) {
-        fit.srmr <- character(0L)
-        fit.srmr2 <- character(0L)
+        fit.srmr <- c("wrmr")
+        fit.srmr2 <- c("wrmr")
     } else {
         fit.srmr <- c("srmr")
-        fit.srmr2 <- c("rmr", "rmr_nomean", "srmr", "srmr_nomean")
+        fit.srmr2 <- c("rmr", "rmr_nomean", 
+                       "srmr", # the default
+                       "srmr_bentler", "srmr_bentler_nomean",
+                       "srmr_bollen", "srmr_bollen_nomean",
+                       "srmr_mplus", "srmr_mplus_nomean")
     }
 
     # various
@@ -514,24 +502,27 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 							  fit.logl, fit.rmsea, fit.srmr2, fit.other, "saturate.status", "null.status")
         }
     }
+
+	objectSat <- saturateMx(dat)
+	objectNull <- nullMx(dat)
     
     # main container
     indices <- list()
+	
+	# Number of free parameters
+	if("npar" %in% fit.measures) {
+		indices["npar"] <- npar
+	}
 
 	if("logl" %in% fit.measures ||
-	   "npar" %in% fit.measures ||
 	   "aic" %in% fit.measures ||
 	   "bic" %in% fit.measures) {
 		
-		logl.H0 <- object@output$Minus2LogLikelihood * (-1/2)
-
+		# Use the definition in OpenMx
+		logl.H0 <- (-1/2) * (object@output$Minus2LogLikelihood - objectSat@output$Minus2LogLikelihood )
+		
 		if("logl" %in% fit.measures) {
 			indices["logl"] <- logl.H0
-		}
-
-		# Number of free parameters
-		if("npar" %in% fit.measures) {
-			indices["npar"] <- npar
 		}
 
 		# AIC
@@ -551,6 +542,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 			indices["bic2"] <- BIC2
 		}
 	}
+	
 	if(!mxMixture) {
 		if(multigroup) {
 			defVars <- lapply(object@submodels, findDefVars)
@@ -564,15 +556,6 @@ fitMeasuresMx <- function(object, fit.measures="all") {
         return(out)
 	}
 	
-	objectSat <- saturateMx(dat)
-	objectNull <- nullMx(dat)
-	
-	if("unrestricted.logl" %in% fit.measures) {
-		logl.H1 <- objectSat@output$Minus2LogLikelihood * (-1/2)
-		indices["unrestricted.logl"] <- logl.H1
-    }
-
-
 	if(length(objectSat@output) == 0) {
 		stop("The saturated model has not been estimated yet.")
 	}
@@ -609,7 +592,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 	
     # Chi-square value estimated model (H0)
     if(any("chisq" %in% fit.measures)) {
-	indices["chisq"] <- X2
+		indices["chisq"] <- X2
     }
     if(any("df" %in% fit.measures)) {
         indices["df"] <- df
@@ -626,41 +609,7 @@ fitMeasuresMx <- function(object, fit.measures="all") {
              "ifi", "rni", 
              "baseline.chisq", 
              "baseline.pvalue") %in% fit.measures)) {
-        
-        # call explicitly independence model
-        # this is not strictly needed for ML, but it is for
-        # GLS and WLS
-        # and MLM and MLR to get the scaling factor(s)!
-        #if(estimator == "ML") {
-        #    if(object@SampleStats@missing.flag) {
-        #        do.fit <- TRUE
-        #    } else {
-        #        do.fit <- FALSE
-        #    }
-        #} else {
-        #    do.fit <- TRUE
-        #}
 
-        #OV.X <- character(0L)
-        #if(object@Options$mimic == "Mplus") 
-        #    OV.X <- vnames(object@ParTable, type="ov.x")
-
-        #indep.syntax <- 
-        #    syntax.independence.model(ov.names   = object@Data@ov.names,
-        #                              ov.names.x = OV.X,
-        #                              sample.cov = object@SampleStats@cov)
-        #fit.indep <- update(object, model = indep.syntax, 
-        #                    se = "none", do.fit=TRUE, 
-        #                    constraints = "",
-        #                    verbose = FALSE, warn = FALSE)
-        #OCALL <- as.list(object@call); OCALL$env <- NULL; OCALL[[1]] <- NULL
-        #NCALL <- list(model = indep.syntax, se = "none", do.fit = TRUE, 
-        #              constraints = "", verbose = FALSE, warn = FALSE)
-        #CALL  <- modifyList(OCALL, NCALL)
-        #cat("DEBUG!\n"); print(as.list(object@call$env)); cat("*******\n")
-        #fit.indep <- do.call("lavaan", args=CALL, envir=object@call$env)
-        #fit.indep <- do.call("lavaan", args=CALL)
-        
 		X2.null <- objectNull@output$Minus2LogLikelihood - objectSat@output$Minus2LogLikelihood
 		df.null <- length(objectSat@output$estimate) - length(objectNull@output$estimate)
 	
@@ -833,8 +782,14 @@ fitMeasuresMx <- function(object, fit.measures="all") {
         # RMR and SRMR
         rmr.group <- numeric(G)
         rmr_nomean.group <- numeric(G)
-        srmr.group <- numeric(G)
-        srmr_nomean.group <- numeric(G)
+        # srmr.group <- numeric(G)
+        # srmr_nomean.group <- numeric(G)
+        srmr_bentler.group <- numeric(G)
+        srmr_bentler_nomean.group <- numeric(G)
+        srmr_bollen.group <- numeric(G)
+        srmr_bollen_nomean.group <- numeric(G)
+        srmr_mplus.group <- numeric(G)
+        srmr_mplus_nomean.group <- numeric(G)
 		upperLevelMatrices <- NULL
 		if(G > 1) {
 			upperLevelMatrices <- getInnerObjects(object)
@@ -844,13 +799,13 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 		}
         for(g in 1:G) {
 			if(G > 1) {
-				if(is(objectSat@submodels[[g]]@objective, "MxRAMObjective")) {
+				if(is(objectSat@submodels[[g]]@expectation, "MxExpectationRAM")) {
 					impliedSat <- getImpliedStatRAM(objectSat@submodels[[g]])
 				} else {
 					impliedSat <- getImpliedStatML(objectSat@submodels[[g]])
 				}
 			} else {
-				if(is(objectSat@objective, "MxRAMObjective")) {
+				if(is(objectSat@expectation, "MxExpectationRAM")) {
 					impliedSat <- getImpliedStatRAM(objectSat)
 				} else {
 					impliedSat <- getImpliedStatML(objectSat)
@@ -863,13 +818,13 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 
             # estimated
 			if(G > 1) {
-				if(is(object@submodels[[g]]@objective, "MxRAMObjective")) {
+				if(is(object@submodels[[g]]@expectation, "MxExpectationRAM")) {
 					implied <- getImpliedStatRAM(object@submodels[[g]])
 				} else {
 					implied <- getImpliedStatML(object@submodels[[g]], xxxextraxxx = upperLevelMatrices)
 				}
 			} else {
-				if(is(object@objective, "MxRAMObjective")) {
+				if(is(object@expectation, "MxExpectationRAM")) {
 					implied <- getImpliedStatRAM(object)
 				} else {
 					implied <- getImpliedStatML(object)
@@ -878,58 +833,97 @@ fitMeasuresMx <- function(object, fit.measures="all") {
 			Sigma.hat <- implied[[2]]
 			Mu.hat <- matrix(implied[[1]], ncol=1)
 
+			# unstandardized residuals
+			RR <- (S - Sigma.hat) # not standardized
+
             # standardized residual covariance matrix
             # this is the Hu and Bentler definition, not the Bollen one!
             sqrt.d <- 1/sqrt(diag(S))
             D <- diag(sqrt.d, ncol=length(sqrt.d))
             R <- D %*% (S - Sigma.hat) %*% D
-            RR <- (S - Sigma.hat) # not standardized
-
-            # this is what the Mplus documentation suggest, 
-            # but is not what is used!
-            #sqrt.d2 <- 1/sqrt(diag(Sigma.hat))
-            #D2 <- diag(sqrt.d2, ncol=length(sqrt.d2))
-            #R <- D %*% S %*% D   - D2 %*% Sigma.hat %*% D2
+			
+			# Bollen approach: simply using cov2cor ('residual correlations')
+            S.cor <- cov2cor(S)
+            Sigma.cor <- cov2cor(Sigma.hat)
+            R.cor <- (S.cor - Sigma.cor)
 
             if(meanstructure) {
                 # standardized residual mean vector
-                R.mean <- D %*% (M - Mu.hat)
+                R.mean <- D %*% (M - Mu.hat) # EQS approach!
                 RR.mean <- (M - Mu.hat) # not standardized
-                #R.mean <-  D %*% M - D2 %*% Mu.hat
+                R.cor.mean <- M/sqrt(diag(S)) - Mu.hat/sqrt(diag(Sigma.hat))
+				
                 e <- nvar*(nvar+1)/2 + nvar
-                srmr.group[g] <- sqrt( (sum(R[lower.tri(R, diag=TRUE)]^2) +
-                                        sum(R.mean^2))/ e )
+                srmr_bentler.group[g] <- 
+                    sqrt( (sum(R[lower.tri(R, diag=TRUE)]^2) +
+                           sum(R.mean^2))/ e )
                 rmr.group[g] <- sqrt( (sum(RR[lower.tri(RR, diag=TRUE)]^2) +
                                        sum(RR.mean^2))/ e )
+                srmr_bollen.group[g] <- 
+                    sqrt( (sum(R.cor[lower.tri(R.cor, diag=TRUE)]^2)  +
+                           sum(R.cor.mean^2)) / e )
+                # see http://www.statmodel.com/download/SRMR.pdf
+                srmr_mplus.group[g] <-
+                    sqrt( (sum(R.cor[lower.tri(R.cor, diag=FALSE)]^2)  +
+                           sum(R.cor.mean^2) +
+                           sum(((diag(S) - diag(Sigma.hat))/diag(S))^2)) / e )
+
                 e <- nvar*(nvar+1)/2
-                srmr_nomean.group[g] <- sqrt( sum(R[lower.tri(R, diag=TRUE)]^2) / e )
-                rmr_nomean.group[g] <- sqrt( sum(RR[lower.tri(RR, diag=TRUE)]^2) / e )
+                srmr_bentler_nomean.group[g] <- 
+                    sqrt(  sum( R[lower.tri( R, diag=TRUE)]^2) / e )
+                rmr_nomean.group[g] <- 
+                    sqrt(  sum(RR[lower.tri(RR, diag=TRUE)]^2) / e )
+                srmr_bollen_nomean.group[g] <- 
+                    sqrt(  sum(R.cor[lower.tri(R.cor, diag=TRUE)]^2) / e )
+                srmr_mplus_nomean.group[g] <-
+                    sqrt( (sum(R.cor[lower.tri(R.cor, diag=FALSE)]^2)  +
+                           sum(((diag(S) - diag(Sigma.hat))/diag(S))^2)) / e )
             } else {
-                e <- nvar*(nvar+1)/2
-                srmr_nomean.group[g] <- srmr.group[g] <- sqrt( sum(R[lower.tri(R, diag=TRUE)]^2) / e )
-                rmr_nomean.group[g] <- rmr.group[g] <- sqrt( sum(RR[lower.tri(RR, diag=TRUE)]^2) / e )
-                
+				e <- nvar*(nvar+1)/2
+                srmr_bentler_nomean.group[g] <- srmr_bentler.group[g] <- 
+                    sqrt( sum(R[lower.tri(R, diag=TRUE)]^2) / e )
+                rmr_nomean.group[g] <- rmr.group[g] <- 
+                    sqrt( sum(RR[lower.tri(RR, diag=TRUE)]^2) / e )
+                srmr_bollen_nomean.group[g] <- srmr_bollen.group[g] <-
+                    sqrt(  sum(R.cor[lower.tri(R.cor, diag=TRUE)]^2) / e )
+                srmr_mplus_nomean.group[g] <- srmr_mplus.group[g] <-
+                    sqrt( (sum(R.cor[lower.tri(R.cor, diag=FALSE)]^2)  +
+                           sum(((diag(S) - diag(Sigma.hat))/diag(S))^2)) / e )
             }
         }
         
         if(G > 1) {
-            ## FIXME: get the scaling right
-			nEachGroup <- as.matrix(t(sapply(dat, slot, "numObs")))
-            SRMR <- as.numeric( (nEachGroup %*% srmr.group) / N )
-            SRMR_NOMEAN <- as.numeric( (nEachGroup %*% srmr_nomean.group) / N )
-            RMR <- as.numeric( (nEachGroup %*% rmr.group) / N )
-            RMR_NOMEAN <- as.numeric( (nEachGroup %*% rmr_nomean.group) / N )
+			## FIXME: get the scaling right
+			ngroups <- sapply(dat, slot, "numObs")
+            SRMR_BENTLER <- as.numeric( (ngroups %*% srmr_bentler.group) / N )
+            SRMR_BENTLER_NOMEAN <- as.numeric( (ngroups %*% srmr_bentler_nomean.group) / N )
+            SRMR_BOLLEN <- as.numeric( (ngroups %*% srmr_bollen.group) / N )
+            SRMR_BOLLEN_NOMEAN <- as.numeric( (ngroups %*% srmr_bollen_nomean.group) / N )
+            SRMR_MPLUS <- as.numeric( (ngroups %*% srmr_mplus.group) / N )
+            SRMR_MPLUS_NOMEAN <- as.numeric( (ngroups %*% srmr_mplus_nomean.group) / N )
+            RMR <- as.numeric( (ngroups %*% rmr.group) / N )
+            RMR_NOMEAN <- as.numeric( (ngroups %*% rmr_nomean.group) / N )
         } else {
-            SRMR <- srmr.group[1]
-            SRMR_NOMEAN <- srmr_nomean.group[1]
+            SRMR_BENTLER <- srmr_bentler.group[1]
+            SRMR_BENTLER_NOMEAN <- srmr_bentler_nomean.group[1]
+            SRMR_BOLLEN <- srmr_bollen.group[1]
+            SRMR_BOLLEN_NOMEAN <- srmr_bollen_nomean.group[1]
+            SRMR_MPLUS <- srmr_mplus.group[1]
+            SRMR_MPLUS_NOMEAN <- srmr_mplus_nomean.group[1]
             RMR <- rmr.group[1]
             RMR_NOMEAN <- rmr_nomean.group[1]
         }
 
-        indices["srmr"] <- SRMR
-        indices["srmr_nomean"] <- SRMR_NOMEAN
-        indices["rmr"] <- RMR
-        indices["rmr_nomean"] <- RMR_NOMEAN
+        indices["srmr"]        <- SRMR_BENTLER
+        indices["srmr_nomean"] <- SRMR_BENTLER_NOMEAN
+        indices["srmr_bentler"]        <- SRMR_BENTLER
+        indices["srmr_bentler_nomean"] <- SRMR_BENTLER_NOMEAN
+        indices["srmr_bollen"]         <- SRMR_BOLLEN
+        indices["srmr_bollen_nomean"]  <- SRMR_BOLLEN_NOMEAN
+        indices["srmr_mplus"]          <- SRMR_MPLUS
+        indices["srmr_mplus_nomean"]   <- SRMR_MPLUS_NOMEAN
+        indices["rmr"]                 <- RMR
+        indices["rmr_nomean"]          <- RMR_NOMEAN
     }
 
     if(any(c("cn_05", "cn_01") %in% fit.measures)) {
@@ -939,6 +933,15 @@ fitMeasuresMx <- function(object, fit.measures="all") {
         indices["cn_01"] <- CN_01
     }
 
+	if("wrmr" %in% fit.measures) {
+        # we use the definition: wrmr = sqrt ( 2*N*F / e )
+        e <- npar + df # Modified from lavaan
+        WRMR <- sqrt( X2 / e )
+        indices["wrmr"] <- WRMR
+    }
+
+	# Intentionally not report GFI, AGFI, and PGFI because it requires the weight matrix
+	
     # MFI - McDonald Fit Index (McDonald, 1989)
     if("mfi" %in% fit.measures) { 
         #MFI <- exp(-0.5 * (X2 - df)/(N-1)) # Hu & Bentler 1998 Table 1
@@ -1020,18 +1023,18 @@ getImpliedStatML <- function(xxxobjectxxx, xxxcovdatatxxx = NULL, xxxextraxxx = 
 		assign(xxxalgebranamexxx[i], eval(xxxalgebraformulaxxx[[i]]))
 	}
 	
-	xxximpliedCovxxx <- get(xxxobjectxxx@objective@covariance)
+	xxximpliedCovxxx <- get(xxxobjectxxx@expectation@covariance)
 	
-	if(is.na(xxxobjectxxx@objective@means)) {
+	if(is.na(xxxobjectxxx@expectation@means)) {
 		xxximpliedMeanxxx <- rep(0, nrow(xxximpliedCovxxx))
 	} else {
-		xxximpliedMeanxxx <- get(xxxobjectxxx@objective@means)
+		xxximpliedMeanxxx <- get(xxxobjectxxx@expectation@means)
 	}
 	
-	if(is.na(xxxobjectxxx@objective@thresholds)) {
+	if(is.na(xxxobjectxxx@expectation@thresholds)) {
 		xxximpliedThresholdxxx <- NA
 	} else {
-		xxximpliedThresholdxxx <- get(xxxobjectxxx@objective@thresholds)
+		xxximpliedThresholdxxx <- get(xxxobjectxxx@expectation@thresholds)
 	}
 	list(xxximpliedMeanxxx, xxximpliedCovxxx, xxximpliedThresholdxxx)
 }
@@ -1071,7 +1074,7 @@ standardizeMx <- function(object, free = TRUE) {
 }
 
 standardizeMxSingleGroup <- function(object) {
-	if(!is(object@objective, "MxRAMObjective")) stop("The standardizeMx function is available for the MxRAMObjective only.")
+	if(!is(object@expectation, "MxExpectationRAM")) stop("The standardizeMx function is available for the MxExpectationRAM only.")
 	A <- object@matrices$A@values
 	I <- diag(nrow(A))
 	S <- object@matrices$S@values

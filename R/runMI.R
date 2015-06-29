@@ -94,7 +94,7 @@ runMI <- function(model, data, m, miArgs=list(), chi="all", miPackage="Amelia", 
 	template@Fit@x <- comb.results$coef[comb.results$se != 0]
 	template@Model <- imposeGLIST(template@Model, comb.results$coef, template@ParTable)
 	
-	fmi.results <- cbind(lavaan::parameterEstimates(template)[,1:3], group=template@ParTable$group, fmi1 = comb.results[[3]], fmi2 = comb.results[[4]])
+	fmi.results <- cbind(lavaan::parameterEstimates(template, remove.eq = FALSE, remove.ineq = FALSE)[,1:3], group=template@ParTable$group, fmi1 = comb.results[[3]], fmi2 = comb.results[[4]])
 
 	fit <- imputed.results.l[[1]]@Fit@test
 	df <- fit[[1]]$df
@@ -140,10 +140,9 @@ runMI <- function(model, data, m, miArgs=list(), chi="all", miPackage="Amelia", 
 		chiNullScaled1 <- sapply(null.results, function(x) x@Fit@test[[2]]$stat)
 		dfNullScaled <- null.results[[1]]@Fit@test[[2]]$df
 	}
-	
 	outNull <- list(model=nullModel, data=imputed.l[[1]], se="none", do.fit=FALSE)
 	outNull <- c(outNull, list(...))
-	templateNull <- do.call(fun, outNull)
+	templateNull <- suppressWarnings(do.call(fun, outNull))
 	
 	coefsNull <- sapply(null.results, function(x) x@Fit@est)
 	seNull <- sapply(null.results, function(x) x@Fit@se)
@@ -253,7 +252,6 @@ runlavaanMI <- function(MIdata, syntax, fun, ...) {
 #Conveniance function to run impuations on data and only return list of data
 imputeMissingAmelia <- function(data,m, miArgs){
   # pull out only the imputations
-  library(Amelia)
   out <- c(list(Amelia::amelia, x = data, m = m, p2s=0), miArgs)
   temp.am <- eval(as.call(out))
   return(temp.am$imputations)
@@ -262,7 +260,8 @@ imputeMissingAmelia <- function(data,m, miArgs){
 
 imputeMissingMice <- function(data,m, miArgs){
   # pull out only the imputations
-  library(mice)
+  requireNamespace("mice")
+  if(!("package:mice" %in% search())) attachNamespace("mice")
   out <- c(list(mice::mice, data=data, m = m, diagnostics=FALSE, printFlag=FALSE), miArgs)
   temp.mice <- eval(as.call(out))
   temp.mice.imp <- NULL
@@ -409,11 +408,10 @@ satPartable <- function(fit.alt){
 	ustart <- rep(NA, length(lhs.all))
 	exo <- rep(0, length(lhs.all))
 	label <- rep("", length(lhs.all))
-	eq.id <- exo
-	unco <- id
+	plabel <- paste0(".p", id, ".")
 	par.sat <- list(id, lhs.all, op.all, rhs.all, user, group,
-				  free, ustart, exo, label, eq.id, unco)
-	names(par.sat) <- c("id", "lhs", "op", "rhs", "user", "group", "free", "ustart", "exo", "label", "eq.id", "unco")
+				  free, ustart, exo, label, plabel)
+	names(par.sat) <- c("id", "lhs", "op", "rhs", "user", "group", "free", "ustart", "exo", "label", "plabel")
 	return(par.sat)
 }
 
@@ -517,13 +515,17 @@ imposeGLIST <- function(object, coef, partable) {
 				GLIST[names(GLIST) == "theta"][[group]][lhs, rhs] <- coef[i]
 			}
 		} else if (partable$op[i] == "~") {
-			GLIST[names(GLIST) == "beta"][[group]][lhs, rhs] <- coef[i]
+			targetName <- "beta"
+			if(!(rhs %in% colnames(GLIST[names(GLIST) == "beta"][[group]]))) targetName <- "gamma"
+			GLIST[names(GLIST) == targetName][[group]][lhs, rhs] <- coef[i]
 		} else if (partable$op[i] == "~1") {
 			if(lhs %in% rownames(GLIST[names(GLIST) == "alpha"][[group]])) {
 				GLIST[names(GLIST) == "alpha"][[group]][lhs, 1] <- coef[i]
 			} else {
 				GLIST[names(GLIST) == "nu"][[group]][lhs, 1] <- coef[i]
 			}		
+		} else if (partable$op[i] == "|") {
+			GLIST[names(GLIST) == "tau"][[group]][paste0(lhs, "|", rhs), 1] <- coef[i]
 		}
 	}
 	object@GLIST <- GLIST
