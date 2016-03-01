@@ -4,8 +4,8 @@
 	Bollen-Stine Bootstrap with the Existence of Missing Data
 }
 \description{
-	Implement the Bollen and Stine's (1992) Bootstrap when missing observations exist. The implemented method is proposed by Savalei and Yuan (2009). This can be used in two ways. The first and easiest option is to fit the model to incomplete data in \code{lavaan} using the FIML estimator, then pass that \code{lavaan} object to \code{bsBootMis}. 
-    
+	Implement the Bollen and Stine's (1992) Bootstrap when missing observations exist. The implemented method is proposed by Savalei and Yuan (2009). This can be used in two ways. The first and easiest option is to fit the model to incomplete data in \code{lavaan} using the FIML estimator, then pass that \code{lavaan} object to \code{bsBootMis}.
+
     The second is designed for users of other software packages (e.g., LISREL, EQS, Amos, or Mplus). Users can import their data, chi-squared value, and model-implied moments from another package, and they have the option of saving (or writing to a file) either the transformed data or bootstrapped samples of that data, which can be analyzed in other programs. In order to analyze the bootstrapped samples and return a p value, users of other programs must still specify their model using lavaan syntax.
 }
 \usage{
@@ -13,7 +13,8 @@ bsBootMiss(x, transformation = 2, nBoot = 500, model, rawData,
 	Sigma, Mu, group, ChiSquared, EMcov,
 	writeTransData = FALSE, transDataOnly = FALSE,
 	writeBootData = FALSE, bootSamplesOnly = FALSE,
-	writeArgs, seed = NULL, suppressWarn = TRUE, ...)
+	writeArgs, seed = NULL, suppressWarn = TRUE,
+	showProgress = TRUE, ...)
 }
 \arguments{
   \item{x}{
@@ -59,7 +60,7 @@ bsBootMiss(x, transformation = 2, nBoot = 500, model, rawData,
 	Logical. If \code{TRUE}, the stacked bootstrap data sets are written to a text file, \code{bootSamplesOnly} is set to \code{TRUE}, and the list of bootstrap data sets are returned invisibly.
   }
   \item{writeArgs}{
-	Optional. If \code{TRUE} or \code{TRUE} are \code{TRUE}, user can pass arguments to the \code{\link[utils]{write.table}} function as a list.  Some default values are provided: \code{file} = "bootstrappedSamples.dat", \code{row.names} = \code{FALSE}, and \code{na} = "-999", but the user can override all of these by providing other values for those arguments in the \code{writeArgs} list.
+	Optional \code{list}. If \code{writeBootData = TRUE} or \code{writeBootData = TRUE}, user can pass arguments to the \code{\link[utils]{write.table}} function as a list.  Some default values are provided: \code{file} = "bootstrappedSamples.dat", \code{row.names} = \code{FALSE}, and \code{na} = "-999", but the user can override all of these by providing other values for those arguments in the \code{writeArgs} list.
   }
   \item{seed}{
 	The seed number used in randomly drawing bootstrap samples.
@@ -67,16 +68,19 @@ bsBootMiss(x, transformation = 2, nBoot = 500, model, rawData,
   \item{suppressWarn}{
 	Logical. If \code{TRUE}, warnings from \code{lavaan} function will be suppressed when fitting the model to each bootstrap sample.
   }
+  \item{showProgress}{
+	Logical. Indicating whether to display a progress bar while fitting models to bootstrap samples.
+  }
   \item{\dots}{
 	The additional arguments in the \code{\link[lavaan]{lavaan}} function.
   }
 }
 \value{
-	As a default, this function returns \code{\linkS4class{BootMiss}} object containing the results of the bootstrap samples. Users can use \code{print}, \code{summary}, or \code{hist} functions to examine the results. The transformed data is returned instead if \code{transDataOnly} is \code{TRUE}. The bootstrap data sets are returned if \code{bootSamplesOnly} is \code{TRUE}.
+	As a default, this function returns a \code{\linkS4class{BootMiss}} object containing the results of the bootstrap samples. Use \code{show}, \code{summary}, or \code{hist} to examine the results. Optionally, the transformed data set is returned if \code{transDataOnly = TRUE}. Optionally, the bootstrap data sets are returned if \code{bootSamplesOnly = TRUE}.
 }
 \references{
 
-Bollen, K. A., \& Stine, R. A. (1992). Bootstrapping goodness-of-fit measures in structural equation models. \emph{Sociological Methods \& Research, 21}, 205-229. doi:10.1177/0049124192021002004 
+Bollen, K. A., \& Stine, R. A. (1992). Bootstrapping goodness-of-fit measures in structural equation models. \emph{Sociological Methods \& Research, 21}, 205-229. doi:10.1177/0049124192021002004
 
 Savalei, V., \& Yuan, K.-H. (2009). On the model-based bootstrap with missing data: obtaining a p-value for a test of exact fit. \emph{Multivariate Behavioral Research, 44}, 741-763. doi:10.1080/00273170903333590
 }
@@ -87,6 +91,7 @@ Savalei, V., \& Yuan, K.-H. (2009). On the model-based bootstrap with missing da
     Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }
 \examples{
+\dontrun{
 dat1 <- HolzingerSwineford1939
 dat1$x5 <- ifelse(dat1$x1 <= quantile(dat1$x1, .3), NA, dat1$x5)
 dat1$x9 <- ifelse(is.na(dat1$x5), NA, dat1$x9)
@@ -106,8 +111,11 @@ temp <- bsBootMiss(targetFit, transformation = 1, nBoot = 10, seed = 31415)
 temp
 summary(temp)
 hist(temp)
-## user can specify confidence level (default = 0.95), the location of
-## the legend ("none", "right", or "left"), and pass other arguments to hist()
-hist(temp, conf = .90, legend = "none", xlab = "something else", breaks = 25)
-
+hist(temp, printLegend = FALSE) # suppress the legend
+## user can specify alpha level (default: alpha = 0.05), and the number of
+## digits to display (default: nd = 2).  Pass other arguments to hist(...),
+## or a list of arguments to legend() via "legendArgs"
+hist(temp, alpha = .01, nd = 3, xlab = "something else", breaks = 25,
+     legendArgs = list("bottomleft", box.lty = 2))
+}
 }

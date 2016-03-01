@@ -41,7 +41,7 @@ Enders, C. K. (2008). A note of the use of missing auxiliary variables in full i
 	\code{\linkS4class{lavaanStar}}
 }
 \author{
-    Sunthud Pornprasertmanit (Texas Tech University; \email{sunthud.pornprasertmanit@ttu.edu})
+    Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
 }
 \examples{
 # Example of confirmatory factor analysis
@@ -61,6 +61,7 @@ fitaux <- cfa.auxiliary(fit, aux="z", data=dat) # Use lavaan output
 fitgroup <- cfa(HS.model, data=dat, group="school", meanstructure=TRUE)
 fitgroupaux <- cfa.auxiliary(fitgroup, aux="z", data=dat, group="school")
 
+\dontrun{
 # Example of path analysis
 
 mod <- ' x5 ~ x4
@@ -115,4 +116,5 @@ HS.model2 <- ' visual  =~ x1 + x2 + x3
               speed   =~ x7 + x8 + x9'
 fit <- cfa(HS.model2, data=HolzingerSwineford1939)
 fitaux <- cfa.auxiliary(HS.model2, data=HolzingerSwineford1939, aux=c("x4", "x5")) 
+}
 }
