@@ -53,6 +53,10 @@ kStat <- function(x, ord) {
 #	object:	The target vector
 #	population: The vector represents population values or sample values
 skew <- function(object, population=FALSE) {
+	if(any(is.na(object))) {
+		object <- object[!is.na(object)]
+		warning("Missing observations are removed from a vector.")
+	}
 	if(population) {
 		return(centralMoment(object, 3)/(centralMoment(object, 2)^(3/2)))
 	} else {
@@ -70,6 +74,10 @@ skew <- function(object, population=FALSE) {
 #	object:	The target vector
 #	population: The vector represents population values or sample values
 kurtosis <- function(object, population=FALSE) {
+	if(any(is.na(object))) {
+		object <- object[!is.na(object)]
+		warning("Missing observations are removed from a vector.")
+	}	
 	if(population) {
 		return((centralMoment(object, 4)/(centralMoment(object, 2)^2)) - 3)
 	} else {
@@ -85,9 +93,9 @@ kurtosis <- function(object, population=FALSE) {
 # Calculate the Mardia's skewness 
 # Argument:
 #	dat: Datasets with multiple variables
-mardiaSkew <- function(dat) {
+mardiaSkew <- function(dat, use = "everything") {
 	centeredDat <- scale(dat, center=TRUE, scale=FALSE)
-	invS <- solve(cov(dat))
+	invS <- solve(cov(dat, use = use))
 	FUN <- function(vec1, vec2, invS) {
 		as.numeric(t(as.matrix(vec1)) %*% invS %*% as.matrix(vec2))
 	}
@@ -107,9 +115,9 @@ mardiaSkew <- function(dat) {
 # Calculate the Mardia's Kurtosis 
 # Argument:
 #	dat: Datasets with multiple variables
-mardiaKurtosis <- function(dat) {
+mardiaKurtosis <- function(dat, use = "everything") {
 	centeredDat <- scale(dat, center=TRUE, scale=FALSE)
-	invS <- solve(cov(dat))
+	invS <- solve(cov(dat, use = use))
 	FUN <- function(vec, invS) {
 		as.numeric(t(as.matrix(vec)) %*% invS %*% as.matrix(vec))
 	}

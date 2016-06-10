@@ -1,6 +1,6 @@
 Package: semTools
 Title: Useful Tools for Structural Equation Modeling
-Version: 0.4-11
+Version: 0.4-12
 Authors@R: c(person(given = "Sunthud", family = "Pornprasertmanit", role = c("aut", "cre"), email = "psunthud@gmail.com"), 
 		person(given = "Patrick", family = "Miller", role = "aut", email="pmille13@nd.edu"), 
 		person(given = "Alexander", family = "Schoemann", role = "aut", email="schoemanna@ecu.edu"),
@@ -21,7 +21,8 @@ Authors@R: c(person(given = "Sunthud", family = "Pornprasertmanit", role = c("au
 		person(given = "Terry", family = "Jorgensen", role = "ctb", email="TJorgensen314@gmail.com"),
 		person(given = "Steven", family = "Chesnut", role = "ctb", email="Steven.Chesnut@usm.edu"),
 		person(given = "Jarrett", family = "Byrnes", role = "ctb", email="Jarrett.Byrnes@umb.edu"), 
-		person(given = "Jason", family = "Rights", role = "ctb", email="jason.d.rights@vanderbilt.edu") 		
+		person(given = "Jason", family = "Rights", role = "ctb", email="jason.d.rights@vanderbilt.edu"), 		
+		person(given = "Ylenio", family = "Longo", role = "ctb", email="yleniolongo@gmail.com") 		
 		)
 Description: Provides useful tools for structural equation modeling packages. 
 Depends: R(>= 3.0), methods, lavaan(>= 0.5-20), utils, stats, graphics
@@ -51,9 +52,10 @@ Author: Sunthud Pornprasertmanit [aut, cre],
   Terry Jorgensen [ctb],
   Steven Chesnut [ctb],
   Jarrett Byrnes [ctb], 
-  Jason Rights [ctb]
+  Jason Rights [ctb],
+  Ylenio Longo [ctb]
 Maintainer: Sunthud Pornprasertmanit <psunthud@gmail.com>
-Date/Publication: 2016-03-01 10:43:20
+Date/Publication: 2016-06-10 23:29:51
 NeedsCompilation: no
-Packaged: 2016-03-01 02:06:49 UTC; Sunthud
+Packaged: 2016-06-10 14:43:07 UTC; Sunthud
 Repository: CRAN
