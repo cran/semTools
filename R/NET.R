@@ -7,60 +7,46 @@ setClass("Net", representation(test = "matrix", df = "vector"))
 
 ## function to test whether model "x" is nested within model "y"
 x.within.y <- function(x, y, crit = crit) {
-  if (x@Options$estimator %in% c("WLS", "DWLS") | y@Options$estimator %in% c("WLS", "DWLS")) stop(
-    "The net() function is not available for categorical-data estimators.")
-  prepCov <- function(x, varNames) {
-    for (g in seq_along(x)) {
-      colnames(x[[g]]) <- varNames[[g]]
-      rownames(x[[g]]) <- varNames[[g]]
-    }
-    x
-  }
-  prepMu <- function(x, varNames) {
-    for (g in seq_along(x)) {
-      x[[g]] <- as.numeric(x[[g]])
-      names(x[[g]]) <- varNames[[g]]
-    }
-    x
-  }
-  ##############################################################################
-  if (!all(sapply(c(x@Data@eXo, y@Data@eXo), is.null))) {
+  if (length(c(lavaan::lavNames(x, "ov.ord"), lavaan::lavNames(y, "ov.ord"))))
+    stop("The net() function is not available for categorical-data estimators.")
+
+  exoX <- lavaan::lavInspect(x, "options")$fixed.x & length(lavaan::lavNames(x, "ov.x"))
+  exoY <- lavaan::lavInspect(y, "options")$fixed.x & length(lavaan::lavNames(y, "ov.x"))
+  if (exoX | exoY) {
     stop(c("The net() function does not work with exogenous variables.\n",
-           "Set 'fixed.x = FALSE' or remove exogenous predictors from model syntax."))
+           "Fit the model again with 'fixed.x = FALSE'"))
   }
   ## variable names
-  Xnames <- x@pta$vnames$ov
-  if (is.null(Xnames)) Xnames <- x@Data@ov.names
-  Ynames <- y@pta$vnames$ov
-  if (is.null(Ynames)) Ynames <- y@Data@ov.names
-  if (identical(sort(Xnames[[1]]), sort(Ynames[[1]]))) {
-    varNames <- Xnames
-  } else {
+  Xnames <- lavaan::lavNames(x)
+  Ynames <- lavaan::lavNames(y)
+  if (!identical(sort(Xnames), sort(Ynames)))
     stop("Models do not contain the same variables")
-  }
 
   ## check that the analyzed data matches
-  xData <- do.call(rbind, lapply(x@Data@X, function(foo) foo[ , rank(Xnames[[1]])]))
-  yData <- do.call(rbind, lapply(y@Data@X, function(foo) foo[ , rank(Ynames[[1]])]))
+  xData <- lavaan::lavInspect(x, "data")
+  if (is.list(xData)) xData <- do.call(rbind, xData)
+  xData <- xData[ , rank(Xnames)]
+  yData <- lavaan::lavInspect(y, "data")
+  if (is.list(yData)) yData <- do.call(rbind, yData)
+  yData <- yData[ , rank(Ynames)]
   if (!identical(xData, yData)) stop("Models must apply to the same data")
   ##############################################################################
 
   ## check degrees of freedom support nesting structure
-  if (lavaan::lavInspect(x, "fit")["df"] < lavaan::lavInspect(y, "fit")["df"]) stop("
-      x cannot be nested within y because y is more restricted than x")
+  if (lavaan::lavInspect(x, "fit")["df"] < lavaan::lavInspect(y, "fit")["df"])
+    stop("x cannot be nested within y because y is more restricted than x")
 
   ## model-implied moments
-  Sigma <- prepCov(x@Fit@Sigma.hat, varNames)
-  Mu <- prepMu(x@Fit@Mu.hat, varNames)
-  N <- x@Data@nobs
+  Sigma <- lavaan::lavInspect(x, "cov.ov")
+  Mu <- lavaan::lavInspect(x, "mean.ov")
+  N <- lavaan::lavInspect(x, "nobs")
 
   ## fit model and inspect chi-squared
-  suppressWarnings(try(myFit <- lavaan::lavaan(sample.cov = Sigma, sample.mean = Mu,
-                                       sample.nobs = N, slotParTable = y@ParTable,
-                                       slotOptions = y@Options,
-                                       WLS.V = x@SampleStats@WLS.V)))
-  if(!lavaan::lavInspect(myFit, "converged")) return(NA) else {
-    result <- lavaan::lavInspect(myFit, "fit")["chisq"] < crit
+
+  suppressWarnings(try(newFit <- update(y, data = NULL, sample.cov = Sigma,
+                                        sample.mean = Mu, sample.nobs = N)))
+  if(!lavaan::lavInspect(newFit, "converged")) return(NA) else {
+    result <- lavaan::lavInspect(newFit, "fit")["chisq"] < crit
     names(result) <- NULL
     if (lavaan::lavInspect(x, "fit")["df"] ==
         lavaan::lavInspect(y, "fit")["df"]) return(c(Equivalent = result))
@@ -83,7 +69,7 @@ net <- function(..., crit = .0001) {
   }
 
   ## check whether any models include categorical outcomes
-  catMod <- sapply(fitList, function(x) x@Options$categorical)
+  catMod <- sapply(fitList, function(x) lavaan::lavInspect(x, "options")$categorical)
   if (any(catMod)) stop("This method only applies to continuous outcomes.")
 
   ## get degrees of freedom for each model

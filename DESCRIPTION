@@ -1,6 +1,6 @@
 Package: semTools
 Title: Useful Tools for Structural Equation Modeling
-Version: 0.4-12
+Version: 0.4-13
 Authors@R: c(person(given = "Sunthud", family = "Pornprasertmanit", role = c("aut", "cre"), email = "psunthud@gmail.com"), 
 		person(given = "Patrick", family = "Miller", role = "aut", email="pmille13@nd.edu"), 
 		person(given = "Alexander", family = "Schoemann", role = "aut", email="schoemanna@ecu.edu"),
@@ -55,7 +55,7 @@ Author: Sunthud Pornprasertmanit [aut, cre],
   Jason Rights [ctb],
   Ylenio Longo [ctb]
 Maintainer: Sunthud Pornprasertmanit <psunthud@gmail.com>
-Date/Publication: 2016-06-10 23:29:51
+Date/Publication: 2016-09-06 16:54:27
 NeedsCompilation: no
-Packaged: 2016-06-10 14:43:07 UTC; Sunthud
+Packaged: 2016-09-06 14:33:26 UTC; Sunthud
 Repository: CRAN
