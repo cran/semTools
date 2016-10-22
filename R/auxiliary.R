@@ -1,10 +1,11 @@
-## Title: Automatically accounts for auxiliary variable in full information maximum likelihood
-## Author: Sunthud Pornprasertmanit
-# Description: Automatically accounts for auxiliary variable in full information maximum likelihood
+### Title: Automatically accounts for auxiliary variable in full information maximum likelihood
+### Author: Sunthud Pornprasertmanit
+### Last updated: 17 October 2016
+### Description: Automatically accounts for auxiliary variable in full information maximum likelihood
 
 setClass("lavaanStar", contains = "lavaan", representation(nullfit = "vector", imputed="list", imputedResults="list", auxNames="vector"), prototype(nullfit=c(chi=0,df=0), imputed=list(), imputedResults=list(), auxNames = ""))
 
-setMethod("inspect", "lavaanStar",
+setMethod("inspect", "lavaanStar",  ## FIXME: get rid of lavaanStar object
 function(object, what="free") {
 	what <- tolower(what)
 	if(what == "fit" ||
@@ -24,7 +25,7 @@ function(object, what="free") {
               what == "auxiliary") {
 		print(object@auxNames)
 	} else {
-		getMethod("inspect", "lavaan")(object, what=what)
+		getMethod("inspect", "lavaan")(object, what=what)  ## FIXME: don't set a new inspect method
 	}
 })
 
@@ -32,7 +33,52 @@ setMethod("summary", "lavaanStar",
 function(object, fit.measures=FALSE, ...) {
 	getMethod("summary", "lavaan")(object, fit.measures=FALSE, ...)
 	if(fit.measures) {
-		cat("Because the original method to find the baseline model does not work, \nplease do not use any fit measures relying on baseline model, including CFI and TLI. \nTo find the correct one, please use the inspect function: lavInspect(object, what='fit').\n")
+		cat("Because the original method to find the baseline model does not work, \nplease do not use any fit measures relying on baseline model, including CFI and TLI. \nTo find the correct one, please use the function: lavInspect(object, what='fit').\n")
+	}
+})
+
+setMethod("anova", signature(object = "lavaanStar"),
+function(object, ...) {
+	imputed <- object@imputed
+	if(length(imputed) > 0) {
+		dots <- list(...)
+		if(length(dots) > 1) stop("Multiple Imputed Results: Cannot compare more than two objects")
+		object2 <- dots[[1]]
+		imputed2 <- object2@imputed
+		if(length(imputed) == 0) stop("The second object must come from multiple imputation.")
+		listlogl1 <- imputed[["indivlogl"]]
+		listlogl2 <- imputed2[["indivlogl"]]
+		df1 <- lavaan::lavInspect(object, "fit")["df"]
+		df2 <- lavaan::lavInspect(object2, "fit")["df"]
+		if(df2 < df1) {
+			templogl <- listlogl1
+			listlogl1 <- listlogl2
+			listlogl2 <- templogl
+		}
+		dfdiff <- df2 - df1
+		anovaout <- mapply(lavaan::anova, object@imputedResults, object2@imputedResults, SIMPLIFY = FALSE)
+		chidiff <- sapply(anovaout, function(u) u[2, "Chisq diff"])
+		dfdiff2 <- mean(sapply(anovaout, function(u) u[2, "Df diff"]))
+		fit.altcc <- mean(chidiff)
+		naive <- c(fit.altcc, dfdiff2, 1 - pchisq(fit.altcc, dfdiff2))
+		names(naive) <- c("chisq", "df", "pvalue")	
+		lmrr <- lmrrPooledChi(chidiff, dfdiff2)
+		mr <- NULL
+		mplus <- NULL
+		if(!is.null(listlogl1[["loglmod"]]) | !is.null(listlogl2[["loglmod"]])) {
+			logl1 <- listlogl1[["loglmod"]]
+			logl2 <- listlogl2[["loglmod"]]
+			chimean <- mean((logl1 - logl2)*2)
+			m <- length(logl1)
+			ariv <- ((m+1)/((m-1)*dfdiff))*(fit.altcc-chimean)
+
+			mplus <- mplusPooledChi(chimean, dfdiff, ariv)
+			mr <- mrPooledChi(chimean, m, dfdiff, ariv)
+		}
+		result <- list(naive = naive, lmrr = lmrr, mr = mr, mplus = mplus)
+		return(result)
+	} else {
+		return(getMethod("anova", "lavaan")(object, ...))
 	}
 })
 
@@ -246,7 +292,7 @@ nullAuxiliary <- function(aux, indName, covName=NULL, meanstructure, ngroups) {
 
 
 fitMeasuresLavaanStar <- function(object) {
-	notused <- capture.output(result <- suppressWarnings(getMethod("inspect", "lavaan")(object, what="fit")))
+	notused <- capture.output(result <- suppressWarnings(getMethod("inspect", "lavaan")(object, what="fit"))) ## FIXME: don't set a new inspect method
 	result[c("baseline.chisq", "baseline.df", "baseline.pvalue")] <- object@nullfit[c("chisq", "df", "pvalue")]
 		
     if(lavaan::lavInspect(object, "options")$test %in% c("satorra.bentler", "yuan.bentler", 
@@ -475,57 +521,4 @@ fitMeasuresLavaanStar <- function(object) {
 	result	
 }
 
-
-setMethod("summary", "lavaanStar",
-function(object, fit.measures=FALSE, ...) {
-	getMethod("summary", "lavaan")(object, fit.measures=FALSE, ...)
-	if(fit.measures) {
-		cat("Because the original method to find the baseline model does not work, \nplease do not use any fit measures relying on baseline model, including CFI and TLI. \nTo find the correct one, please use the inspect function: lavInspect(object, what='fit').\n")
-	}
-})
-
-setMethod("anova", signature(object = "lavaanStar"),
-function(object, ...) {
-	imputed <- object@imputed
-	if(length(imputed) > 0) {
-		dots <- list(...)
-		if(length(dots) > 1) stop("Multiple Imputed Results: Cannot compare more than two objects")
-		object2 <- dots[[1]]
-		imputed2 <- object2@imputed
-		if(length(imputed) == 0) stop("The second object must come from multiple imputation.")
-		listlogl1 <- imputed[["indivlogl"]]
-		listlogl2 <- imputed2[["indivlogl"]]
-		df1 <- lavaan::lavInspect(object, "fit")["df"]
-		df2 <- lavaan::lavInspect(object2, "fit")["df"]
-		if(df2 < df1) {
-			templogl <- listlogl1
-			listlogl1 <- listlogl2
-			listlogl2 <- templogl
-		}
-		dfdiff <- df2 - df1
-		anovaout <- mapply(anova, object@imputedResults, object2@imputedResults, SIMPLIFY = FALSE)
-		chidiff <- sapply(anovaout, function(u) u[2, "Chisq diff"])
-		dfdiff2 <- mean(sapply(anovaout, function(u) u[2, "Df diff"]))
-		fit.altcc <- mean(chidiff)
-		naive <- c(fit.altcc, dfdiff2, 1 - pchisq(fit.altcc, dfdiff2))
-		names(naive) <- c("chisq", "df", "pvalue")	
-		lmrr <- lmrrPooledChi(chidiff, dfdiff2)
-		mr <- NULL
-		mplus <- NULL
-		if(!is.null(listlogl1[["loglmod"]]) | !is.null(listlogl2[["loglmod"]])) {
-			logl1 <- listlogl1[["loglmod"]]
-			logl2 <- listlogl2[["loglmod"]]
-			chimean <- mean((logl1 - logl2)*2)
-			m <- length(logl1)
-			ariv <- ((m+1)/((m-1)*dfdiff))*(fit.altcc-chimean)
-
-			mplus <- mplusPooledChi(chimean, dfdiff, ariv)
-			mr <- mrPooledChi(chimean, m, dfdiff, ariv)
-		}
-		result <- list(naive = naive, lmrr = lmrr, mr = mr, mplus = mplus)
-		return(result)
-	} else {
-		return(getMethod("anova", "lavaan")(object, ...))
-	}
-})
 

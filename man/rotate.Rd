@@ -45,7 +45,6 @@ unrotated <- efaUnrotate(HolzingerSwineford1939, nf=3, varList=paste0("x", 1:9),
 out.varimax <- orthRotate(unrotated, method="varimax")
 summary(out.varimax, sort=FALSE, suppress=0.3)
 
-\dontrun{
 # Orthogonal Quartimin
 orthRotate(unrotated, method="quartimin")
 
@@ -55,6 +54,7 @@ oblqRotate(unrotated, method="quartimin")
 # Geomin
 oblqRotate(unrotated, method="geomin")
 
+\dontrun{
 # Target rotation
 library(GPArotation)
 target <- matrix(0, 9, 3)

@@ -1,8 +1,9 @@
-## Title: Copy or save each aspect of the lavaan object into a clipboard or a file
-## Author: Sunthud Pornprasertmanit
-# Description: Copy or print each aspect of the lavaan object into a clipboard or a file
+### Title: Copy or save each aspect of the lavaan object into a clipboard or a file
+### Author: Sunthud Pornprasertmanit
+### Last updated: 14 October 2016
+### Description: Copy or print each aspect of the lavaan object into a clipboard or a file
 
-# Clipboard: copy each aspect of the lavaan object into a clipboard; this function will be compatible with the inspect function in lavaan
+# Clipboard: copy each aspect of the lavaan object into a clipboard; this function will be compatible with lavaan::lavInspect
 clipboard <- function(object, what="summary", ...) {
 	if(.Platform$OS.type == "windows") {
 		saveFile(object, file="clipboard-128", what=what, tableFormat=TRUE, ...)
@@ -20,7 +21,7 @@ clipboard <- function(object, what="summary", ...) {
 	}
 }
 
-# saveFile: save each aspect of the lavaan object into a file; this function will be compatible with the inspect function in lavaan
+# saveFile: save each aspect of the lavaan object into a file; this function will be compatible with lavaan::lavInspect
 saveFile <- function(object, file, what="summary", tableFormat=FALSE, ...) {
 	# Check whether the object is in the lavaan class
 	if(is(object, "lavaan")) {
@@ -80,7 +81,7 @@ saveFileLavaan <- function(object, file, what="summary", tableFormat=FALSE, ...)
 # object = lavaan object input
 copySummary <- function(object, file) {
 	# Capture the output of the lavaan class
-	outputText <- utils::capture.output(summary(object, rsquare=TRUE, standardize=TRUE, fit.measure=TRUE))
+	outputText <- utils::capture.output(lavaan::summary(object, rsquare=TRUE, standardize=TRUE, fit.measure=TRUE))
 
 	# Split the text by two spaces
 	outputText <- strsplit(outputText, "  ")

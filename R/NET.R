@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 22 Sep 2014
+### Last updated: 14 October 2016
 ### semTools function for Nesting and Equivalence Testing
 
 setClass("Net", representation(test = "matrix", df = "vector"))
@@ -41,10 +41,12 @@ x.within.y <- function(x, y, crit = crit) {
   Mu <- lavaan::lavInspect(x, "mean.ov")
   N <- lavaan::lavInspect(x, "nobs")
 
-  ## fit model and inspect chi-squared
+  ## fit model and check that chi-squared < crit
 
-  suppressWarnings(try(newFit <- update(y, data = NULL, sample.cov = Sigma,
-                                        sample.mean = Mu, sample.nobs = N)))
+  suppressWarnings(try(newFit <- lavaan::update(y, data = NULL,
+                                                sample.cov = Sigma,
+                                                sample.mean = Mu,
+                                                sample.nobs = N)))
   if(!lavaan::lavInspect(newFit, "converged")) return(NA) else {
     result <- lavaan::lavInspect(newFit, "fit")["chisq"] < crit
     names(result) <- NULL

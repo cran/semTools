@@ -1,5 +1,5 @@
 ## Terrence D. Jorgensen
-### Last updated: 28 August 2016
+### Last updated: 14 October 2016
 ### semTools function to implement 2-stage ML
 
 setClass("twostage",
@@ -61,6 +61,8 @@ twostage <- function(..., aux, fun, baseline.model = NULL) {
   varnames <- c(targetNames, aux)
   covstruc <- outer(varnames, varnames, function(x, y) paste(x, "~~", y))
   satArgs <- funArgs
+  satArgs$constraints <- NULL
+  satArgs$group.equal <- ""
   satArgs$model <- c(covstruc[lower.tri(covstruc, diag = TRUE)],
                      paste(varnames, "~ 1"))
   satFit <- do.call(lavaan::lavaan, satArgs)
@@ -108,29 +110,29 @@ twostage <- function(..., aux, fun, baseline.model = NULL) {
 ## methods
 setMethod("coef", "twostage", function(object, type = c("free","user")) {
   type <- type[1]
-  coef(object@target, type = type)
+  lavaan::coef(object@target, type = type)
 })
 
 setMethod("fitted.values", "twostage",
           function(object, model = c("target","saturated","baseline"),
                    type = "moments", labels = TRUE) {
   model <- model[1]
-  fitted.values(slot(object, model), type = type, labels = labels)
+  lavaan::fitted.values(slot(object, model), type = type, labels = labels)
 })
 setMethod("fitted", "twostage",
           function(object, model = c("target","saturated","baseline"),
                    type = "moments", labels = TRUE) {
   model <- model[1]
-  fitted.values(slot(object, model), type = type, labels = labels)
+  lavaan::fitted.values(slot(object, model), type = type, labels = labels)
 })
 
 setMethod("residuals", "twostage", function(object, type = c("raw","cor","normalized","standardized")) {
   type <- type[1]
-  residuals(object@target, type = type)
+  lavaan::residuals(object@target, type = type)
 })
 setMethod("resid", "twostage", function(object, type = c("raw","cor","normalized","standardized")) {
   type <- type[1]
-  residuals(object@target, type = type)
+  lavaan::residuals(object@target, type = type)
 })
 
 setMethod("nobs", "twostage",
@@ -149,6 +151,12 @@ setMethod("vcov", "twostage", function(object, baseline = FALSE) {
   bread <- MASS::ginv(t(MATS$delta) %*% meat) # FIXME: why not solve()?
   out <- bread %*% t(meat) %*% MATS$satACOV %*% meat %*% bread
   class(out) <- c("lavaan.matrix.symmetric","matrix")
+  if (baseline) {
+    rownames(out) <- names(getMethod("coef", "lavaan")(object@baseline))
+  } else {
+    rownames(out) <- names(getMethod("coef", "twostage")(object))
+  }
+  colnames(out) <- rownames(out)
   out
 })
 
@@ -201,7 +209,7 @@ setMethod("anova", "twostage", function(object, h1 = NULL, baseline = FALSE) {
 setMethod("show", "twostage", function(object) {
   ## show chi-squared test results
   cat("Chi-squared test(s) results, ADJUSTED for missing data:\n\n")
-  anova(object)
+  getMethod("anova", "twostage")(object)
   cat("\n\nChi-squared test results, UNADJUSTED for missing data:\n\n")
   show(object@target)
   invisible(object)
@@ -209,7 +217,7 @@ setMethod("show", "twostage", function(object) {
 
 setMethod("summary", "twostage", function(object, ...) {
   ## show chi-squared test results AND estimates
-  show(object)
+  getMethod("show", "twostage")(object)
   cat("\n\nParameter Estimates, with SEs (and tests/CIs) ADJUSTED for missing data:\n\n")
   dots <- list(...)
   if (!"fmi" %in% names(dots)) dots$fmi <- FALSE
@@ -218,7 +226,7 @@ setMethod("summary", "twostage", function(object, ...) {
   PT <- lavaan::parTable(object@target)
   PT <- PT[PT$group > 0, ]
   PE <- do.call(lavaan::parameterEstimates, c(dots, object = object@target))
-  SEs <- sqrt(diag(vcov(object)))
+  SEs <- sqrt(diag(getMethod("vcov", "twostage")(object)))
   PE$se[PT$free > 0] <- SEs[PT$free]
   PE$z[PT$free > 0] <- PE$est[PT$free > 0] / PE$se[PT$free > 0]
   PE$pvalue[PT$free > 0] <- pnorm(abs(PE$z[PT$free > 0]), lower.tail = FALSE)*2
@@ -228,11 +236,11 @@ setMethod("summary", "twostage", function(object, ...) {
     PE$ci.upper[PT$free > 0] <- PE$est[PT$free > 0] + crit * PE$se[PT$free > 0]
   }
   if (dots$fmi) {
-    compVar <- diag(vcov(object@target))[PT$free] ## FIXME: need to re-fit model to model-implied moments from Stage 2?
-    # compFit <- update(object@target, sample.nobs = nobs(object@target),
-    #                   sample.cov = lavInspect(object@target, "cov.ov"),
-    #                   sample.mean = lavInspect(object@target, "mean.ov"))
-    # compVar <- diag(vcov(compFit))[PT$free]
+    compVar <- diag(lavaan::vcov(object@target))[PT$free] ## FIXME: need to re-fit model to model-implied moments from Stage 2?
+    # compFit <- lavaan::update(object@target, sample.nobs = lavaan::nobs(object@target),
+    #                           sample.cov = lavInspect(object@target, "cov.ov"),
+    #                           sample.mean = lavInspect(object@target, "mean.ov"))
+    # compVar <- diag(lavaan::vcov(compFit))[PT$free]
     missVar <- SEs^2
     PE$fmi[PT$free > 0] <- 1 - compVar / missVar
   }
@@ -311,8 +319,8 @@ twostageMatrices <- function(object, baseline) {
   H <- do.call(lavaan::lav_matrix_bdiag, H)
 
   ## asymptotic information and covariance matrices of target model
-  satACOV <- vcov(object@saturated)
-  satInfo <- solve(satACOV * nobs(object@saturated))
+  satACOV <- lavaan::vcov(object@saturated)
+  satInfo <- solve(satACOV * lavaan::nobs(object@saturated))
   ## all(round(acov*N, 8) == round(solve(info), 8))
   ## all(round(acov, 8) == round(solve(info)/N, 8))
   if (length(object@auxNames)) {
@@ -322,7 +330,7 @@ twostageMatrices <- function(object, baseline) {
   	infoAux <- satInfo[dimAux, dimAux]
   	infoAT <- satInfo[dimAux, dimTar]
   	satInfo <- infoTar - t(infoAT) %*% solve(infoAux) %*% infoAT
-  	satACOV <- solve(satInfo) / nobs(object@saturated)
+  	satACOV <- solve(satInfo) / lavaan::nobs(object@saturated)
   }
   list(delta = delta, H = H, satACOV = satACOV, satInfo = satInfo)
 }
@@ -333,9 +341,9 @@ twostageLRT <- function(object, baseline, print = FALSE) {
   ## calculate model derivatives and complete-data information matrix
   MATS <- twostageMatrices(object, baseline)
   ## residual-based statistic (Savalei & Bentler, 2009, eq. 8)
-  N <- nobs(slot(object, SLOT))
+  N <- lavaan::nobs(slot(object, SLOT))
   nG <- lavaan::lavInspect(slot(object, SLOT), "ngroups")
-  res <- residuals(slot(object, SLOT))
+  res <- lavaan::residuals(slot(object, SLOT))
   if (nG == 1L) res <- list(res)
   etilde <- do.call(c, lapply(res, function(x) c(lavaan::lav_matrix_vech(x$cov), x$mean)))
   ID <- MATS$satInfo %*% MATS$delta
