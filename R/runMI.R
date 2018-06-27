@@ -1,574 +1,320 @@
-##  Functon to impute missing data, run Lavaan on each one 
-##  input: data frames of raw data with missing data, model specification (lavaan script), number of imputations wanted.)
-##  Output: lavaanStar object which filled with the appropriate information 
-##  Alexander Schoemann, Patrick Miller, Mijke Rhemtulla, Sunthud Pornprasertmanit, Alexander Robitzsch, Mauricio Garnier Villarreal
-##  Last modified 5/25/2012
-
-##Currently outputs a list of parameter estimates, standard errors, fit indices and fraction missing information
-
-cfa.mi <- function(model, data, m, miArgs=list(), miPackage="Amelia", chi="all", seed=12345, nullModel = NULL, includeImproper = FALSE, ...) {
-	runMI(model=model, data=data, m=m, miArgs=miArgs, chi=chi, miPackage=miPackage, seed=seed, fun="cfa", nullModel = nullModel, includeImproper = includeImproper, ...)
-}
-
-sem.mi <- function(model, data, m, miArgs=list(), miPackage="Amelia", chi="all", seed=12345, nullModel = NULL, includeImproper = FALSE, ...) {
-	runMI(model=model, data=data, m=m, miArgs=miArgs, chi=chi, miPackage=miPackage, seed=seed, fun="sem", nullModel = nullModel, includeImproper = includeImproper, ...)
-}
-
-growth.mi <- function(model, data, m, miArgs=list(), miPackage="Amelia", chi="all", seed=12345, nullModel = NULL, includeImproper = FALSE, ...) {
-	runMI(model=model, data=data, m=m, miArgs=miArgs, chi=chi, miPackage=miPackage, seed=seed, fun="growth", nullModel = nullModel, includeImproper = includeImproper, ...)
-}
-
-lavaan.mi <- function(model, data, m, miArgs=list(), miPackage="Amelia", chi="all", seed=12345, nullModel = NULL, includeImproper = FALSE, ...) {
-	runMI(model=model, data=data, m=m, miArgs=miArgs, chi=chi, miPackage=miPackage, seed=seed, fun="lavaan", nullModel = nullModel, includeImproper = includeImproper, ...)
-}
+### Terrence D. Jorgensen
+### Last updated: 3 June 2018
+### runMI creates lavaan.mi object, inherits from lavaanList class
 
 
-runMI <- function(model, data, m, miArgs=list(), chi="all", miPackage="Amelia", seed=12345, fun, nullModel = NULL, includeImproper = FALSE, ...) 
-{
-	set.seed(seed)
-	chi <- tolower(chi)
-	if(!(chi %in% c("none", "mplus", "mr", "lmrr", "all"))) {
-		stop("The chi argument should be one of the followings only: 'none, 'mr', 'lmrr', 'mplus', or 'all'.")
-	}
-	
-	imputed.data <- is.list(data) & (!is.data.frame(data))
-	imputed.l <- NULL
-	if (!imputed.data){		
-		if( ( miPackage!="Amelia" )  &  ( miPackage !="mice")  ) { 
-			stop("Currently runMI only supports imputation by Amelia or mice") 
-		}
-		if(miPackage=="Amelia"){
-			imputed.l<-imputeMissingAmelia(data,m, miArgs)
-		} else if(miPackage=="mice"){
-			imputed.l<-imputeMissingMice(data,m, miArgs)
-		}
-	} else { 
-		imputed.l <- data 
-		m <- length( data )
-		data <- data[[1]]
-	}
-	out <- list(model=model, data=imputed.l[[1]], se="none", do.fit=FALSE)
-	out <- c(out, list(...))
-	template <- do.call(fun, out)
-    imputed.results.l <- suppressWarnings(lapply(imputed.l, runlavaanMI, syntax=model, fun=fun, ...))
-	converged.l <- sapply(imputed.results.l, lavaan::lavInspect, what = "converged")
-	
-	coefAll <- sapply(imputed.results.l, function(x) lavaan::parTable(x)$est)
-	seAll <- sapply(imputed.results.l, function(x) lavaan::parTable(x)$se)
-	partableImp <- lavaan::partable(imputed.results.l[[1]])
-	posVar <- (partableImp$op == "~~") & (partableImp$lhs == partableImp$rhs)
-	convergedtemp <- converged.l
-	properSE <- apply(seAll, 2, function(x) all(!is.na(x)) & all(x >= 0) & !(all(x == 0)))
-	
-	properVariance <- apply(coefAll[posVar, ,drop=FALSE], 2, function(x) all(x >= 0))
-	if(!includeImproper) {
-		converged.l <- converged.l & properSE & properVariance
-	}
-	if(sum(converged.l) < 2) {
-		tab <- cbind(convergedtemp, properSE, properVariance, converged.l)
-		colnames(tab) <- c("1. Convergence", "2. Proper SE", "3. Proper Variance Estimate", "Used for pooling")
-		print(tab)
-		stop("Please increase the number of imputations. The number of convergent replications is less than or equal to 1. See the details above.")
-	}
-	
-	mOriginal <- m
-	m <- sum(converged.l)
-	convergenceRate <- m/mOriginal
-	imputed.results.l <- imputed.results.l[converged.l]
-	
-	coefs <- sapply(imputed.results.l, function(x) lavaan::parTable(x)$est)
-	se <- sapply(imputed.results.l, function(x) lavaan::parTable(x)$se)
-	Sigma.hat <- lapply(imputed.results.l, lavaan::lavInspect, what = "cov.ov")
-    Mu.hat <- lapply(imputed.results.l, lavaan::lavInspect, what = "mean.ov")
-	meanSigmaHat <- list()
-	meanMuHat <- list()
-	for(g in seq_len(lavaan::lavInspect(template, "ngroups"))) {
-		tempSigma <- lapply(Sigma.hat, "[[", g)
-		meanSigmaHat[[g]] <- Reduce("+", tempSigma)/m
-		tempMu <- lapply(Mu.hat, "[[", g)
-		meanMuHat[[g]] <- Reduce("+", tempMu)/m		
-	}
-	template@Fit@Sigma.hat <- meanSigmaHat
-	template@Fit@Mu.hat <- meanMuHat
-	comb.results <- miPoolVector(t(coefs),t(se), m)
-	
-	
-	template@Fit@est <- template@ParTable$est <- comb.results$coef
-	template@Fit@se <- template@ParTable$se <- comb.results$se
-	template@Fit@x <- comb.results$coef[comb.results$se != 0]
-	template@Model <- imposeGLIST(template@Model, comb.results$coef, lavaan::parTable(template))
-
-	selectVCOV <- lavaan::partable(imputed.results.l[[1]])$free != 0
-	# VCOV
-	VCOVs <- sapply(imputed.results.l, function(x) vecsmat(lavaan::vcov(x)))
-	template@vcov$vcov <- vcovPool(t(coefs[selectVCOV, ]),t(VCOVs), m)
-	
-	fmi.results <- cbind(lavaan::parameterEstimates(template, remove.system.eq = FALSE, remove.eq = FALSE, remove.ineq = FALSE)[,1:3], group=lavaan::parTable(template)$group, fmi1 = comb.results[[3]], fmi2 = comb.results[[4]])
-
-	fit <- lavaan::lavInspect(imputed.results.l[[1]], "test")
-	df <- fit[[1]]$df
-  #if (df == 0) chi <- "none" # for saturated models, no model fit available
-	chi1 <- sapply(imputed.results.l, function(x) lavaan::lavInspect(x, "test")[[1]]$stat)
-
-	if(length(lavaan::lavNames(template, "ov.ord")) | (length(fit) > 1)) {
-		if(chi=="all") chi <- "lmrr"
-		if(chi %in% c("mplus", "mr")) {
-			stop("The 'mplus' or 'mr' method for pooling chi-square values is not available with categorical variables.")
-		}
-	}
-	
-	chiScaled1 <- NULL
-	dfScaled <- NULL
-	if(length(fit) > 1) {
-		chiScaled1 <- sapply(imputed.results.l, function(x) lavaan::lavInspect(x, "test")[[2]]$stat)
-		dfScaled <- fit[[2]]$df
-	}
-	
-	if(lavaan::lavInspect(template, "ngroups") == 1) {
-		fit[[1]]$stat.group <- mean(sapply(imputed.results.l, function(x) lavaan::lavInspect(x, "test")[[1]]$stat.group))
-	} else {
-		fit[[1]]$stat.group <- rowMeans(sapply(imputed.results.l, function(x) lavaan::lavInspect(x, "test")[[1]]$stat.group))
-	}
-	if(is.null(nullModel)) nullModel <- lavaan::lav_partable_independence(template)
-	if(is.list(nullModel)) nullModel$ustart[nullModel$exo == 1] <- NA
-	
-    null.results <- suppressWarnings(lapply(imputed.l, runlavaanMI, syntax=nullModel, fun=fun, ...))
-
-	convergedNull.l <- sapply(null.results, lavaan::lavInspect, what = "converged")
-	seNullAll <- sapply(null.results, function(x) lavaan::parTable(x)$se)
-	if(!includeImproper) {
-		convergedNull.l <- convergedNull.l & apply(seNullAll, 2, function(x) all(!is.na(x) & (x >= 0)))
-	}
-	
-	dfNull <- lavaan::lavInspect(null.results[[1]], "test")[[1]]$df
-	if(dfNull == 0) convergedNull.l <- rep(TRUE, m)
-	if(!any(convergedNull.l)) stop("No null model is converged")
-	
-	mNull <- sum(convergedNull.l)
-	convergenceNullRate <- mNull/mOriginal
-	null.results <- null.results[convergedNull.l]
-	chiNull <- sapply(null.results, function(x) lavaan::lavInspect(x, "test")[[1]]$stat)
-	
-	chiNullScaled1 <- NULL
-	dfNullScaled <- NULL
-	if(length(fit) > 1) {
-		chiNullScaled1 <- sapply(null.results, function(x) lavaan::lavInspect(x, "test")[[2]]$stat)
-		dfNullScaled <- lavaan::lavInspect(null.results[[1]], "test")[[2]]$df
-	}
-	outNull <- list(model=nullModel, data=imputed.l[[1]], se="none", do.fit=FALSE)
-	outNull <- c(outNull, list(...))
-	templateNull <- suppressWarnings(do.call(fun, outNull))
-	
-	coefsNull <- sapply(null.results, function(x) lavaan::parTable(x)$est)
-	seNull <- sapply(null.results, function(x) lavaan::parTable(x)$se)
-	
-	comb.results.null <- miPoolVector(t(coefsNull),t(seNull), mNull)
-	fitNull <- lavaan::lavInspect(null.results[[1]], "test")
-
-	lmrr <- NULL
-	lmrrNull <- NULL
-	mr <- NULL
-	mrNull <- NULL
-	mplus <- NULL
-	mplusNull <- NULL
-	lmrrScaled <- NULL
-	lmrrScaledNull <- NULL
-	logsat <- NA
-	logalt <- NA
-	loglnull <- NULL
-	loglsat <- NULL
-	loglmod <- NULL
-	
-	if(chi %in% c("lmrr", "all")){
-		lmrr <- lmrrPooledChi(chi1, df)
-		lmrrNull <- lmrrPooledChi(chiNull, dfNull)
-		fit[[1]]$stat <- as.numeric(lmrr[1] * lmrr[2])
-		fit[[1]]$pvalue <- as.numeric(lmrr[4])
-		fitNull[[1]]$stat <- as.numeric(lmrrNull[1] * lmrrNull[2])
-		fitNull[[1]]$pvalue <- as.numeric(lmrrNull[4])
-		
-		if(!is.null(chiScaled1)) {
-			lmrrScaled <- lmrrPooledChi(chiScaled1, dfScaled)
-			lmrrScaledNull <- lmrrPooledChi(chiNullScaled1, dfNullScaled)
-			fit[[2]] <- lavaan::lavInspect(imputed.results.l[[1]], "test")[[2]]
-			fit[[2]]$stat <- as.numeric(lmrrScaled[1] * lmrrScaled[2])
-			fit[[2]]$pvalue <- as.numeric(lmrrScaled[4])
-			fitNull[[2]] <- lavaan::lavInspect(null.results[[1]], "test")[[2]]
-			fitNull[[2]]$stat <- as.numeric(lmrrScaledNull[1] * lmrrScaledNull[2])
-			fitNull[[2]]$pvalue <- as.numeric(lmrrScaledNull[4])
-			template@Options$estimator <- lavaan::lavInspect(imputed.results.l[[1]], "options")$estimator 
-			template@Options$test <- lavaan::lavInspect(imputed.results.l[[1]], "options")$test 
-			templateNull@Options$estimator <- lavaan::lavInspect(null.results[[1]], "options")$estimator 
-			templateNull@Options$test <- lavaan::lavInspect(null.results[[1]], "options")$test 
-		}
-	}
-	
-	if(chi %in% c("mplus", "mr", "all")){
-		mrplusOut <- mrplusPooledChi(template, imputed.l[converged.l], chi1, df, coef=comb.results$coef, coefs = coefs, m=m, fun=fun, ...)
-		mrplus <- mrplusOut[[1]]
-		mrplusChi <- mrplusOut[[2]]
-		mrplusNullOut <- mrplusPooledChi(templateNull, imputed.l[convergedNull.l], chiNull, dfNull, coef=comb.results.null$coef, coefs = coefsNull, m=mNull, fun=fun, par.sat=lavaan::lav_partable_unrestricted(template), ...)
-		mrplusNull <- mrplusNullOut[[1]]
-		mrplusNullChi <- mrplusNullOut[[2]]
-		logsat <- mrplus[5] / (1 + mrplus[4])
-		logalt <- mrplus[6] / (1 + mrplus[4])
-		loglnull <- mrplusNullChi[,2]
-		loglsat <- mrplusChi[,1]
-		loglmod <- mrplusChi[,2]
-		
-		if(chi %in% c("mr", "all")){
-			mr <- mrPooledChi(mrplus[1], mrplus[2], mrplus[3], mrplus[4])
-			mrNull <- mrPooledChi(mrplusNull[1], mrplusNull[2], mrplusNull[3], mrplusNull[4])
-			
-			fit[[1]]$stat <- as.numeric(mr[1] * mr[2])
-			fit[[1]]$pvalue <- as.numeric(mr[4])
-			fitNull[[1]]$stat <- as.numeric(mrNull[1] * mrNull[2])
-			fitNull[[1]]$pvalue <- as.numeric(mrNull[4])
-		}
-		if(chi %in% c("mplus", "all")){
-			mplus <- mplusPooledChi(mrplus[1], mrplus[3], mrplus[4])
-			mplusNull <- mplusPooledChi(mrplusNull[1], mrplusNull[3], mrplusNull[4])
-			fit[[1]]$stat <- as.numeric(mplus[1])
-			fit[[1]]$pvalue <- as.numeric(mplus[3])
-			fitNull[[1]]$stat <- as.numeric(mplusNull[1])
-			fitNull[[1]]$pvalue <- as.numeric(mplusNull[3])
-		}
-	}
-	template@test <- fit
-	template@Fit@npar <- lavaan::fitMeasures(imputed.results.l[[1]], "npar")[[1]]
-	template@Options <- lavaan::lavInspect(imputed.results.l[[1]], "options")
-	templateNull@test <- fitNull
-	result <- as(template, "lavaanStar")
-    ## HACK! YR
-    templateNull@Fit@converged <- TRUE ### ! to trick fitMeasures
-    ## 
-	notused <- capture.output(fitVec <- suppressWarnings(lavaan::fitMeasures(templateNull)))
-	name <- names(fitVec)
-	fitVec <- as.vector(fitVec)
-	names(fitVec) <- name
-	result@nullfit <- fitVec
-	
-	result@Fit@iterations <- as.integer(m)
-	result@Fit@converged <- TRUE
-	
-	summaryImputed <- list()
-	summaryImputed[[1]] <- c("target model" = convergenceRate, "null model" = convergenceNullRate)
-	summaryImputed[[2]] <- fmi.results
-	summaryImputed[[3]] <- list(lmrr = lmrr, mr = mr, mplus = mplus)
-	summaryImputed[[4]] <- list(lmrr = lmrrNull, mr = mrNull, mplus = mplusNull)
-	summaryImputed[[5]] <- list(unrestricted.logl = logsat, logl = logalt)
-	summaryImputed[[6]] <- list(chiorig = chi1, loglmod = loglmod, loglnull = loglnull, loglsat = loglsat)
-	nameImputed <- c("convergenceRate", "fractionMissing", "targetFit", "nullFit", "logl", "indivlogl")
-	if(!is.null(lmrrScaled)) {
-		summaryImputed[[7]] <- list(lmrr = lmrrScaled)
-		summaryImputed[[8]] <- list(lmrr = lmrrScaledNull)
-		names(summaryImputed) <- c(nameImputed, "targetFit.scaled", "nullFit.scaled")
-	} else {
-		names(summaryImputed) <- nameImputed
-	}
-	result@imputed <- summaryImputed
-	result@imputedResults <- imputed.results.l
-
-	return(result)
-}
-  
-#Convenient function to run lavaan models and get results out. For easy use with lapply
-runlavaanMI <- function(MIdata, syntax, fun, ...) {
-	out <- list(model=syntax, data=MIdata)
-	out <- c(out, list(...))
-	fit <- NULL
-	try(fit <- do.call(fun, out), silent=TRUE)
-    return(fit)
-}
-	
-#Conveniance function to run impuations on data and only return list of data
-imputeMissingAmelia <- function(data,m, miArgs){
-  # pull out only the imputations
-  out <- c(list(Amelia::amelia, x = data, m = m, p2s=0), miArgs)
-  temp.am <- eval(as.call(out))
-  return(temp.am$imputations)
-
-} # end imputeMissingAmelia
-
-imputeMissingMice <- function(data,m, miArgs){
-  # pull out only the imputations
-  requireNamespace("mice")
-  if(!("package:mice" %in% search())) attachNamespace("mice")
-  out <- c(list(mice::mice, data=data, m = m, diagnostics=FALSE, printFlag=FALSE), miArgs)
-  temp.mice <- eval(as.call(out))
-  temp.mice.imp <- NULL
-  for(i in 1:m) {
-	temp.mice.imp[[i]] <- mice::complete(x=temp.mice, action=i, include=FALSE) 
+#' Fit a lavaan Model to Multiple Imputed Data Sets
+#'
+#' This function fits a lavaan model to a list of imputed data sets, and can
+#' also implement multiple imputation for a single \code{data.frame} with
+#' missing observations, using either the Amelia package or the mice package.
+#'
+#'
+#' @aliases runMI lavaan.mi cfa.mi sem.mi growth.mi
+#' @importFrom lavaan lavInspect parTable
+#'
+#' @param model The analysis model can be specified using lavaan
+#' \code{\link[lavaan]{model.syntax}} or a parameter table (as returned by
+#' \code{\link[lavaan]{parTable}}).
+#' @param data A \code{data.frame} with missing observations, or a \code{list}
+#' of imputed data sets (if data are imputed already). If \code{runMI} has
+#' already been called, then imputed data sets are stored in the
+#' \code{@DataList} slot, so \code{data} can also be a \code{lavaan.mi} object
+#' from which the same imputed data will be used for additional analyses.
+#' @param fun \code{character}. Name of a specific lavaan function used to fit
+#' \code{model} to \code{data} (i.e., \code{"lavaan"}, \code{"cfa"},
+#' \code{"sem"}, or \code{"growth"}). Only required for \code{runMI}.
+#' @param \dots additional arguments to pass to \code{\link[lavaan]{lavaan}} or
+#' \code{\link[lavaan]{lavaanList}}. See also \code{\link[lavaan]{lavOptions}}.
+#' Note that \code{lavaanList} provides parallel computing options, as well as
+#' a \code{FUN} argument so the user can extract custom output after the model
+#' is fitted to each imputed data set (see \strong{Examples}).  TIP: If a
+#' custom \code{FUN} is used \emph{and} \code{parallel = "snow"} is requested,
+#' the user-supplied function should explicitly call \code{library} or use
+#' \code{\link[base]{::}} for any functions not part of the base distribution.
+#' @param m \code{integer}. Request the number of imputations. Ignored if
+#' \code{data} is already a \code{list} of imputed data sets or a
+#' \code{lavaan.mi} object.
+#' @param miArgs Addition arguments for the multiple-imputation function
+#' (\code{miPackage}). The arguments should be put in a list (see example
+#' below). Ignored if \code{data} is already a \code{list} of imputed data sets
+#' or a \code{lavaan.mi} object.
+#' @param miPackage Package to be used for imputation. Currently these
+#' functions only support \code{"Amelia"} or \code{"mice"} for imputation.
+#' Ignored if \code{data} is already a \code{list} of imputed data sets or a
+#' \code{lavaan.mi} object.
+#' @param seed \code{integer}. Random number seed to be set before imputing the
+#'  data. Ignored if \code{data} is already a \code{list} of imputed data sets
+#'  or a \code{lavaan.mi} object.
+#' @return A \code{\linkS4class{lavaan.mi}} object
+#' @author Terrence D. Jorgensen (University of Amsterdam;
+#' \email{TJorgensen314@@gmail.com})
+#' @references Enders, C. K. (2010). \emph{Applied missing data analysis}. New
+#' York, NY: Guilford.
+#'
+#' Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+#' New York, NY: Wiley.
+#' @examples
+#'  \dontrun{
+#' ## impose missing data for example
+#' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
+#'                                       "ageyr","agemo","school")]
+#' set.seed(12345)
+#' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
+#' age <- HSMiss$ageyr + HSMiss$agemo/12
+#' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
+#'
+#' ## specify CFA model from lavaan's ?cfa help page
+#' HS.model <- '
+#'   visual  =~ x1 + x2 + x3
+#'   textual =~ x4 + x5 + x6
+#'   speed   =~ x7 + x8 + x9
+#' '
+#'
+#' ## impute data within runMI...
+#' out1 <- cfa.mi(HS.model, data = HSMiss, m = 20, seed = 12345,
+#'                miArgs = list(noms = "school"))
+#'
+#' ## ... or impute missing data first
+#' library(Amelia)
+#' set.seed(12345)
+#' HS.amelia <- amelia(HSMiss, m = 20, noms = "school", p2s = FALSE)
+#' imps <- HS.amelia$imputations
+#' out2 <- cfa.mi(HS.model, data = imps)
+#'
+#' ## same results (using the same seed results in the same imputations)
+#' cbind(impute.within = coef(out1), impute.first = coef(out2))
+#'
+#' summary(out1)
+#' summary(out1, ci = FALSE, fmi = TRUE, add.attributes = FALSE)
+#' summary(out1, ci = FALSE, stand = TRUE, rsq = TRUE)
+#'
+#' ## model fit. D3 includes information criteria
+#' anova(out1)
+#' anova(out1, test = "D2", indices = TRUE) # request D2 and fit indices
+#'
+#'
+#'
+#' ## fit multigroup model without invariance constraints
+#' mgfit1 <- cfa.mi(HS.model, data = imps, estimator = "mlm", group = "school")
+#' ## add invariance constraints, and use previous fit as "data"
+#' mgfit0 <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm", group = "school",
+#'                  group.equal = c("loadings","intercepts"))
+#'
+#' ## compare fit (scaled likelihood ratio test)
+#' anova(mgfit0, h1 = mgfit1)
+#'
+#' ## correlation residuals
+#' resid(mgfit0, type = "cor.bentler")
+#'
+#'
+#' ## use D1 to test a parametrically nested model (whether latent means are ==)
+#' anova(mgfit0, test = "D1", constraints = '
+#'       .p70. == 0
+#'       .p71. == 0
+#'       .p72. == 0')
+#'
+#'
+#'
+#' ## ordered-categorical data
+#' data(datCat)
+#' lapply(datCat, class)
+#' ## impose missing values
+#' set.seed(123)
+#' for (i in 1:8) datCat[sample(1:nrow(datCat), size = .1*nrow(datCat)), i] <- NA
+#'
+#' catout <- cfa.mi(' f =~ u1 + u2 + u3 + u4 ', data = datCat,
+#'                  m = 3, seed = 456,
+#'                  miArgs = list(ords = paste0("u", 1:8), noms = "g"),
+#'                  FUN = function(fit) {
+#'                    list(wrmr = lavaan::fitMeasures(fit, "wrmr"),
+#'                         zeroCells = lavaan::lavInspect(fit, "zero.cell.tables"))
+#'                  })
+#' summary(catout)
+#' anova(catout, indices = "all") # note the scaled versions of indices, too
+#'
+#' ## extract custom output
+#' sapply(catout@funList, function(x) x$wrmr) # WRMR for each imputation
+#' catout@funList[[1]]$zeroCells # zero-cell tables for first imputation
+#' catout@funList[[2]]$zeroCells # zero-cell tables for second imputation ...
+#'
+#' }
+#'
+#' @export
+runMI <- function(model, data, fun = "lavaan", ...,
+                  m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+  CALL <- match.call()
+  dots <- list(...)
+  if (!is.null(dots$fixed.x)) {
+    if (dots$fixed.x) warning('fixed.x set to FALSE')
   }
-  return(temp.mice.imp)
-} # end imputeMissingAmelia
-
-
-
- 
-# miPoolVector
-# Function -- simsem package
-# Pool MI results that providing in matrix or vector formats
-# Argument:
-#	MI.param: 	Coefficients matrix (row = imputation, col = parameters)
-#	MI.se:		Standard errors matrix (row = imputation, col = parameters)
-#	imps:		Number of imputations
-# Return:
-#	coef:	Parameter estimates
-#	se:		Standard error combining the between and within variances
-#	FMI.1:	Fraction missing?
-#	FMI.2:	Fraction missing?
-# Author: 	Mijke Rhumtella
-#			Alex Schoemann
-#			Sunthud Pornprasertmanit (University of Kansas; psunthud@ku.edu)
-# Date Modified: February 8, 2012
-
-miPoolVector <- function(MI.param, MI.se, imps) {
-   #compute parameter estimates
-  Estimates <- colMeans(MI.param)
-
-#compute between-imputation variance: variance of parameter estimates
-  Bm <- apply(MI.param,2,var)
-
-#compute within-imputation variance: average of squared estimated SEs 
-#Um <- colSums(MI.se^2/m)
-  Um <- apply(MI.se^2,2,mean)
-
-#Total variance
-#Tm <- Um + (Bm)*((1+m)/m+1)
-#compute total variance: sum of between- and within- variance with correction
-  TV <- Um + ((imps+1)/imps)*Bm
-
-#compute correction factor for fraction of missing info
-  nu <- (imps-1)*((((1+1/imps)*Bm)/TV)^-2)
-
-#compute 2 estimates of fraction of missing information
-  FMI.1 <- 1-(Um/TV)
-  FMI.2 <- 1- ((nu+1)*Um)/((nu+3)*TV)
-  FMI.2[is.nan(FMI.2)] <- 0
-  FMI<-rbind(FMI.1,FMI.2)
-
-#Get rid of estimates from fixed variables
-#fixedParam <- Bm==0
-
-#Estimates <- subset(Estimates, !fixedParam)
-#TV <- subset(TV, !fixedParam)
-#FMI.1 <- subset(FMI.1, !fixedParam)
-#FMI.2 <- subset(FMI.2, !fixedParam)
-SE <- sqrt(TV)
-MI.res<-list(Estimates,SE,FMI.1,FMI.2)
-names(MI.res)<-c('coef','se','FMI.1','FMI.2')
-#compute chi-square proportion (is this useful?)
-#(MI.fit.mat$chisq.p is a placeholder for however we'll index the p-value of chi square)
-#chisq <- sum(MI.fit.mat$chisq.pval<.05)/m
-  return(MI.res)
-}
-#Examples:
-#param <- matrix(c(0.7, 0.1, 0.5,
-#					0.75, 0.12, 0.54,
-#					0.66, 0.11, 0.56,
-#					0.74, 0.09, 0.55), nrow=4, byrow=T)
-#SE <- matrix(c(0.1, 0.01, 0.05,
-#				0.11, 0.023, 0.055,
-#				0.10, 0.005, 0.04,
-#				0.14, 0.012, 0.039), nrow=4, byrow=T)
-#nimps <- 4
-#miPoolVector(param, SE, nimps)
-
-# lmrrPooledChi
-# Function -- simsem package
-# Pool Chi-square statistic based on Li, Meng, Raghunathan, & Rubin (1991) adapted from http://psychology.clas.asu.edu/files/CombiningLikelihoodRatioChi-SquareStatisticsFromaMIAnalysis.sas
-# Argument:
-#	chis: 	vector of chi-square values
-#	df:		degree of freedom
-# Author: 	Craig Enders
-#			Sunthud Pornprasertmanit (University of Kansas; psunthud@ku.edu)
-# Date Modified: March 31, 2012
-
-vecsmat <- function(X) X[lower.tri(X, diag = TRUE)]
-
-invvecsmat <- function(x) {
-	p <- (sqrt(1 + 8 * length(x)) - 1) /2
-	X <- matrix(0, p, p)
-	X[lower.tri(X, diag = TRUE)] <- x
-	vars <- diag(X)
-	X <- X + t(X)
-	diag(X) <- vars
-	X
-}
-
-vcovPool <- function(MI.param, MI.cov, imps) {
-   #compute parameter estimates
-  Estimates <- colMeans(MI.param)
-
-#compute between-imputation variance: variance of parameter estimates
-  Bm <- vecsmat(cov(MI.param))
-
-#compute within-imputation variance: average of squared estimated SEs 
-#Um <- colSums(MI.se^2/m)
-  Um <- apply(MI.cov,2,mean)
-
-#Total variance
-#Tm <- Um + (Bm)*((1+m)/m+1)
-#compute total variance: sum of between- and within- variance with correction
-  TV <- Um + ((imps+1)/imps)*Bm
-
-  return(invvecsmat(TV))
-}
-
-lmrrPooledChi <- function(chis, df) {
-	# From Li, Meng, Raghunathan, & Rubin (1991)
-	if(is.matrix(chis)) {
-		ifelse(ncol(chis) == 1 | nrow(chis) == 1, chis <- as.vector(chis), stop("Please put a vector of chi-square values"))
-	}
-	m <- length(chis)
-	dbar <- mean(chis)
-	sqrtd <- sqrt(chis)
-	xbarsqrtd <- mean(sqrtd)
-	# Equation 2.2
-	r <- (1 + 1/m) * (sum((sqrtd - xbarsqrtd)^2)/(m - 1))
-	# Equation 2.1
-	D <- (dbar/df - ((m + 1) * r /(m - 1)))/(1 + r)
-	if(D < 0) D <- 0
-	# Equation 2.16 and 2.17
-	aw <- df^(-(3/m)) * (m - 1) * (1 + (1/r))^2
-	p <- 1 - pf(D, df, aw)
-	result <- c(D, df, aw, p)
-	names(result) <- c("F", "df1", "df2", "p.F")
-	return(result)
-}
-#Examples:
-#lmrrPooledChi(c(89.864, 81.116,71.500,49.022,61.986,64.422,55.256,57.890,79.416,63.944), 2)
-
-##### function that does the part of the MR and Mplus combination methods are equal 
-mrplusPooledChi <- function(template, imputed.l, chi1, df, coef, coefs, m, fun, par.sat=NULL, ...) {
-	
-	if(is.null(par.sat)) par.sat <- lavaan::lav_partable_unrestricted(template) 
-	comb.sat <- suppressWarnings(lapply(imputed.l, runlavaanMI, syntax=par.sat, fun=fun, ...))
-	converged.sat1 <- sapply(comb.sat, lavaan::lavInspect, what = "converged")
-	
-	coefs.sat1 <- sapply(comb.sat, function(x) lavaan::parTable(x)$est)
-	est.sat1 <- rowMeans(coefs.sat1[,converged.sat1])
-	par.sat2 <- par.sat
-	par.sat2$free <- as.integer(rep(0, length(par.sat2$free)))
-	par.sat2$ustart <- est.sat1
-	par.sat2$start <- est.sat1
-	par.sat2$est <- est.sat1
-	comb.sat2 <- suppressWarnings(lapply(imputed.l, runlavaanMI, syntax=par.sat2, fun=fun, ...))
-    comb.sat2 <- lapply(comb.sat2, forceTest)
-	fit.sat2 <- sapply(comb.sat2, function(x) lavaan::lavInspect(x, "fit")["logl"])
-
-	par.alt2 <- lavaan::partable(template)
-	par.alt2$free <- as.integer(rep(0, length(par.alt2$free)))
-	par.alt2$ustart <- coef
-	par.alt2$start <- coef
-	par.alt2$est <- coef
-	par.alt2.l <- rep(list(par.alt2), m)
-	TEMPFUN <- function(ptable, origcoef) {
-		exo <- ptable$exo == 1
-		ptable$ustart[exo] <- origcoef[exo]
-		ptable$start[exo] <- origcoef[exo]
-		ptable$est[exo] <- origcoef[exo]
-		ptable
-	}
-	par.alt2.l <- mapply(TEMPFUN, par.alt2.l, data.frame(coefs), SIMPLIFY = FALSE)
-	comb.alt2 <- suppressWarnings(mapply(runlavaanMI, MIdata = imputed.l, syntax = par.alt2.l, SIMPLIFY = FALSE, MoreArgs = list(fun = fun, ...)))
-	#comb.alt2 <- suppressWarnings(lapply(imputed.l, runlavaanMI, syntax=par.alt2, fun=fun, ...))
-    comb.alt2 <- lapply(comb.alt2, forceTest)
-	fit.alt2 <- sapply(comb.alt2, function(x) lavaan::lavInspect(x, "fit")["logl"])
-	chinew <- cbind(fit.sat2, fit.alt2, (fit.sat2-fit.alt2)*2)
-	
-	
-	chimean <- mean(chinew[,3])
-	logsat <- mean(chinew[,1])
-	logalt <- mean(chinew[,2])
-	
-	fit.altcc <- mean(chi1)
-	ariv <- ((m+1)/((m-1)*df))*(fit.altcc-chimean)
-	resmrCHI <- c(chimean, m, df, ariv, logsat, logalt)
-	return(list(resmrCHI, chinew))
-}
-
-##### function that does the calculations for the Mplus chi combination
-mplusPooledChi <- function(chimean, k, ariv){
-  comb.chi.mplus <- matrix(NA, nrow=1, ncol=3)
-  comb.chi.mplus[1] <- chimean/(1+ariv)
-  comb.chi.mplus[2] <- k
-  comb.chi.mplus[3] <- 1 - pchisq(comb.chi.mplus[1], comb.chi.mplus[2])
-  colnames(comb.chi.mplus) <- c("chisq", "df", "pvalue")
-  comb.chi.mplus <- as.data.frame(comb.chi.mplus)
-  rownames(comb.chi.mplus) <- ""
-  return(comb.chi.mplus)
-}
-
-##### function that does the calculations for the MR chi combination
-mrPooledChi <-function(chimean, m, k, ariv){
-  km <- m*k
-  kmtest <- km-k
-  
-  if(kmtest<=4){
-    v4 <- 4+(km-k-4)*(1+(1-(2/kmtest))*(1/ariv))^2
+  if (!is.null(dots$conditional.x)) {
+    if (dots$conditional.x) warning('conditional.x set to FALSE')
   }
-  else{
-    v4 <- (kmtest*(1+k^-1)*(1+(1/ariv))^2)/2          
-  }       
-  comb.chi.mr <- matrix(NA, nrow=1, ncol=4)
-  comb.chi.mr[1] <- chimean/((1+ariv)*k)
-  comb.chi.mr[2] <- k
-  comb.chi.mr[3] <- v4
-  comb.chi.mr[4] <- 1 - pf(comb.chi.mr[1], comb.chi.mr[2], comb.chi.mr[3])
-  colnames(comb.chi.mr) <- c("F", "df1", "df2", "pvalue")
-  comb.chi.mr <- as.data.frame(comb.chi.mr)
-  rownames(comb.chi.mr) <- ""
-  return(comb.chi.mr)
+  dots$fixed.x <- dots$conditional.x <- FALSE
+
+  seed <- as.integer(seed[1])
+  ## Create (or acknowledge) list of imputed data sets
+  imputedData <- NULL
+  if (is.data.frame(data)) {
+    if (miPackage[1] == "Amelia") {
+      requireNamespace("Amelia")
+      if (!"package:Amelia" %in% search()) attachNamespace("Amelia")
+      imputeCall <- c(list(Amelia::amelia, x = data, m = m, p2s = 0), miArgs)
+      set.seed(seed)
+      imputedData <- unclass(eval(as.call(imputeCall))$imputations)
+    } else if (miPackage[1] == "mice") {
+      requireNamespace("mice")
+      if (!"package:mice" %in% search()) attachNamespace("mice")
+      imputeCall <- c(list(mice::mice, data = data, m = m, diagnostics = FALSE,
+                           printFlag = FALSE), miArgs)
+      set.seed(seed)
+      miceOut <- eval(as.call(imputeCall))
+      imputedData <- list()
+      for (i in 1:m) {
+        imputedData[[i]] <- mice::complete(x = miceOut, action = i, include = FALSE)
+      }
+    } else stop("Currently runMI only supports imputation by Amelia or mice")
+  } else if (is.list(data)) {
+    seed <- integer(length = 0)
+    imputeCall <- list()
+    imputedData <- data
+    m <- length(data)
+    class(imputedData) <- "list" # override inheritance (e.g., "mi" if Amelia)
+  } else if (is(data, "lavaan.mi")) {
+    seed <- data@seed
+    imputeCall <- data@imputeCall
+    imputedData <- data@DataList
+    m <- length(imputedData)
+  } else stop("data is not a valid input type: a partially observed data.frame,",
+              " a list of imputed data.frames, or previous lavaan.mi object")
+
+  ## Function to get custom output for lavaan.mi object
+  ## NOTE: Need "lavaan::" to allow for parallel computations
+  .getOutput. <- function(obj) {
+    converged <- lavaan::lavInspect(obj, "converged")
+    if (converged) {
+      se <- lavaan::parTable(obj)$se
+      se.test <- all(!is.na(se)) & all(se >= 0) & any(se != 0)
+      if (lavaan::lavInspect(obj, "ngroups") == 1L) {
+        Heywood.lv <- det(lavaan::lavInspect(obj, "cov.lv")) <= 0
+        Heywood.ov <- det(lavaan::lavInspect(obj, "theta")) <= 0
+      } else {
+        Heywood.lv <- !all(sapply(lavaan::lavInspect(obj, "cov.lv"), det) > 0)
+        Heywood.ov <- !all(sapply(lavaan::lavInspect(obj, "theta"), det) > 0)
+      }
+    } else {
+      se.test <- Heywood.lv <- Heywood.ov <- NA
+    }
+    list(sampstat = lavaan::lavInspect(obj, "sampstat"),
+         coefMats = lavaan::lavInspect(obj, "est"),
+         modindices = try(lavaan::modindices(obj), silent = TRUE),
+         GLIST = obj@Model@GLIST, # FIXME: @Model slot may disappear; need GLIST for std.all and in simsem
+         converged = converged, SE = se.test,
+         Heywood.lv = Heywood.lv, Heywood.ov = Heywood.ov)
+  }
+
+  ## fit model using lavaanList
+  lavListCall <- list(lavaan::lavaanList, model = model, dataList = imputedData,
+                      cmd = fun)
+  lavListCall <- c(lavListCall, dots)
+  lavListCall$store.slots <- c("partable","vcov","test")
+  lavListCall$FUN <- if (is.null(dots$FUN)) .getOutput. else function(obj) {
+    temp1 <- .getOutput.(obj)
+    temp2 <- dots$FUN(obj)
+    if (!is.list(temp2)) temp2 <- list(userFUN1 = temp2)
+    if (is.null(names(temp2))) names(temp2) <- paste0("userFUN", 1:length(temp2))
+    duplicatedNames <- which(sapply(names(temp2), function(x) {
+      x %in% c("sampstat","coefMats","modindices","converged",
+               "SE","Heywood.lv","Heywood.ov","GLIST")
+    }))
+    for (i in duplicatedNames) names(temp2)[i] <- paste0("userFUN", i)
+    c(temp1, temp2)
+  }
+  fit <- eval(as.call(lavListCall))
+  ## Store custom @DataList and @SampleStatsList
+  fit@SampleStatsList <- lapply(fit@funList, "[[", i = "sampstat")
+  fit@DataList <- imputedData
+  ## assign class and add new slots
+  fit <- as(fit, "lavaan.mi")
+  fit@coefList <- lapply(fit@funList, "[[", i = "coefMats")
+  fit@miList <- lapply(fit@funList, "[[", i = "modindices")
+  fit@seed <- seed
+  fit@call <- CALL
+  fit@lavListCall <- lavListCall
+  fit@imputeCall <- imputeCall
+  convList <- lapply(fit@funList, "[", i = c("converged","SE",
+                                             "Heywood.lv","Heywood.ov"))
+  nonConv <- which(sapply(convList, is.null))
+  if (length(nonConv)) for (i in nonConv) {
+    convList[[i]] <- list(converged = FALSE, SE = NA, Heywood.lv = NA, Heywood.ov = NA)
+  }
+
+  fit@convergence <- lapply(convList, function(x) do.call(c, x))
+  conv <- which(sapply(fit@convergence, "[", i = "converged"))
+  if (length(conv)) {
+    firstConv <- conv[1]
+    fit@GLIST <- list()
+    ## loop over GLIST elements
+    for (mat in seq_along(fit@funList[[firstConv]][["GLIST"]])) {
+      matList <- lapply(fit@funList[conv], function(x) x$GLIST[[mat]])
+      fit@GLIST[[mat]] <- Reduce("+", matList) / length(matList)
+    }
+    names(fit@GLIST) <- names(fit@funList[[firstConv]][["GLIST"]])
+  } else {
+    fit@GLIST <- list()
+    warning('The model did not converge for any imputed data sets.')
+  }
+
+  ## keep any remaining funList slots (if allowing users to supply custom FUN)
+  funNames <- names(fit@funList[[1]])
+  keepIndex <- which(!sapply(funNames, function(x) {
+    x %in% c("sampstat","coefMats","modindices","converged",
+             "SE","Heywood.lv","Heywood.ov","GLIST")
+  }))
+  if (length(keepIndex)) {
+    fit@funList <- lapply(fit@funList, "[", i = keepIndex)
+    if (length(keepIndex) > 1L) {
+      keepNames <- funNames[keepIndex]
+      noNames <- which(keepNames == "")
+      for (i in seq_along(noNames)) keepNames[ noNames[i] ] <- paste0("userFUN", i)
+      fit@funList <- lapply(fit@funList, "names<-", value = keepNames)
+    }
+  } else fit@funList <- list()
+
+  fit@ParTable$start <- getMethod("coef", "lavaan.mi")(fit, type = "user", labels = FALSE)
+  fit
 }
 
-forceTest <- function(object) {
-	previousCall <- lavaan::lavInspect(object, "call")
-	args <- previousCall[-1]
-	args$model <- lavaan::parTable(object)
-	args$control <- list(optim.method="none", optim.force.converged=TRUE)
-	funcall <- as.character(previousCall[[1]])
-	lav <- do.call(funcall[length(funcall)], args)
-	lav
+#' @rdname runMI
+#' @export
+lavaan.mi <- function(model, data, ...,
+                      m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+  runMI(model = model, data = data, fun = "lavaan", ...,
+        m = m, miArgs = miArgs, miPackage = miPackage, seed = seed)
 }
 
-imposeGLIST <- function(object, coef, partable) {
-	GLIST <- object@GLIST
-	for(i in 1:length(GLIST)) {
-		if(!is.matrix(GLIST[[i]])) GLIST[[i]] <- as.matrix(GLIST[[i]])
-		dimnames(GLIST[[i]]) <- object@dimNames[[i]]
-	}
-	for(i in 1:length(coef)) {
-		group <- partable$group[i]
-		lhs <- partable$lhs[i]
-		rhs <- partable$rhs[i]
-		if(partable$op[i] == "=~") {
-			targetName <- "lambda"
-			if(!(rhs %in% rownames(GLIST[names(GLIST) == "lambda"][[group]]))) targetName <- "beta"
-			GLIST[names(GLIST) == targetName][[group]][rhs, lhs] <- coef[i]
-		} else if (partable$op[i] == "~~") {
-			if(lhs %in% rownames(GLIST[names(GLIST) == "psi"][[group]])) {
-				GLIST[names(GLIST) == "psi"][[group]][rhs, lhs] <- coef[i]
-				GLIST[names(GLIST) == "psi"][[group]][lhs, rhs] <- coef[i]
-			} else {
-				GLIST[names(GLIST) == "theta"][[group]][rhs, lhs] <- coef[i]
-				GLIST[names(GLIST) == "theta"][[group]][lhs, rhs] <- coef[i]
-			}
-		} else if (partable$op[i] == "~") {
-			targetName <- "beta"
-			if(!(rhs %in% colnames(GLIST[names(GLIST) == "beta"][[group]]))) targetName <- "gamma"
-			GLIST[names(GLIST) == targetName][[group]][lhs, rhs] <- coef[i]
-		} else if (partable$op[i] == "~1") {
-			if(lhs %in% rownames(GLIST[names(GLIST) == "alpha"][[group]])) {
-				GLIST[names(GLIST) == "alpha"][[group]][lhs, 1] <- coef[i]
-			} else {
-				GLIST[names(GLIST) == "nu"][[group]][lhs, 1] <- coef[i]
-			}		
-		} else if (partable$op[i] == "|") {
-			GLIST[names(GLIST) == "tau"][[group]][paste0(lhs, "|", rhs), 1] <- coef[i]
-		}
-	}
-	object@GLIST <- GLIST
-	object
+#' @rdname runMI
+#' @export
+cfa.mi <- function(model, data, ...,
+                   m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+  runMI(model = model, data = data, fun = "cfa", ...,
+        m = m, miArgs = miArgs, miPackage = miPackage, seed = seed)
 }
+
+#' @rdname runMI
+#' @export
+sem.mi <- function(model, data, ...,
+                   m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+  runMI(model = model, data = data, fun = "sem", ...,
+        m = m, miArgs = miArgs, miPackage = miPackage, seed = seed)
+}
+
+#' @rdname runMI
+#' @export
+growth.mi <- function(model, data, ...,
+                      m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+  runMI(model = model, data = data, fun = "growth", ...,
+        m = m, miArgs = miArgs, miPackage = miPackage, seed = seed)
+}
+

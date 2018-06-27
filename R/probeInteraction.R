@@ -1,59 +1,194 @@
-## Title: Probing Interaction
-## Author: Sunthud Pornprasertmanit <psunthud@ku.edu>
-## Description: Probing Interaction with Residual Centering
-##----------------------------------------------------------------------------##
+### Sunthud Pornprasertmanit
+### Last updated: 9 March 2018
 
+
+
+#' Probing two-way interaction on the no-centered or mean-centered latent
+#' interaction
+#'
+#' Probing interaction for simple intercept and simple slope for the
+#' no-centered or mean-centered latent two-way interaction
+#'
+#' Before using this function, researchers need to make the products of the
+#' indicators between the first-order factors using mean centering (Marsh, Wen,
+#' & Hau, 2004). Note that the double-mean centering may not be appropriate for
+#' probing interaction if researchers are interested in simple intercepts. The
+#' mean or double-mean centering can be done by the \code{\link{indProd}}
+#' function. The indicator products can be made for all possible combination or
+#' matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
+#' with the regression with latent interaction will be used to fit all original
+#' indicators and the product terms. See the example for how to fit the product
+#' term below. Once the lavaan result is obtained, this function will be used
+#' to probe the interaction.
+#'
+#' Let that the latent interaction model regressing the dependent variable
+#' (\eqn{Y}) on the independent varaible (\eqn{X}) and the moderator (\eqn{Z})
+#' be \deqn{ Y = b_0 + b_1X + b_2Z + b_3XZ + r, } where \eqn{b_0} is the
+#' estimated intercept or the expected value of \eqn{Y} when both \eqn{X} and
+#' \eqn{Z} are 0, \eqn{b_1} is the effect of \eqn{X} when \eqn{Z} is 0,
+#' \eqn{b_2} is the effect of \eqn{Z} when \eqn{X} is 0, \eqn{b_3} is the
+#' interaction effect between \eqn{X} and \eqn{Z}, and \eqn{r} is the residual
+#' term.
+#'
+#' For probing two-way interaction, the simple intercept of the independent
+#' variable at each value of the moderator (Aiken & West, 1991; Cohen, Cohen,
+#' West, & Aiken, 2003; Preacher, Curran, & Bauer, 2006) can be obtained by
+#' \deqn{ b_{0|X = 0, Z} = b_0 + b_2Z. }
+#'
+#' The simple slope of the independent varaible at each value of the moderator
+#' can be obtained by \deqn{ b_{X|Z} = b_1 + b_3Z. }
+#'
+#' The variance of the simple intercept formula is \deqn{ Var\left(b_{0|X = 0,
+#' Z}\right) = Var\left(b_0\right) + 2ZCov\left(b_0, b_2\right) +
+#' Z^2Var\left(b_2\right) } where \eqn{Var} denotes the variance of a parameter
+#' estimate and \eqn{Cov} denotes the covariance of two parameter estimates.
+#'
+#' The variance of the simple slope formula is \deqn{ Var\left(b_{X|Z}\right) =
+#' Var\left(b_1\right) + 2ZCov\left(b_1, b_3\right) + Z^2Var\left(b_3\right) }
+#'
+#' Wald statistic is used for test statistic.
+#'
+#'
+#' @importFrom lavaan lavInspect
+#' @importFrom stats pnorm
+#'
+#' @param fit The lavaan model object used to evaluate model fit
+#' @param nameX The vector of the factor names used as the predictors. The
+#' first-order factor will be listed first. The last name must be the name
+#' representing the interaction term.
+#' @param nameY The name of factor that is used as the dependent variable.
+#' @param modVar The name of factor that is used as a moderator. The effect of
+#' the other independent factor on each moderator variable value will be
+#' probed.
+#' @param valProbe The values of the moderator that will be used to probe the
+#' effect of the other independent factor.
+#' @return A list with two elements:
+#' \enumerate{
+#'  \item \code{SimpleIntercept}: The intercepts given each value of the
+#'   moderator. This element will be shown only if the factor intercept is
+#'   estimated (e.g., not fixed as 0).
+#'  \item \code{SimpleSlope}: The slopes given each value of the moderator.
+#' }
+#' In each element, the first column represents the values of the moderators
+#' specified in the \code{valProbe} argument. The second column is the simple
+#' intercept or simple slope. The third column is the \emph{SE} of the simple
+#' intercept or simple slope. The fourth column is the Wald (\emph{z})
+#' statistic. The fifth column is the \emph{p} value testing whether the simple
+#' intercepts or slopes are different from 0.
+#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+#' @seealso \itemize{
+#'  \item \code{\link{indProd}} For creating the indicator products with no
+#'   centering, mean centering, double-mean centering, or residual centering.
+#'  \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
+#'   latent interaction.
+#' }
+#' @references
+#' Aiken, L. S., & West, S. G. (1991). \emph{Multiple regression: Testing
+#' and interpreting interactions}. Newbury Park, CA: Sage.
+#'
+#' Cohen, J., Cohen, P., West, S. G., & Aiken, L. S. (2003). \emph{Applied
+#' multiple regression/correlation analysis for the behavioral sciences}
+#' (3rd ed.). New York, NY: Routledge.
+#'
+#' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
+#' latent interactions: Evaluation of alternative estimation strategies and
+#' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
+#' doi:10.1037/1082-989X.9.3.275
+#'
+#' Preacher, K. J., Curran, P. J., & Bauer, D. J. (2006). Computational tools
+#' for probing interactions in multiple linear regression, multilevel modeling,
+#' and latent curve analysis. \emph{Journal of Educational and Behavioral
+#' Statistics, 31}(4), 437--448. doi:10.3102/10769986031004437
+#' @examples
+#'
+#' library(lavaan)
+#'
+#' dat2wayMC <- indProd(dat2way, 1:3, 4:6)
+#'
+#' model1 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f3 =~ x7 + x8 + x9
+#' f3 ~ f1 + f2 + f12
+#' f12 ~~0*f1
+#' f12 ~~ 0*f2
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f12 ~ NA*1
+#' f3 ~ NA*1
+#' "
+#'
+#' fitMC2way <- sem(model1, data = dat2wayMC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' summary(fitMC2way)
+#'
+#' result2wayMC <- probe2WayMC(fitMC2way, c("f1", "f2", "f12"),
+#'                             "f3", "f2", c(-1, 0, 1))
+#' result2wayMC
+#'
+#' @export
 probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe) {
 	# Check whether modVar is correct
 	if(is.character(modVar)) {
 		modVar <- match(modVar, nameX)
-	} 
+	}
 	if(is.na(modVar) || !(modVar %in% 1:2)) stop("The moderator name is not in the name of independent factors or not 1 or 2.")
 
 	# Check whether the fit object does not use mlm, mlr, or mlf estimator (because the variance-covariance matrix of parameter estimates cannot be computed
-	estSpec <- lavaan::lavInspect(fit, "call")$estimator
+	estSpec <- lavInspect(fit, "call")$estimator
 	if(!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf"))) stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-	
+
 	# Get the parameter estimate values from the lavaan object
-	est <- lavaan::lavInspect(fit, "coef")
+	est <- lavInspect(fit, "est")
 
 	# Compute the intercept of no-centering
 	betaNC <- as.matrix(est$beta[nameY, nameX]); colnames(betaNC) <- nameY
 
 	# Extract all varEst
-	varEst <- lavaan::vcov(fit) 
-	
+	varEst <- lavaan::vcov(fit)
+
 	# Check whether intercept are estimated
-	targetcol <- paste(nameY, "~", 1, sep="") 
-	estimateIntcept <- targetcol %in% rownames(varEst) 
-	
-	pvalue <- function(x) (1 - pnorm(abs(x))) * 2 
-	
-	resultIntcept <- NULL 
-	resultSlope <- NULL 
+	targetcol <- paste(nameY, "~", 1, sep="")
+	estimateIntcept <- targetcol %in% rownames(varEst)
+
+	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
+
+	resultIntcept <- NULL
+	resultSlope <- NULL
 	if(estimateIntcept) {
 		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep="")) 
+		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
 
 		# Transform it to non-centering SE
-		usedVar <-  varEst[targetcol, targetcol] 
-		usedBeta <- rbind(est$alpha[nameY,], betaNC) 
-		
-		# Change the order of usedVar and usedBeta if the moderator variable is listed first 
+		usedVar <-  varEst[targetcol, targetcol]
+		usedBeta <- rbind(est$alpha[nameY,], betaNC)
+
+		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		if(modVar == 1) {
 			usedVar <- usedVar[c(1, 3, 2, 4), c(1, 3, 2, 4)]
 			usedBeta <- usedBeta[c(1, 3, 2, 4)]
 		}
-		
-		# Find simple intercept  
-		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe 
+
+		# Find simple intercept
+		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe
 		varIntcept <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zIntcept <- simpleIntcept/sqrt(varIntcept)
 		pIntcept <- round(pvalue(zIntcept),6) #JG: rounded values to make them more readable
 		resultIntcept <- cbind(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
 		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
-		
-		# Find simple slope 
+
+		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[4] * valProbe
 		varSlope <- usedVar[2, 2] + 2 * valProbe * usedVar[2, 4] + (valProbe^2) * usedVar[4, 4]
 		zSlope <- simpleSlope/sqrt(varSlope)
@@ -61,19 +196,19 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe) {
 		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="") 
+		targetcol <- paste(nameY, "~", nameX, sep="")
 
-		# Transform it to non-centering SE 
+		# Transform it to non-centering SE
 		usedVar <-  varEst[targetcol, targetcol]
 		usedBeta <- betaNC
-		
-		# Change the order of usedVar and usedBeta if the moderator variable is listed first 
+
+		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		if(modVar == 2) {
 			usedVar <- usedVar[c(2, 1, 3), c(2, 1, 3)]
 			# usedBeta <- usedBeta[c(2, 1, 3)]
 		}
-		
-		# Find simple slope 
+
+		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[3] * valProbe
 		varSlope <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zSlope <- simpleSlope/sqrt(varSlope)
@@ -81,24 +216,147 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe) {
 		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	}
-	
+
 	return(list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope))
 }
 
+
+
+#' Probing two-way interaction on the residual-centered latent interaction
+#'
+#' Probing interaction for simple intercept and simple slope for the
+#' residual-centered latent two-way interaction (Pornprasertmanit, Schoemann,
+#' Geldhof, & Little, submitted)
+#'
+#' Before using this function, researchers need to make the products of the
+#' indicators between the first-order factors and residualize the products by
+#' the original indicators (Lance, 1988; Little, Bovaird, & Widaman, 2006). The
+#' process can be automated by the \code{\link{indProd}} function. Note that
+#' the indicator products can be made for all possible combination or
+#' matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
+#' with the regression with latent interaction will be used to fit all original
+#' indicators and the product terms. To use this function the model must be fit
+#' with a mean structure. See the example for how to fit the product term
+#' below. Once the lavaan result is obtained, this function will be used to
+#' probe the interaction.
+#'
+#' The probing process on residual-centered latent interaction is based on
+#' transforming the residual-centered result into the no-centered result. See
+#' Pornprasertmanit, Schoemann, Geldhof, and Little (submitted) for further
+#' details. Note that this approach based on a strong assumption that the
+#' first-order latent variables are normally distributed. The probing process
+#' is applied after the no-centered result (parameter estimates and their
+#' covariance matrix among parameter estimates) has been computed. See the
+#' \code{\link{probe2WayMC}} for further details.
+#'
+#'
+#' @importFrom lavaan lavInspect
+#' @importFrom stats pnorm
+#'
+#' @param fit The lavaan model object used to evaluate model fit
+#' @param nameX The vector of the factor names used as the predictors. The
+#' first-order factor will be listed first. The last name must be the name
+#' representing the interaction term.
+#' @param nameY The name of factor that is used as the dependent variable.
+#' @param modVar The name of factor that is used as a moderator. The effect of
+#' the other independent factor on each moderator variable value will be
+#' probed.
+#' @param valProbe The values of the moderator that will be used to probe the
+#' effect of the other independent factor.
+#' @return A list with two elements:
+#' \enumerate{
+#'  \item \code{SimpleIntercept}: The intercepts given each value of the
+#'   moderator. This element will be shown only if the factor intercept is
+#'   estimated (e.g., not fixed as 0).
+#'  \item \code{SimpleSlope}: The slopes given each value of the moderator.
+#' }
+#' In each element, the first column represents the values of the moderators
+#' specified in the \code{valProbe} argument. The second column is the simple
+#' intercept or simple slope. The third column is the standard error of the
+#' simple intercept or simple slope. The fourth column is the Wald (\emph{z})
+#' statistic. The fifth column is the \emph{p} value testing whether the simple
+#' intercepts or slopes are different from 0.
+#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+#' @seealso \itemize{
+#'  \item \code{\link{indProd}} For creating the indicator products with no
+#'   centering, mean centering, double-mean centering, or residual centering.
+#'  \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
+#'   latent interaction.
+#' }
+#' @references
+#'
+#' Lance, C. E. (1988). Residual centering, exploratory and confirmatory
+#' moderator analysis, and decomposition of effects in path models containing
+#' interactions. \emph{Applied Psychological Measurement, 12}(2), 163--175.
+#' doi:10.1177/014662168801200205
+#'
+#' Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of
+#' orthogonalizing powered and product terms: Implications for modeling
+#' interactions. \emph{Structural Equation Modeling, 13}(4), 497--519.
+#' doi:10.1207/s15328007sem1304_1
+#'
+#' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
+#' latent interactions: Evaluation of alternative estimation strategies and
+#' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
+#' doi:10.1037/1082-989X.9.3.275
+#'
+#' Geldhof, G. J., Pornprasertmanit, S., Schoemann, A. M., & Little, T. D.
+#' (2013). Orthogonalizing through residual centering: Extended applications
+#' and caveats \emph{Educational and Psychological Measurement, 73}(1), 27--46.
+#' doi:10.1177/0013164412445473
+#' @examples
+#'
+#' library(lavaan)
+#'
+#' dat2wayRC <- orthogonalize(dat2way, 1:3, 4:6)
+#'
+#' model1 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f3 =~ x7 + x8 + x9
+#' f3 ~ f1 + f2 + f12
+#' f12 ~~0*f1
+#' f12 ~~ 0*f2
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f12 ~ NA*1
+#' f3 ~ NA*1
+#' "
+#'
+#' fitRC2way <- sem(model1, data = dat2wayRC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' summary(fitRC2way)
+#'
+#' result2wayRC <- probe2WayRC(fitRC2way, c("f1", "f2", "f12"),
+#'                             "f3", "f2", c(-1, 0, 1))
+#' result2wayRC
+#'
+#' @export
 probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe) {
 	# Check whether modVar is correct
 	if(is.character(modVar)) {
 		modVar <- match(modVar, nameX)
-	} 
+	}
 	if(is.na(modVar) || !(modVar %in% 1:2)) stop("The moderator name is not in the name of independent factors or not 1 or 2.")
 
 	# Check whether the fit object does not use mlm, mlr, or mlf estimator (because the variance-covariance matrix of parameter estimates cannot be computed
-	estSpec <- lavaan::lavInspect(fit, "call")$estimator
+	estSpec <- lavInspect(fit, "call")$estimator
 	if(!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf"))) stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-	
+
 	# Get the parameter estimate values from the lavaan object
-	est <- lavaan::lavInspect(fit, "coef")
-	
+	est <- lavInspect(fit, "est")
+
 	# Find the mean and covariance matrix of independent factors
 	varX <- est$psi[nameX, nameX]
 	meanX <- as.matrix(est$alpha[nameX,]); colnames(meanX) <- "intcept"
@@ -109,87 +367,87 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe) {
 	betaRC <- as.matrix(est$beta[nameY, nameX]); colnames(betaRC) <- nameY
 
 	# Find the number of observations
-	numobs <- lavaan::lavInspect(fit, "nobs")
-	
-	# Compute SSRC 
-	meanXwith1 <- rbind(1, meanX) 
-	varXwith0 <- cbind(0, rbind(0, varX)) 
-	SSRC <- numobs * (varXwith0 + (meanXwith1 %*% t(meanXwith1))) 
+	numobs <- lavInspect(fit, "nobs")
+
+	# Compute SSRC
+	meanXwith1 <- rbind(1, meanX)
+	varXwith0 <- cbind(0, rbind(0, varX))
+	SSRC <- numobs * (varXwith0 + (meanXwith1 %*% t(meanXwith1)))
 
 	# Compute Mean(Y) and Var(Y)
 	betaRCWithIntcept <- rbind(intceptRC, betaRC)
-	meanY <- t(meanXwith1) %*% betaRCWithIntcept 
-	varY <- (t(betaRCWithIntcept) %*% SSRC %*% betaRCWithIntcept)/numobs - meanY^2 + resVarRC 
+	meanY <- t(meanXwith1) %*% betaRCWithIntcept
+	varY <- (t(betaRCWithIntcept) %*% SSRC %*% betaRCWithIntcept)/numobs - meanY^2 + resVarRC
 
 	# Compute Cov(Y, X)
-	covY <- as.matrix((varX %*% betaRC)[1:2,]) 
+	covY <- as.matrix((varX %*% betaRC)[1:2,])
 
 	# Compute E(XZ)
-	meanX[3] <- meanX[1] * meanX[2] + varX[1, 2] 
-	
+	meanX[3] <- meanX[1] * meanX[2] + varX[1, 2]
+
 	# Compute Var(XZ)
-	varX[3, 3] <- meanX[1]^2 * varX[2, 2] + meanX[2]^2 * varX[1, 1] + 2 * meanX[1] * meanX[2] * varX[1, 2] + varX[1, 1] * varX[2, 2] + varX[1, 2]^2  
+	varX[3, 3] <- meanX[1]^2 * varX[2, 2] + meanX[2]^2 * varX[1, 1] + 2 * meanX[1] * meanX[2] * varX[1, 2] + varX[1, 1] * varX[2, 2] + varX[1, 2]^2
 
 	# Compute Cov(X, XZ), Cov(Z, XZ)
-	varX[1, 3] <- varX[3, 1] <- meanX[1] * varX[1, 2] + meanX[2] * varX[1, 1] 
-	varX[2, 3] <- varX[3, 2] <- meanX[1] * varX[2, 2] + meanX[2] * varX[1, 2] 
+	varX[1, 3] <- varX[3, 1] <- meanX[1] * varX[1, 2] + meanX[2] * varX[1, 1]
+	varX[2, 3] <- varX[3, 2] <- meanX[1] * varX[2, 2] + meanX[2] * varX[1, 2]
 
 	# Compute Cov(Y, XZ) and regression coefficients of no-centering
-	betaNC <- solve(varX[1:2,1:2], covY - rbind(varX[1,3] * betaRC[3,1], varX[2, 3] * betaRC[3,1])) 
-	betaNC <- rbind(betaNC, betaRC[3, 1]) 
-	covY <- rbind(covY, (varX %*% betaNC)[3, 1]) 
+	betaNC <- solve(varX[1:2,1:2], covY - rbind(varX[1,3] * betaRC[3,1], varX[2, 3] * betaRC[3,1]))
+	betaNC <- rbind(betaNC, betaRC[3, 1])
+	covY <- rbind(covY, (varX %*% betaNC)[3, 1])
 
 	# Aggregate the non-centering sufficient statistics (Just show how to do but not necessary)
-	fullCov <- rbind(cbind(varX, covY), c(covY, varY)) 
-	fullMean <- rbind(meanX, meanY) 
+	fullCov <- rbind(cbind(varX, covY), c(covY, varY))
+	fullMean <- rbind(meanX, meanY)
 
 	# Compute the intercept of no-centering
-	intceptNC <- meanY - t(betaNC) %*% meanX 
+	intceptNC <- meanY - t(betaNC) %*% meanX
 
 	# Compute SSNC
 	betaNCWithIntcept <- rbind(intceptNC, betaNC)
-	meanXwith1 <- rbind(1, meanX) 
-	varXwith0 <- rbind(0, cbind(0, varX)) 
-	SSNC <- numobs * (varXwith0 + (meanXwith1 %*% t(meanXwith1))) 
+	meanXwith1 <- rbind(1, meanX)
+	varXwith0 <- rbind(0, cbind(0, varX))
+	SSNC <- numobs * (varXwith0 + (meanXwith1 %*% t(meanXwith1)))
 
 	# Compute residual variance on non-centering
-	resVarNC <- varY - (t(betaNCWithIntcept) %*% SSNC %*% betaNCWithIntcept)/numobs + meanY^2 
+	resVarNC <- varY - (t(betaNCWithIntcept) %*% SSNC %*% betaNCWithIntcept)/numobs + meanY^2
 
 	# Extract all varEst
-	varEst <- lavaan::vcov(fit) 
-	
+	varEst <- lavaan::vcov(fit)
+
 	# Check whether intercept are estimated
-	targetcol <- paste(nameY, "~", 1, sep="") 
-	estimateIntcept <- targetcol %in% rownames(varEst) 
-	
-	pvalue <- function(x) (1 - pnorm(abs(x))) * 2 
-	
-	resultIntcept <- NULL 
-	resultSlope <- NULL 
+	targetcol <- paste(nameY, "~", 1, sep="")
+	estimateIntcept <- targetcol %in% rownames(varEst)
+
+	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
+
+	resultIntcept <- NULL
+	resultSlope <- NULL
 	if(estimateIntcept) {
 		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep="")) 
-		varEstSlopeRC <- varEst[targetcol, targetcol] 
+		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
+		varEstSlopeRC <- varEst[targetcol, targetcol]
 
 		# Transform it to non-centering SE
-		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC %*% solve(SSNC)) 
-		usedBeta <- betaNCWithIntcept 
-		
-		# Change the order of usedVar and usedBeta if the moderator variable is listed first 
+		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC %*% solve(SSNC))
+		usedBeta <- betaNCWithIntcept
+
+		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		if(modVar == 1) {
 			usedVar <- usedVar[c(1, 3, 2, 4), c(1, 3, 2, 4)]
 			usedBeta <- usedBeta[c(1, 3, 2, 4)]
 		}
-		
-		# Find simple intercept  
-		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe 
+
+		# Find simple intercept
+		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe
 		varIntcept <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zIntcept <- simpleIntcept/sqrt(varIntcept)
 		pIntcept <- round(pvalue(zIntcept),6) #JG: rounded values to make them more readable
 		resultIntcept <- cbind(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
 		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
-		
-		# Find simple slope 
+
+		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[4] * valProbe
 		varSlope <- usedVar[2, 2] + 2 * valProbe * usedVar[2, 4] + (valProbe^2) * usedVar[4, 4]
 		zSlope <- simpleSlope/sqrt(varSlope)
@@ -197,20 +455,20 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe) {
 		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="") 
-		varEstSlopeRC <- varEst[targetcol, targetcol] 
+		targetcol <- paste(nameY, "~", nameX, sep="")
+		varEstSlopeRC <- varEst[targetcol, targetcol]
 
-		# Transform it to non-centering SE 
+		# Transform it to non-centering SE
 		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC[2:4, 2:4] %*% solve(SSNC[2:4, 2:4]))
 		usedBeta <- betaNC
-		
-		# Change the order of usedVar and usedBeta if the moderator variable is listed first 
+
+		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		if(modVar == 2) {
 			usedVar <- usedVar[c(2, 1, 3), c(2, 1, 3)]
 			# usedBeta <- usedBeta[c(2, 1, 3)]
 		}
-		
-		# Find simple slope 
+
+		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[3] * valProbe
 		varSlope <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zSlope <- simpleSlope/sqrt(varSlope)
@@ -218,41 +476,211 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe) {
 		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	}
-	
+
 	return(list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope))
 }
 
 
+
+#' Probing two-way interaction on the no-centered or mean-centered latent
+#' interaction
+#'
+#' Probing interaction for simple intercept and simple slope for the
+#' no-centered or mean-centered latent two-way interaction
+#'
+#' Before using this function, researchers need to make the products of the
+#' indicators between the first-order factors using mean centering (Marsh, Wen,
+#' & Hau, 2004). Note that the double-mean centering may not be appropriate for
+#' probing interaction if researchers are interested in simple intercepts. The
+#' mean or double-mean centering can be done by the \code{\link{indProd}}
+#' function. The indicator products can be made for all possible combination or
+#' matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
+#' with the regression with latent interaction will be used to fit all original
+#' indicators and the product terms. See the example for how to fit the product
+#' term below. Once the lavaan result is obtained, this function will be used
+#' to probe the interaction.
+#'
+#' Let that the latent interaction model regressing the dependent variable
+#' (\eqn{Y}) on the independent varaible (\eqn{X}) and two moderators (\eqn{Z}
+#' and \eqn{W}) be \deqn{ Y = b_0 + b_1X + b_2Z + b_3W + b_4XZ + b_5XW + b_6ZW
+#' + b_7XZW + r, } where \eqn{b_0} is the estimated intercept or the expected
+#' value of \eqn{Y} when \eqn{X}, \eqn{Z}, and \eqn{W} are 0, \eqn{b_1} is the
+#' effect of \eqn{X} when \eqn{Z} and \eqn{W} are 0, \eqn{b_2} is the effect of
+#' \eqn{Z} when \eqn{X} and \eqn{W} is 0, \eqn{b_3} is the effect of \eqn{W}
+#' when \eqn{X} and \eqn{Z} are 0, \eqn{b_4} is the interaction effect between
+#' \eqn{X} and \eqn{Z} when \eqn{W} is 0, \eqn{b_5} is the interaction effect
+#' between \eqn{X} and \eqn{W} when \eqn{Z} is 0, \eqn{b_6} is the interaction
+#' effect between \eqn{Z} and \eqn{W} when \eqn{X} is 0, \eqn{b_7} is the
+#' three-way interaction effect between \eqn{X}, \eqn{Z}, and \eqn{W}, and
+#' \eqn{r} is the residual term.
+#'
+#' For probing three-way interaction, the simple intercept of the independent
+#' variable at the specific values of the moderators (Aiken & West, 1991) can
+#' be obtained by \deqn{ b_{0|X = 0, Z, W} = b_0 + b_2Z + b_3W + b_6ZW. }
+#'
+#' The simple slope of the independent varaible at the specific values of the
+#' moderators can be obtained by \deqn{ b_{X|Z, W} = b_1 + b_3Z + b_4W + b_7ZW.
+#' }
+#'
+#' The variance of the simple intercept formula is \deqn{ Var\left(b_{0|X = 0,
+#' Z, W}\right) = Var\left(b_0\right) + Z^2Var\left(b_2\right) +
+#' W^2Var\left(b_3\right) + Z^2W^2Var\left(b_6\right) + 2ZCov\left(b_0,
+#' b_2\right) + 2WCov\left(b_0, b_3\right) + 2ZWCov\left(b_0, b_6\right) +
+#' 2ZWCov\left(b_2, b_3\right) + 2Z^2WCov\left(b_2, b_6\right) +
+#' 2ZW^2Cov\left(b_3, b_6\right) } where \eqn{Var} denotes the variance of a
+#' parameter estimate and \eqn{Cov} denotes the covariance of two parameter
+#' estimates.
+#'
+#' The variance of the simple slope formula is \deqn{ Var\left(b_{X|Z,
+#' W}\right) = Var\left(b_1\right) + Z^2Var\left(b_4\right) +
+#' W^2Var\left(b_5\right) + Z^2W^2Var\left(b_7\right) + 2ZCov\left(b_1,
+#' b_4\right) + 2WCov\left(b_1, b_5\right) + 2ZWCov\left(b_1, b_7\right) +
+#' 2ZWCov\left(b_4, b_5\right) + 2Z^2WCov\left(b_4, b_7\right) +
+#' 2ZW^2Cov\left(b_5, b_7\right) }
+#'
+#' Wald statistic is used for test statistic.
+#'
+#'
+#' @importFrom lavaan lavInspect
+#' @importFrom stats pnorm
+#'
+#' @param fit The lavaan model object used to evaluate model fit
+#' @param nameX The vector of the factor names used as the predictors. The
+#' three first-order factors will be listed first. Then the second-order
+#' factors will be listeed. The last element of the name will represent the
+#' three-way interaction. Note that the fourth element must be the interaction
+#' between the first and the second variables. The fifth element must be the
+#' interaction between the first and the third variables. The sixth element
+#' must be the interaction between the second and the third variables.
+#' @param nameY The name of factor that is used as the dependent variable.
+#' @param modVar The name of two factors that are used as the moderators. The
+#' effect of the independent factor on each combination of the moderator
+#' variable values will be probed.
+#' @param valProbe1 The values of the first moderator that will be used to
+#' probe the effect of the independent factor.
+#' @param valProbe2 The values of the second moderator that will be used to
+#' probe the effect of the independent factor.
+#' @return A list with two elements:
+#' \enumerate{
+#'  \item \code{SimpleIntercept}: The intercepts given each value of the moderator.
+#'   This element will be shown only if the factor intercept is estimated
+#'   (e.g., not fixed as 0).
+#'  \item \code{SimpleSlope}: The slopes given each value of the moderator.
+#' }
+#' In each element, the first column represents values of the first moderator
+#' specified in the \code{valProbe1} argument. The second column represents
+#' values of the second moderator specified in the \code{valProbe2} argument.
+#' The third column is the simple intercept or simple slope. The fourth column
+#' is the standard error of the simple intercept or simple slope. The fifth
+#' column is the Wald (\emph{z}) statistic. The sixth column is the \emph{p}
+#' value testing whether the simple intercepts or slopes are different from 0.
+#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+#' @seealso \itemize{
+#'  \item \code{\link{indProd}} For creating the indicator products with no
+#'   centering, mean centering, double-mean centering, or residual centering.
+#'  \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
+#'   latent interaction.
+#' }
+#' @references
+#' Aiken, L. S., & West, S. G. (1991). \emph{Multiple regression: Testing
+#' and interpreting interactions}. Newbury Park, CA: Sage.
+#'
+#' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
+#' latent interactions: Evaluation of alternative estimation strategies and
+#' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
+#' doi:10.1037/1082-989X.9.3.275
+#' @examples
+#'
+#' library(lavaan)
+#'
+#' dat3wayMC <- indProd(dat3way, 1:3, 4:6, 7:9)
+#'
+#' model3 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f3 =~ x7 + x8 + x9
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f13 =~ x1.x7 + x2.x8 + x3.x9
+#' f23 =~ x4.x7 + x5.x8 + x6.x9
+#' f123 =~ x1.x4.x7 + x2.x5.x8 + x3.x6.x9
+#' f4 =~ x10 + x11 + x12
+#' f4 ~ f1 + f2 + f3 + f12 + f13 + f23 + f123
+#' f1 ~~ 0*f12
+#' f1 ~~ 0*f13
+#' f1 ~~ 0*f123
+#' f2 ~~ 0*f12
+#' f2 ~~ 0*f23
+#' f2 ~~ 0*f123
+#' f3 ~~ 0*f13
+#' f3 ~~ 0*f23
+#' f3 ~~ 0*f123
+#' f12 ~~ 0*f123
+#' f13 ~~ 0*f123
+#' f23 ~~ 0*f123
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x7 ~ 0*1
+#' x10 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x1.x7 ~ 0*1
+#' x4.x7 ~ 0*1
+#' x1.x4.x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f3 ~ NA*1
+#' f12 ~ NA*1
+#' f13 ~ NA*1
+#' f23 ~ NA*1
+#' f123 ~ NA*1
+#' f4 ~ NA*1
+#' "
+#'
+#' fitMC3way <- sem(model3, data = dat3wayMC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' summary(fitMC3way)
+#'
+#' result3wayMC <- probe3WayMC(fitMC3way,
+#'                             c("f1", "f2", "f3", "f12", "f13", "f23", "f123"),
+#'                             "f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
+#' result3wayMC
+#'
+#' @export
 probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 	# Check whether modVar is correct
 	if(is.character(modVar)) {
 		modVar <- match(modVar, nameX)
-	} 
-	if((NA %in% modVar) || !(do.call("&", as.list(modVar %in% 1:3)))) stop("The moderator name is not in the list of independent factors and is not 1, 2 or 3.") 
+	}
+	if((NA %in% modVar) || !(do.call("&", as.list(modVar %in% 1:3)))) stop("The moderator name is not in the list of independent factors and is not 1, 2 or 3.")
 
 	# Check whether the fit object does not use mlm, mlr, or mlf estimator (because the variance-covariance matrix of parameter estimates cannot be computed
-	estSpec <- lavaan::lavInspect(fit, "call")$estimator
+	estSpec <- lavInspect(fit, "call")$estimator
 	if(!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf"))) stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as the estimator because the covariance matrix of the parameter estimates cannot be computed.")
 
 	# Get the parameter estimate values from the lavaan object
-	est <- lavaan::lavInspect(fit, "coef")
+	est <- lavInspect(fit, "est")
 
 	# Compute the intercept of no-centering
 	betaNC <- as.matrix(est$beta[nameY, nameX]); colnames(betaNC) <- nameY
 
 	# Extract all varEst
 	varEst <- lavaan::vcov(fit)
-	
+
 	# Check whether intercept are estimated
 	targetcol <- paste(nameY, "~", 1, sep="")
 	estimateIntcept <- targetcol %in% rownames(varEst)
-	
+
 	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
-	
+
 	# Find the order to rearrange
 	ord <- c(setdiff(1:3, modVar), modVar)
 	ord <- c(ord, 7 - rev(ord))
-	
+
 	resultIntcept <- NULL
 	resultSlope <- NULL
 	if(estimateIntcept) {
@@ -260,17 +688,17 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
 
 		# Transform it to non-centering SE
-		usedVar <-  varEst[targetcol, targetcol] 
-		usedBeta <- rbind(est$alpha[nameY,], betaNC) 
+		usedVar <-  varEst[targetcol, targetcol]
+		usedBeta <- rbind(est$alpha[nameY,], betaNC)
 		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
-		
+
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(1, ord+1, 8), c(1, ord+1, 8)]
 		usedBeta <- usedBeta[c(1, ord+1, 8)]
-				
+
 		# Find probe value
 		val <- expand.grid(valProbe1, valProbe2)
-		
+
 		# Find simple intercept
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * val[,1] + usedBeta[4] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varIntcept <- usedVar[1, 1] + val[,1]^2 * usedVar[3, 3] + val[,2]^2 * usedVar[4, 4] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 3] + 2 * val[,2] * usedVar[1, 4] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[3, 4] + 2 * val[,1]^2 * val[,2] * usedVar[3, 7] + 2* val[,1] * val[,2]^2 * usedVar[4, 7]
@@ -278,7 +706,7 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		pIntcept <- pvalue(zIntcept)
 		resultIntcept <- cbind(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
 		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
-		
+
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[5] * val[,1] + usedBeta[6] * val[,2] + usedBeta[8] * val[,1] * val[,2]
 		varSlope <- usedVar[2, 2] + val[,1]^2 * usedVar[5, 5] + val[,2]^2 * usedVar[6, 6] + val[,1]^2 * val[,2]^2 * usedVar[8, 8] + 2 * val[,1] * usedVar[2, 5] + 2 * val[,2] * usedVar[2, 6] + 2 * val[,1] * val[,2] * usedVar[2, 8] + 2 * val[,1] * val[,2] * usedVar[5, 6] + 2 * val[,1]^2 * val[,2] * usedVar[5, 8] + 2 * val[,1] * val[,2]^2 * usedVar[6, 8]
@@ -293,14 +721,14 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		usedVar <-  varEst[targetcol, targetcol]
 		usedBeta <- betaNC
 		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
-		
+
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(ord, 7), c(ord, 7)]
 		usedBeta <- usedBeta[c(ord, 7)]
 
 		# Find probe value
 		val <- expand.grid(valProbe1, valProbe2)
-		
+
 		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[4] * val[,1] + usedBeta[5] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varSlope <- usedVar[1, 1] + val[,1]^2 * usedVar[4, 4] + val[,2]^2 * usedVar[5, 5] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 4] + 2 * val[,2] * usedVar[1, 5] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[4, 5] + 2 * val[,1]^2 * val[,2] * usedVar[4, 7] + 2 * val[,1] * val[,2]^2 * usedVar[5, 7]
@@ -309,24 +737,181 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	}
-	
+
 	return(list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope))
 }
 
+
+
+#' Probing three-way interaction on the residual-centered latent interaction
+#'
+#' Probing interaction for simple intercept and simple slope for the
+#' residual-centered latent three-way interaction (Pornprasertmanit, Schoemann,
+#' Geldhof, & Little, submitted)
+#'
+#' Before using this function, researchers need to make the products of the
+#' indicators between the first-order factors and residualize the products by
+#' the original indicators (Lance, 1988; Little, Bovaird, & Widaman, 2006). The
+#' process can be automated by the \code{\link{indProd}} function. Note that
+#' the indicator products can be made for all possible combination or
+#' matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
+#' with the regression with latent interaction will be used to fit all original
+#' indicators and the product terms (Geldhof, Pornprasertmanit, Schoemann, &
+#' Little, in press). To use this function the model must be fit with a mean
+#' structure. See the example for how to fit the product term below. Once the
+#' lavaan result is obtained, this function will be used to probe the
+#' interaction.
+#'
+#' The probing process on residual-centered latent interaction is based on
+#' transforming the residual-centered result into the no-centered result. See
+#' Pornprasertmanit, Schoemann, Geldhof, and Little (submitted) for further
+#' details. Note that this approach based on a strong assumption that the
+#' first-order latent variables are normally distributed. The probing process
+#' is applied after the no-centered result (parameter estimates and their
+#' covariance matrix among parameter estimates) has been computed See the
+#' \code{\link{probe3WayMC}} for further details.
+#'
+#'
+#' @importFrom lavaan lavInspect
+#' @importFrom stats pnorm
+#'
+#' @param fit The lavaan model object used to evaluate model fit
+#' @param nameX The vector of the factor names used as the predictors. The
+#' three first-order factors will be listed first. Then the second-order
+#' factors will be listeed. The last element of the name will represent the
+#' three-way interaction. Note that the fourth element must be the interaction
+#' between the first and the second variables. The fifth element must be the
+#' interaction between the first and the third variables. The sixth element
+#' must be the interaction between the second and the third variables.
+#' @param nameY The name of factor that is used as the dependent variable.
+#' @param modVar The name of two factors that are used as the moderators. The
+#' effect of the independent factor on each combination of the moderator
+#' variable values will be probed.
+#' @param valProbe1 The values of the first moderator that will be used to
+#' probe the effect of the independent factor.
+#' @param valProbe2 The values of the second moderator that will be used to
+#' probe the effect of the independent factor.
+#' @return A list with two elements:
+#' \enumerate{
+#'  \item \code{SimpleIntercept}: The intercepts given each value of the moderator.
+#'    This element will be shown only if the factor intercept is estimated
+#'    (e.g., not fixed as 0).
+#'  \item \code{SimpleSlope}: The slopes given each value of the moderator.
+#' }
+#' In each element, the first column represents values of the first moderator
+#' specified in the \code{valProbe1} argument. The second column represents
+#' values of the second moderator specified in the \code{valProbe2} argument.
+#' The third column is the simple intercept or simple slope. The fourth column
+#' is the \emph{SE} of the simple intercept or simple slope. The fifth column
+#' is the Wald (\emph{z}) statistic. The sixth column is the \emph{p} value
+#' testing whether the simple intercepts or slopes are different from 0.
+#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+#' @seealso \itemize{
+#'  \item \code{\link{indProd}} For creating the indicator products with no
+#'   centering, mean centering, double-mean centering, or residual centering.
+#'  \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
+#'   latent interaction.
+#' }
+#' @references
+#' Geldhof, G. J., Pornprasertmanit, S., Schoemann, A., & Little,
+#' T. D. (2013). Orthogonalizing through residual centering: Extended
+#' applications and caveats. \emph{Educational and Psychological Measurement,
+#' 73}(1), 27--46. doi:10.1177/0013164412445473
+#'
+#' Lance, C. E. (1988). Residual centering, exploratory and confirmatory
+#' moderator analysis, and decomposition of effects in path models containing
+#' interactions. \emph{Applied Psychological Measurement, 12}(2), 163--175.
+#' doi:10.1177/014662168801200205
+#'
+#' Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of
+#' orthogonalizing powered and product terms: Implications for modeling
+#' interactions. \emph{Structural Equation Modeling, 13}(4), 497--519.
+#' doi:10.1207/s15328007sem1304_1
+#'
+#' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
+#' latent interactions: Evaluation of alternative estimation strategies and
+#' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
+#' doi:10.1037/1082-989X.9.3.275
+#'
+#' Pornprasertmanit, S., Schoemann, A. M., Geldhof, G. J., & Little, T. D.
+#' (submitted). \emph{Probing latent interaction estimated with a residual
+#' centering approach.}
+#' @examples
+#'
+#' library(lavaan)
+#'
+#' dat3wayRC <- orthogonalize(dat3way, 1:3, 4:6, 7:9)
+#'
+#' model3 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f3 =~ x7 + x8 + x9
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f13 =~ x1.x7 + x2.x8 + x3.x9
+#' f23 =~ x4.x7 + x5.x8 + x6.x9
+#' f123 =~ x1.x4.x7 + x2.x5.x8 + x3.x6.x9
+#' f4 =~ x10 + x11 + x12
+#' f4 ~ f1 + f2 + f3 + f12 + f13 + f23 + f123
+#' f1 ~~ 0*f12
+#' f1 ~~ 0*f13
+#' f1 ~~ 0*f123
+#' f2 ~~ 0*f12
+#' f2 ~~ 0*f23
+#' f2 ~~ 0*f123
+#' f3 ~~ 0*f13
+#' f3 ~~ 0*f23
+#' f3 ~~ 0*f123
+#' f12 ~~ 0*f123
+#' f13 ~~ 0*f123
+#' f23 ~~ 0*f123
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x7 ~ 0*1
+#' x10 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x1.x7 ~ 0*1
+#' x4.x7 ~ 0*1
+#' x1.x4.x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f3 ~ NA*1
+#' f12 ~ NA*1
+#' f13 ~ NA*1
+#' f23 ~ NA*1
+#' f123 ~ NA*1
+#' f4 ~ NA*1
+#' "
+#'
+#' fitRC3way <- sem(model3, data = dat3wayRC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' summary(fitRC3way)
+#'
+#' result3wayRC <- probe3WayRC(fitRC3way,
+#'                             c("f1", "f2", "f3", "f12", "f13", "f23", "f123"),
+#'                             "f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
+#' result3wayRC
+#'
+#' @export
 probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 	# Check whether modVar is correct
 	if(is.character(modVar)) {
 		modVar <- match(modVar, nameX)
-	} 
+	}
 	if((NA %in% modVar) || !(do.call("&", as.list(modVar %in% 1:3)))) stop("The moderator name is not in the list of independent factors and is not 1, 2 or 3.") # JG: Changed error
 
 	# Check whether the fit object does not use mlm, mlr, or mlf estimator (because the variance-covariance matrix of parameter estimates cannot be computed
-	estSpec <- lavaan::lavInspect(fit, "call")$estimator
+	estSpec <- lavInspect(fit, "call")$estimator
 	if(!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf"))) stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as the estimator because the covariance matrix of the parameter estimates cannot be computed.")
 
 	# Get the parameter estimate values from the lavaan object
-	est <- lavaan::lavInspect(fit, "coef")
-	
+	est <- lavInspect(fit, "est")
+
 	# Find the mean and covariance matrix of independent factors
 	varX <- est$psi[nameX, nameX]
 	meanX <- as.matrix(est$alpha[nameX,]); colnames(meanX) <- "intcept"
@@ -338,7 +923,7 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 	betaRC <- as.matrix(est$beta[nameY, nameX]); colnames(betaRC) <- nameY
 
 	# Find the number of observations
-	numobs <- lavaan::lavInspect(fit, "nobs")
+	numobs <- lavInspect(fit, "nobs")
 
 	# Compute SSRC
 	meanXwith1 <- rbind(1, meanX)
@@ -358,29 +943,29 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 	meanX[5] <- expect2NormProd(meanX[c(1,3)], varX[c(1,3), c(1,3)])
 	meanX[6] <- expect2NormProd(meanX[c(2,3)], varX[c(2,3), c(2,3)])
 	meanX[7] <- expect3NormProd(meanX[1:3], varX[1:3, 1:3])
-	
+
 	# Compute Var(XZ), Var(XW), Var(ZW), Var(XZW)
 	varX[4, 4] <- var2NormProd(meanX[c(1,2)], varX[c(1,2), c(1,2)])
 	varX[5, 5] <- var2NormProd(meanX[c(1,3)], varX[c(1,3), c(1,3)])
 	varX[6, 6] <- var2NormProd(meanX[c(2,3)], varX[c(2,3), c(2,3)])
 	varX[7, 7] <- var3NormProd(meanX[1:3], varX[1:3, 1:3])
-	
+
 	# Compute All covariances
 	varX[4, 1] <- varX[1, 4] <- expect3NormProd(meanX[c(1, 2, 1)], varX[c(1, 2, 1),c(1, 2, 1)]) - expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)]) * meanX[1]
 	varX[5, 1] <- varX[1, 5] <- expect3NormProd(meanX[c(1, 3, 1)], varX[c(1, 3, 1),c(1, 3, 1)]) - expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)]) * meanX[1]
 	varX[6, 1] <- varX[1, 6] <- expect3NormProd(meanX[c(2, 3, 1)], varX[c(2, 3, 1),c(2, 3, 1)]) - expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)]) * meanX[1]
 	varX[7, 1] <- varX[1, 7] <- expect4NormProd(meanX[c(1,2,3,1)], varX[c(1,2,3,1),c(1,2,3,1)]) - expect3NormProd(meanX[c(1,2,3)], varX[c(1,2,3),c(1,2,3)]) * meanX[1]
-	
+
 	varX[4, 2] <- varX[2, 4] <- expect3NormProd(meanX[c(1, 2, 2)], varX[c(1, 2, 2),c(1, 2, 2)]) - expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)]) * meanX[2]
 	varX[5, 2] <- varX[2, 5] <- expect3NormProd(meanX[c(1, 3, 2)], varX[c(1, 3, 2),c(1, 3, 2)]) - expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)]) * meanX[2]
 	varX[6, 2] <- varX[2, 6] <- expect3NormProd(meanX[c(2, 3, 2)], varX[c(2, 3, 2),c(2, 3, 2)]) - expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)]) * meanX[2]
 	varX[7, 2] <- varX[2, 7] <- expect4NormProd(meanX[c(1,2,3,2)], varX[c(1,2,3,2),c(1,2,3,2)]) - expect3NormProd(meanX[c(1,2,3)], varX[c(1,2,3),c(1,2,3)]) * meanX[2]
-	
+
 	varX[4, 3] <- varX[3, 4] <- expect3NormProd(meanX[c(1, 2, 3)], varX[c(1, 2, 3),c(1, 2, 3)]) - expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)]) * meanX[3]
 	varX[5, 3] <- varX[3, 5] <- expect3NormProd(meanX[c(1, 3, 3)], varX[c(1, 3, 3),c(1, 3, 3)]) - expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)]) * meanX[3]
 	varX[6, 3] <- varX[3, 6] <- expect3NormProd(meanX[c(2, 3, 3)], varX[c(2, 3, 3),c(2, 3, 3)]) - expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)]) * meanX[3]
 	varX[7, 3] <- varX[3, 7] <- expect4NormProd(meanX[c(1,2,3,3)], varX[c(1,2,3,3),c(1,2,3,3)]) - expect3NormProd(meanX[c(1,2,3)], varX[c(1,2,3),c(1,2,3)]) * meanX[3]
-	
+
 	varX[5, 4] <- varX[4, 5] <- expect4NormProd(meanX[c(1,3,1,2)], varX[c(1,3,1,2),c(1,3,1,2)]) - expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)]) * expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)])
 	varX[6, 4] <- varX[4, 6] <- expect4NormProd(meanX[c(2,3,1,2)], varX[c(2,3,1,2),c(2,3,1,2)]) - expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)]) * expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)])
 	varX[7, 4] <- varX[4, 7] <- expect5NormProd(meanX[c(1,2,3,1,2)], varX[c(1,2,3,1,2),c(1,2,3,1,2)]) - expect3NormProd(meanX[c(1, 2, 3)], varX[c(1, 2, 3),c(1, 2, 3)]) * expect2NormProd(meanX[c(1,2)], varX[c(1,2),c(1,2)])
@@ -388,22 +973,22 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 	varX[6, 5] <- varX[5, 6] <- expect4NormProd(meanX[c(2,3,1,3)], varX[c(2,3,1,3),c(2,3,1,3)]) - expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)]) * expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)])
 	varX[7, 5] <- varX[5, 7] <- expect5NormProd(meanX[c(1,2,3,1,3)], varX[c(1,2,3,1,3),c(1,2,3,1,3)]) - expect3NormProd(meanX[c(1, 2, 3)], varX[c(1, 2, 3),c(1, 2, 3)]) * expect2NormProd(meanX[c(1,3)], varX[c(1,3),c(1,3)])
 	varX[7, 6] <- varX[6, 7] <- expect5NormProd(meanX[c(1,2,3,2,3)], varX[c(1,2,3,2,3),c(1,2,3,2,3)]) - expect3NormProd(meanX[c(1, 2, 3)], varX[c(1, 2, 3),c(1, 2, 3)]) * expect2NormProd(meanX[c(2,3)], varX[c(2,3),c(2,3)])
-	
+
 	# Find the meanX and varX without XZW
 	meanXReducedWith1 <- rbind(1, as.matrix(meanX[1:6]))
 	varXReducedWith0 <- cbind(0, rbind(0, varX[1:6, 1:6]))
 	SSMCReduced <- numobs * (varXReducedWith0 + (meanXReducedWith1 %*% t(meanXReducedWith1)))
-	
+
 	# Find product of main and two-way onto three-way
 	covXZWwith0 <- rbind(0, as.matrix(varX[7, 1:6]))
 	meanXZWwith1 <- meanX[7] * meanXReducedWith1
 	SSXZW <- numobs * (covXZWwith0 + meanXZWwith1) # should the mean vector be squared (postmultiplied by its transpose)?
-	
+
 	# Compute a vector and b4, b5, b6
 	a <- solve(SSMCReduced) %*% as.matrix(SSXZW)
 	betaTemp <- betaRC[4:6] - (as.numeric(betaRC[7]) * a[5:7])
 	betaTemp <- c(betaTemp, betaRC[7])
-		
+
 	# Compute Cov(Y, XZ) and regression coefficients of no-centering
 	betaNC <- solve(varX[1:3,1:3], as.matrix(covY) - (t(varX[4:7, 1:3]) %*% as.matrix(betaTemp)))
 	betaNC <- rbind(as.matrix(betaNC), as.matrix(betaTemp))
@@ -427,17 +1012,17 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 
 	# Extract all varEst
 	varEst <- lavaan::vcov(fit)
-	
+
 	# Check whether intercept are estimated
 	targetcol <- paste(nameY, "~", 1, sep="")
 	estimateIntcept <- targetcol %in% rownames(varEst)
-	
+
 	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
-	
+
 	# Find the order to rearrange
 	ord <- c(setdiff(1:3, modVar), modVar)
 	ord <- c(ord, 7 - rev(ord))
-	
+
 	resultIntcept <- NULL
 	resultSlope <- NULL
 	if(estimateIntcept) {
@@ -449,14 +1034,14 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC %*% solve(SSNC))
 		usedBeta <- betaNCWithIntcept
 		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
-		
+
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(1, ord+1, 8), c(1, ord+1, 8)]
 		usedBeta <- usedBeta[c(1, ord+1, 8)]
-				
+
 		# Find probe value
 		val <- expand.grid(valProbe1, valProbe2)
-		
+
 		# Find simple intercept
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * val[,1] + usedBeta[4] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varIntcept <- usedVar[1, 1] + val[,1]^2 * usedVar[3, 3] + val[,2]^2 * usedVar[4, 4] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 3] + 2 * val[,2] * usedVar[1, 4] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[3, 4] + 2 * val[,1]^2 * val[,2] * usedVar[3, 7] + 2* val[,1] * val[,2]^2 * usedVar[4, 7]
@@ -464,7 +1049,7 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		pIntcept <- pvalue(zIntcept)
 		resultIntcept <- cbind(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
 		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
-		
+
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[5] * val[,1] + usedBeta[6] * val[,2] + usedBeta[8] * val[,1] * val[,2]
 		varSlope <- usedVar[2, 2] + val[,1]^2 * usedVar[5, 5] + val[,2]^2 * usedVar[6, 6] + val[,1]^2 * val[,2]^2 * usedVar[8, 8] + 2 * val[,1] * usedVar[2, 5] + 2 * val[,2] * usedVar[2, 6] + 2 * val[,1] * val[,2] * usedVar[2, 8] + 2 * val[,1] * val[,2] * usedVar[5, 6] + 2 * val[,1]^2 * val[,2] * usedVar[5, 8] + 2 * val[,1] * val[,2]^2 * usedVar[6, 8]
@@ -480,14 +1065,14 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC[2:8, 2:8] %*% solve(SSNC[2:8, 2:8]))
 		usedBeta <- betaNC
 		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
-		
+
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(ord, 7), c(ord, 7)]
 		usedBeta <- usedBeta[c(ord, 7)]
 
 		# Find probe value
 		val <- expand.grid(valProbe1, valProbe2)
-		
+
 		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[4] * val[,1] + usedBeta[5] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varSlope <- usedVar[1, 1] + val[,1]^2 * usedVar[4, 4] + val[,2]^2 * usedVar[5, 5] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 4] + 2 * val[,2] * usedVar[1, 5] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[4, 5] + 2 * val[,1]^2 * val[,2] * usedVar[4, 7] + 2 * val[,1] * val[,2]^2 * usedVar[5, 7]
@@ -496,9 +1081,195 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2) {
 		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
 		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
 	}
-	
+
 	return(list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope))
 }
+
+
+
+#' Plot the graphs for probing latent interaction
+#'
+#' This function will plot the line graphs representing the simple effect of
+#' the independent variable given the values of the moderator.
+#'
+#'
+#' @param object The result of probing latent interaction obtained from
+#' \code{\link{probe2WayMC}}, \code{\link{probe2WayRC}},
+#' \code{\link{probe3WayMC}}, or \code{\link{probe3WayRC}} function.
+#' @param xlim The vector of two numbers: the minimum and maximum values of the
+#' independent variable
+#' @param xlab The label of the x-axis
+#' @param ylab The label of the y-axis
+#' @param legend \code{logical}. If \code{TRUE} (default), a legend is printed.
+#' @param legendArgs \code{list} of arguments passed to \code{\link{legend}}
+#' function if \code{legend=TRUE}.
+#' @param \dots Any addition argument for the \code{\link{plot}} function
+#' @return None. This function will plot the simple main effect only.
+#' @author
+#' Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+#'
+#' Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
+#' @seealso \itemize{
+#'  \item \code{\link{indProd}} For creating the indicator products with no
+#'   centering, mean centering, double-mean centering, or residual centering.
+#'  \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
+#'   when the results are obtained from mean-centering, or double-mean centering
+#'  \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#'  \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
+#'   when the results are obtained from residual-centering approach.
+#' }
+#' @examples
+#'
+#' library(lavaan)
+#'
+#' dat2wayMC <- indProd(dat2way, 1:3, 4:6)
+#'
+#' model1 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f3 =~ x7 + x8 + x9
+#' f3 ~ f1 + f2 + f12
+#' f12 ~~ 0*f1
+#' f12 ~~ 0*f2
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f12 ~ NA*1
+#' f3 ~ NA*1
+#' "
+#'
+#' fitMC2way <- sem(model1, data = dat2wayMC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' result2wayMC <- probe2WayMC(fitMC2way, c("f1", "f2", "f12"),
+#'                             "f3", "f2", c(-1, 0, 1))
+#' plotProbe(result2wayMC, xlim = c(-2, 2))
+#'
+#'
+#' dat3wayMC <- indProd(dat3way, 1:3, 4:6, 7:9)
+#'
+#' model3 <- "
+#' f1 =~ x1 + x2 + x3
+#' f2 =~ x4 + x5 + x6
+#' f3 =~ x7 + x8 + x9
+#' f12 =~ x1.x4 + x2.x5 + x3.x6
+#' f13 =~ x1.x7 + x2.x8 + x3.x9
+#' f23 =~ x4.x7 + x5.x8 + x6.x9
+#' f123 =~ x1.x4.x7 + x2.x5.x8 + x3.x6.x9
+#' f4 =~ x10 + x11 + x12
+#' f4 ~ f1 + f2 + f3 + f12 + f13 + f23 + f123
+#' f1 ~~ 0*f12
+#' f1 ~~ 0*f13
+#' f1 ~~ 0*f123
+#' f2 ~~ 0*f12
+#' f2 ~~ 0*f23
+#' f2 ~~ 0*f123
+#' f3 ~~ 0*f13
+#' f3 ~~ 0*f23
+#' f3 ~~ 0*f123
+#' f12 ~~ 0*f123
+#' f13 ~~ 0*f123
+#' f23 ~~ 0*f123
+#' x1 ~ 0*1
+#' x4 ~ 0*1
+#' x7 ~ 0*1
+#' x10 ~ 0*1
+#' x1.x4 ~ 0*1
+#' x1.x7 ~ 0*1
+#' x4.x7 ~ 0*1
+#' x1.x4.x7 ~ 0*1
+#' f1 ~ NA*1
+#' f2 ~ NA*1
+#' f3 ~ NA*1
+#' f12 ~ NA*1
+#' f13 ~ NA*1
+#' f23 ~ NA*1
+#' f123 ~ NA*1
+#' f4 ~ NA*1
+#' "
+#'
+#' fitMC3way <- sem(model3, data = dat3wayMC, std.lv = FALSE,
+#'                  meanstructure = TRUE)
+#' result3wayMC <- probe3WayMC(fitMC3way,
+#'                             c("f1", "f2", "f3", "f12", "f13", "f23", "f123"),
+#'                             "f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
+#' plotProbe(result3wayMC, xlim = c(-2, 2))
+#'
+#' @export
+plotProbe <- function(object, xlim, xlab = "Indepedent Variable",
+                      ylab = "Dependent Variable", legend = TRUE,
+                      legendArgs = list(), ...) {
+  if (length(xlim) != 2)  stop("The x-limit should be specified as a numeric",
+                               " vector with the length of 2.")
+
+  # Extract simple slope
+  slope <- object$SimpleSlope
+
+  # Check whether the object is the two-way or three-way interaction result
+  numInt <- 2
+  if (ncol(slope) == 6) numInt <- 3
+  estSlope <- slope[, ncol(slope) - 3]
+
+  # Get whether the simple slope is significant. If so, the resulting lines will be
+  # shown as red. If not, the line will be black.
+  estSlopeSig <- (slope[, ncol(slope)] < 0.05) + 1
+
+  # Extract simple intercept. If the simple intercept is not provided, the intercept
+  # will be fixed as 0.
+  estIntercept <- NULL
+  if (!is.null(object$SimpleIntcept))
+    estIntercept <- object$SimpleIntcept[, ncol(slope) - 3]
+  if (numInt == 2) {
+    if (is.null(legendArgs$title)) legendArgs$title <- colnames(slope)[1]
+    if (is.null(legendArgs$legend)) legendArgs$legend <- slope[, 1]
+    plotSingleProbe(estSlope, estIntercept, xlim = xlim, xlab = xlab, ylab = ylab,
+                    colLine = estSlopeSig, legend = legend,
+                    legendArgs = legendArgs, ...)
+  } else if (numInt == 3) {
+    # Three-way interaction; separate lines for the first moderator, separate graphs
+    # for the second moderator
+    mod2 <- unique(slope[, 2])
+    mod1 <- unique(slope[, 1])
+
+    # Use multiple graphs in a figure
+    if (length(mod2) == 2) {
+      obj <- par(mfrow = c(1, 2))
+    } else if (length(mod2) == 3) {
+      obj <- par(mfrow = c(1, 3))
+    } else if (length(mod2) > 3) {
+      obj <- par(mfrow = c(2, ceiling(length(mod2)/2)))
+    } else if (length(mod2) == 1) {
+      # Intentionally leaving as blank
+    } else stop("Some errors occur")
+
+    for (i in 1:length(mod2)) {
+      select <- slope[, 2] == mod2[i]
+      if (is.null(legendArgs$title)) legendArgs$title <- colnames(slope)[1]
+      if (is.null(legendArgs$legend)) legendArgs$legend <- mod1
+      plotSingleProbe(estSlope[select], estIntercept[select], xlim = xlim,
+                      xlab = xlab, ylab = ylab, colLine = estSlopeSig[select],
+                      main = paste(colnames(slope)[2], "=", mod2[i]),
+                      legend = legend, legendArgs = legendArgs, ...)
+    }
+    if (length(mod2) > 1)
+      par(obj)
+  } else {
+    stop("Please make sure that the object argument is obtained from",
+         " 'probe2wayMC', 'probe2wayRC', 'probe3wayMC', or 'probe3wayRC'.")
+  }
+}
+
+
+
+## ----------------
+## Hidden Functions
+## ----------------
 
 # Find the expected value of the product of two normal variates
 # m = the mean of each normal variate
@@ -507,6 +1278,8 @@ expect2NormProd <- function(m, s) {
 	return(prod(m) + s[1, 2])
 }
 
+
+
 # Find the expected value of the product of three normal variates
 # m = the mean of each normal variate
 # s = the covariance matrix of all variates
@@ -514,12 +1287,14 @@ expect3NormProd <- function(m, s) {
 	return(prod(m) + m[3] * s[1, 2] + m[2] * s[1, 3] + m[1] * s[2, 3])
 }
 
+
+
 # Find the expected value of the product of four normal variates
 # m = the mean of each normal variate
 # s = the covariance matrix of all variates
 expect4NormProd <- function(m, s) {
 	first <- prod(m)
-	com <- combn(1:4, 2)
+	com <- utils::combn(1:4, 2)
 	forSecond <- function(draw, meanval, covval, index) {
 		draw2 <- setdiff(index, draw)
 		prod(meanval[draw2]) * covval[draw[1], draw[2]]
@@ -535,22 +1310,24 @@ expect4NormProd <- function(m, s) {
 	return(first + second + third)
 }
 
+
+
 # Find the expected value of the product of five normal variates
 # m = the mean of each normal variate
 # s = the covariance matrix of all variates
-expect5NormProd <- function(m, s) {  
+expect5NormProd <- function(m, s) {
 	first <- prod(m)
-	com <- combn(1:5, 2) 
+	com <- utils::combn(1:5, 2)
 	forSecond <- function(draw, meanval, covval, index) {
 		draw2 <- setdiff(index, draw)
 		prod(meanval[draw2]) * covval[draw[1], draw[2]]
 	}
 	second <- sum(apply(com, 2, forSecond, meanval=m, covval=s, index=1:5))
 
-	com2 <- combn(1:5, 4)
+	com2 <- utils::combn(1:5, 4)
 	forThirdOuter <- function(index, m, s, indexall) {
 		targetMean <- m[setdiff(indexall, index)]
-		cominner <- combn(index, 2)[,1:3] #select only first three terms containing the first element only
+		cominner <- utils::combn(index, 2)[,1:3] #select only first three terms containing the first element only
 		forThirdInner <- function(draw, covval, index) {
 			draw2 <- setdiff(index, draw)
 			covval[draw[1], draw[2]] * covval[draw2[1], draw2[2]]
@@ -561,6 +1338,8 @@ expect5NormProd <- function(m, s) {
 	third <- sum(apply(com2, 2, forThirdOuter, m=m, s=s, indexall=1:5))
 	return(first + second + third)
 }
+
+
 
 # Find the variance of the product of two normal variates
 # m = the mean of each normal variate
@@ -573,11 +1352,13 @@ var2NormProd <- function(m, s) {
 	return(first + second + third + fourth)
 }
 
+
+
 # Find the variance of the product of three normal variates
 # m = the mean of each normal variate
 # s = the covariance matrix of all variates
 var3NormProd <- function(m, s) {
-	com <- combn(1:3, 2)
+	com <- utils::combn(1:3, 2)
 	forFirst <- function(draw, meanval, covval, index) {
 		# draw = 2, 3; draw2 = 1
 		draw2 <- setdiff(index, draw)
@@ -595,53 +1376,7 @@ var3NormProd <- function(m, s) {
 	return(first + second + third + fourth)
 }
 
-# plotProbe: plot the probing interaction result 
-plotProbe <- function(object, xlim, xlab="Indepedent Variable", ylab="Dependent Variable", ...) {
-	if(length(xlim) != 2) stop("The x-limit should be specified as a numeric vector with the length of 2.")
-	
-	# Extract simple slope
-	slope <- object$SimpleSlope
-	
-	# Check whether the object is the two-way or three-way interaction result
-	numInt <- 2
-	if(ncol(slope) == 6) numInt <- 3
-	estSlope <- slope[,ncol(slope) - 3]
-	
-	# Get whether the simple slope is significant. If so, the resulting lines will be shown as red. If not, the line will be black.
-	estSlopeSig <- (slope[,ncol(slope)] < 0.05) + 1
-	
-	# Extract simple intercept. If the simple intercept is not provided, the intercept will be fixed as 0.
-	estIntercept <- NULL
-	if(!is.null(object$SimpleIntcept)) estIntercept <- object$SimpleIntcept[,ncol(slope) - 3]
-	if(numInt == 2) {
-		plotSingleProbe(estSlope, estIntercept, xlim=xlim, xlab=xlab, ylab=ylab, colLine=estSlopeSig, legendMain=colnames(slope)[1], legendVal=slope[,1], ...)
-	} else if (numInt == 3) {
-		# Three-way interaction; separate lines for the first moderator, separate graphs for the second moderator
-		mod2 <- unique(slope[,2])
-		mod1 <- unique(slope[,1])
-		
-		# Use multiple graphs in a figure
-		if (length(mod2) == 2) {
-			obj <- par(mfrow = c(1, 2))
-		} else if (length(mod2) == 3) {
-			obj <- par(mfrow = c(1, 3))
-		} else if (length(mod2) > 3) {
-			obj <- par(mfrow = c(2, ceiling(length(mod2)/2)))
-		} else if (length(mod2) == 1) {
-			# Intentionally leaving as blank
-		} else {
-			stop("Some errors occur")
-		}
-		for(i in 1:length(mod2)) {
-			select <- slope[,2] == mod2[i]
-			plotSingleProbe(estSlope[select], estIntercept[select], xlim=xlim, xlab=xlab, ylab=ylab, colLine=estSlopeSig[select], main=paste(colnames(slope)[2], "=", mod2[i]), legendMain=colnames(slope)[1], legendVal=mod1, ...)
-		}
-		if (length(mod2) > 1) 
-			par(obj)
-	} else {
-		stop("Please make sure that the object argument is obtained from 'probe2wayMC', 'probe2wayRC', 'probe3wayMC', or 'probe3wayRC'.")
-	}
-}
+
 
 # plotSingleProbe : plot the probing interaction result specific for only one moderator
 # estSlope = slope of each line
@@ -651,22 +1386,34 @@ plotProbe <- function(object, xlim, xlab="Indepedent Variable", ylab="Dependent 
 # ylab = the lable for the dependent variable
 # main = the title of the graph
 # colLine = the color of each line
-# legendMain = the title of the legend
-# legendVal = the description of each line representing in the plot
-plotSingleProbe <- function(estSlope, estIntercept=NULL, xlim, xlab="Indepedent Variable", ylab="Dependent Variable", main=NULL, colLine="black", legendMain=NULL, legendVal=NULL, ...) {
-	if(is.null(estIntercept)) estIntercept <- rep(0, length(estSlope))
-	if(length(colLine) == 1) colLine <- rep(colLine, length(estSlope))
+# legend = whether to print a legend
+# legendArgs = arguments to pass to legend() function
+plotSingleProbe <- function(estSlope, estIntercept = NULL, xlim,
+                            xlab = "Indepedent Variable",
+                            ylab = "Dependent Variable", main = NULL,
+                            colLine = "black", legend = TRUE,
+                            legendArgs = list(), ...) {
+	if (is.null(estIntercept)) estIntercept <- rep(0, length(estSlope))
+	if (length(colLine) == 1) colLine <- rep(colLine, length(estSlope))
 	lower <- estIntercept + (xlim[1] * estSlope)
 	upper <- estIntercept + (xlim[2] * estSlope)
 	ylim <- c(min(c(lower, upper)), max(c(lower, upper)))
-	plot(cbind(xlim, ylim), xlim=xlim, ylim=ylim, type="n", xlab=xlab, ylab=ylab, main=main, ...)
-	for(i in 1:length(estSlope)) {
-		lines(cbind(xlim, c(lower[i], upper[i])), col = colLine[i], lwd=1.5, lty=i)
+	plot(cbind(xlim, ylim), xlim = xlim, ylim = ylim, type = "n",
+	     xlab = xlab, ylab = ylab, main = main, ...)
+	for (i in 1:length(estSlope)) {
+		lines(cbind(xlim, c(lower[i], upper[i])),
+		      col = colLine[i], lwd = 1.5, lty = i)
 	}
-	if(!is.null(legendVal)) {
+	if (legend) {
 		positionX <- 0.25
-		if(all(estSlope > 0)) positionX <- 0.01
-		if(all(estSlope < 0)) positionX <- 0.50
-		legend(positionX * (xlim[2] - xlim[1]) + xlim[1], 0.99 * (ylim[2] - ylim[1]) + ylim[1], legendVal, col=colLine, lty=1:length(estSlope), title=legendMain)
+		if (all(estSlope > 0)) positionX <- 0.01
+		if (all(estSlope < 0)) positionX <- 0.50
+		if (is.null(legendArgs$x)) legendArgs$x <- positionX * (xlim[2] - xlim[1]) + xlim[1]
+		if (is.null(legendArgs$y)) legendArgs$y <- 0.99 * (ylim[2] - ylim[1]) + ylim[1]
+		if (is.null(legendArgs$col)) legendArgs$col <- colLine
+		if (is.null(legendArgs$lty)) legendArgs$lty <- 1:length(estSlope)
+		do.call(graphics::legend, legendArgs)
 	}
 }
+
+

@@ -1,144 +1,235 @@
-########### Mauricio Garnier Villarreal (mgv@ku.edu)
-### Last updated: 14 October 2016
-######This function estimates the Fraction of Missing Information for the variance and mean of each variable in a list of multiple imputed data sets
-#### dat.imp is a list of the imputed data sets
-#### method is the model used for the estimation
-#### varnames is used to select a subset of variables
-#### digits is the number of decimals
-#### group is the grouping variable, in case you want to get the fmi for each group
-#### exclude are the variables that you wnat to exclude from the analysis
+### Mauricio Garnier Villarreal & Terrence D. Jorgensen
+### Last updated: 25 June 2018
+### This function estimates the Fraction of Missing Information for means and
+### (co)variances of each variable in a partially observed data set or from
+### a list of multiple imputed data sets
 
-fmi <- function(dat.imp, method="saturated", varnames=NULL, group=NULL, exclude=NULL, digits=3){ 
-  
-  if(is.character(varnames)){
-    vars <- varnames
+#' Fraction of Missing Information.
+#'
+#' This function estimates the Fraction of Missing Information (FMI) for
+#' summary statistics of each variable, using either an incomplete data set or
+#' a list of imputed data sets.
+#'
+#' The function estimates a saturated model with \code{\link[lavaan]{lavaan}}
+#' for a single incomplete data set using FIML, or with \code{\link{lavaan.mi}}
+#' for a list of imputed data sets. If method = \code{"saturated"}, FMI will be
+#' estiamted for all summary statistics, which could take a lot of time with
+#' big data sets. If method = \code{"null"}, FMI will only be estimated for
+#' univariate statistics (e.g., means, variances, thresholds). The saturated
+#' model gives more reliable estimates, so it could also help to request a
+#' subset of variables from a large data set.
+#'
+#'
+#' @importFrom lavaan lavListInspect lavInspect
+#'
+#' @param data Either a single \code{data.frame} with incomplete observations,
+#' or a \code{list} of imputed data sets.
+#' @param method character. If \code{"saturated"} or \code{"sat"} (default),
+#' the model used to estimate FMI is a freely estimated covariance matrix and
+#' mean vector for numeric variables, and/or polychoric correlations and
+#' thresholds for ordered categorical variables, for each group (if
+#' applicable). If \code{"null"}, only means and variances are estimated for
+#' numeric variables, and/or thresholds for ordered categorical variables
+#' (i.e., covariances and/or polychoric correlations are constrained to zero).
+#' See Details for more information.
+#' @param group character. The optional name of a grouping variable, to request
+#' FMI in each group.
+#' @param ords character. Optional vector of names of ordered-categorical
+#' variables, which are not already stored as class \code{ordered} in
+#' \code{data}.
+#' @param varnames character. Optional vector of variable names, to calculate
+#' FMI for a subset of variables in \code{data}. By default, all numeric and
+#' ordered variables will be included, unless \code{data} is a single
+#' incomplete \code{data.frame}, in which case only numeric variables can be
+#' used with FIML estimation. Other variable types will be removed.
+#' @param exclude character. Optional vector of variable names to exclude from
+#' the analysis.
+#' @param fewImps logical. If \code{TRUE}, use the estimate of FMI that applies
+#' a correction to the estimated between-imputation variance. Recommended when
+#' there are few imputations; makes little difference when there are many
+#' imputations. Ignored when \code{data} is not a list of imputed data sets.
+#' @return \code{fmi} returns a list with at least 2 of the following:
+#' \item{Covariances}{A list of symmetric matrices: (1) the estimated/pooled
+#' covariance matrix, or a list of group-specific matrices (if applicable) and
+#' (2) a matrix of FMI, or a list of group-specific matrices (if applicable).
+#' Only available if \code{method = "saturated"}.} \item{Variances}{The
+#' estimated/pooled variance for each numeric variable. Only available if
+#' \code{method = "null"} (otherwise, it is on the diagonal of Covariances).}
+#' \item{Means}{The estimated/pooled mean for each numeric variable.}
+#' \item{Thresholds}{The estimated/pooled threshold(s) for each
+#' ordered-categorical variable.} \item{message}{A message indicating caution
+#' when the null model is used.}
+#' @author Mauricio Garnier Villarreal (University of Kansas;
+#' \email{mauricio.garniervillarreal@@marquette.edu}) Terrence Jorgensen
+#' (University of Amsterdam; \email{TJorgensen314@@gmail.com})
+#' @references Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse
+#' in surveys}. New York, NY: Wiley.
+#'
+#' Savalei, V. & Rhemtulla, M. (2012). On obtaining estimates of the fraction
+#' of missing information from full information maximum likelihood.
+#' \emph{Structural Equation Modeling, 19}(3), 477--494.
+#' doi:10.1080/10705511.2012.687669
+#'
+#' Wagner, J. (2010). The fraction of missing information as a tool for
+#' monitoring the quality of survey data. \emph{Public Opinion Quarterly,
+#' 74}(2), 223--243. doi:10.1093/poq/nfq007
+#' @examples
+#'
+#' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
+#'                                       "ageyr","agemo","school")]
+#' set.seed(12345)
+#' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
+#' age <- HSMiss$ageyr + HSMiss$agemo/12
+#' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
+#'
+#' ## calculate FMI (using FIML, provide partially observed data set)
+#' (out1 <- fmi(HSMiss, exclude = "school"))
+#' (out2 <- fmi(HSMiss, exclude = "school", method = "null"))
+#' (out3 <- fmi(HSMiss, varnames = c("x5","x6","x7","x8","x9")))
+#' (out4 <- fmi(HSMiss, group = "school"))
+#'
+#' \dontrun{
+#' ## ordered-categorical data
+#' data(datCat)
+#' lapply(datCat, class)
+#' ## impose missing values
+#' set.seed(123)
+#' for (i in 1:8) datCat[sample(1:nrow(datCat), size = .1*nrow(datCat)), i] <- NA
+#' ## impute data m = 3 times
+#' library(Amelia)
+#' set.seed(456)
+#' impout <- amelia(datCat, m = 3, noms = "g", ords = paste0("u", 1:8), p2s = FALSE)
+#' imps <- impout$imputations
+#' ## calculate FMI, using list of imputed data sets
+#' fmi(imps, group = "g")
+#' }
+#'
+#' @export
+fmi <- function(data, method = "saturated", group = NULL, ords = NULL,
+                varnames = NULL, exclude = NULL, fewImps = FALSE) {
+  fiml <- is.data.frame(data)
+  ## check for single data set or list of imputed data sets
+  data1 <- if (fiml) data else data[[1]]
+  ## select user-specified variables
+  vars <- if (is.character(varnames)) varnames else colnames(data1)
+  ## remove grouping variable and user-specified exclusions, if applicable
+  vars <- setdiff(vars, c(group, exclude))
+  ## check classes
+  ordvars <- vars[sapply(data1[vars], is.ordered)]
+  if (!is.null(ords)) ordvars <- c(ordvars, ords)
+  numvars <- vars[sapply(data1[vars], is.numeric)]
+  vars <- union(numvars, ordvars)
+  numvars <- setdiff(vars, ordvars)
+  if (fiml) {
+    if (length(ordvars)) message(c("By providing a single data set, only the ",
+                                   "FIML option is available to calculate FMI,",
+                                   " which requires continuous variables. The ",
+                                   "following variables were removed: ",
+                                   paste(ordvars, collapse = ", ")))
+    if (!length(numvars)) stop("No numeric variables were provided.")
+    vars <- numvars
+  }
+
+  ## construct model
+  covstruc <- outer(vars, vars, function(x, y) paste(x, "~~", y))
+  if (method == "saturated" | method == "sat") {
+    diag(covstruc)[which(ordvars %in% vars)] <- ""
+    model <- covstruc[lower.tri(covstruc, diag = TRUE)]
+  } else if (method == "null") model <- diag(covstruc)
+  if (length(numvars)) model <- c(model, paste(numvars, "~1"))
+
+  ## fit model
+  if (fiml) {
+    fit <- lavaan::lavaan(model, data = data, missing = "fiml", group = group)
+    comb.results <- lavaan::parameterEstimates(fit, fmi = TRUE, zstat = FALSE,
+                                               pvalue = FALSE, ci = FALSE)
+    nG <- lavInspect(fit, "ngroups")
+    if (nG == 1L) comb.results$group <- 1L
+    group.label <- lavInspect(fit, "group.label")
   } else {
-    vars <- colnames(dat.imp[[1]])
+    fit <- lavaan.mi(model, data, group = group, ordered = ordvars, auto.th = TRUE)
+    comb.results <- getMethod("summary","lavaan.mi")(fit, fmi = TRUE, ci = FALSE,
+                                                     add.attributes = FALSE)
+    nG <- lavListInspect(fit, "ngroups")
+    if (nG == 1L) comb.results$group <- 1L
+    group.label <- lavListInspect(fit, "group.label")
+    if (fewImps) {
+      comb.results["fmi1"] <- NULL
+      names(comb.results)[names(comb.results) == "fmi2"] <- "fmi"
+    } else {
+      comb.results["fmi2"] <- NULL
+      names(comb.results)[names(comb.results) == "fmi1"] <- "fmi"
+    }
+    for (i in c("t","df","pvalue","riv")) comb.results[i] <- NULL
   }
-  
-  if(!is.null(group)){
-    vars <- vars[vars!=group]
-  }
-  
-  if(!is.null(exclude)){
-    vars <- vars[vars!=exclude]
-  }
-  
-  if(method == "saturated" | method == "sat"){
-    par.tab <- satParFMI(dat.imp, var.names=vars, groups=group) 
-  }
-  if(method == "null"){
-    par.tab <- nullParFMI(dat.imp, var.names=vars, groups=group)
-  }
-    
-  comb.results1 <- cfa.mi(par.tab, dat.imp, chi="none", meanstructure = TRUE, group = group)
-  
-  comb.results <- inspect(comb.results1, "impute")[[2]]  ## FIXME: can't just be lavInspect because it is a lavaanStar
-  
-  comb.results <- data.frame(comb.results[,c("lhs","op","rhs","group")], 
-                             round(lavaan::parameterEstimates(comb.results1)[,"est"], digits), 
-                             round(comb.results[,c("fmi1","fmi2")], digits))
-  
-  colnames(comb.results) <- c('lhs', 'op', 'rhs', 'group', 'coef', 'fmi.1', 'fmi.2')
-  
-  variances <- comb.results[comb.results$lhs==comb.results$rhs,]
-  
-  variances <- data.frame(variances[,"lhs"], variances[,"group"], variances[,"coef"],
-                          variances[,"fmi.1"], variances[,"fmi.2"])
-  
-  colnames(variances) <- c('var', 'group', 'coef', 'fmi.1', 'fmi.2')
-  
-  var.means <- comb.results[comb.results$op=="~1",]
-  
-  var.means <- data.frame(var.means[,"lhs"], var.means[,"group"], var.means[,"coef"],
-                          var.means[,"fmi.1"], var.means[,"fmi.2"])
-  
-  colnames(var.means) <- c('var', 'group', 'coef', 'fmi.1', 'fmi.2')
-  
-  if(method == "null"){
-    mes <- "These estimates used the null model, they may not be as precise as the saturated model estimates"
-    results<-list(Variances=variances, Means=var.means, Message=mes)
+
+  ## Variances from null model, if applicable
+  if (method == "null") {
+    if (length(numvars)) {
+      Variances <- comb.results[comb.results$lhs == comb.results$rhs,
+                                c("lhs","group","est","fmi")]
+      colnames(Variances)[c(1, 3)] <- c("variable","coef")
+      if (nG > 1L) Variances$group <- group.label[Variances$group]
+      class(Variances) <- c("lavaan.data.frame","data.frame")
+      ## start list of results
+      results <- list(Variances = Variances)
+    } else results <- list()
   } else {
-    results<-list(Variances=variances, Means=var.means)
+    ## covariances from saturated model, including polychorics (if applicable)
+    if (fiml) {
+      covmat <- lavInspect(fit, "theta")
+      if (nG == 1L) covmat <- list(covmat)
+    } else {
+      useImps <- sapply(fit@convergence, "[[", "converged")
+      m <- sum(useImps)
+      if (nG == 1L) {
+        ThetaList <- lapply(fit@coefList[useImps], function(x) x$theta)
+        covmat <- list(Reduce("+", ThetaList) / m)
+      } else {
+        covmat <- list()
+        for (i in group.label) {
+          groupList <- lapply(fit@coefList[useImps],"[[", i)
+          ThetaList <- lapply(groupList, function(x) x$theta)
+          covmat[[i]] <- Reduce("+", ThetaList) / m
+        }
+      }
+    }
+
+    fmimat <- covmat
+    covars <- comb.results[comb.results$op == "~~", c("lhs","rhs","group","est","fmi")]
+    for (i in 1:nG) {
+      fmimat[[i]][as.matrix(covars[covars$group == i, 1:2])] <- covars$fmi[covars$group == i]
+      fmimat[[i]][as.matrix(covars[covars$group == i, 2:1])] <- covars$fmi[covars$group == i]
+    }
+    if (nG == 1L) {
+      Covariances <- list(coef = covmat[[1]], fmi = fmimat[[1]])
+    } else Covariances <- list(coef = covmat, fmi = fmimat)
+    ## start list of results
+    results <- list(Covariances = Covariances)
   }
-  
-  return(results)
+
+  ## Means, if applicable
+  if (length(numvars)) {
+    results$Means <- comb.results[comb.results$op == "~1" & comb.results$lhs %in% numvars,
+                                  c("lhs","group","est","fmi")]
+    colnames(results$Means)[c(1, 3)] <- c("variable","coef")
+    if (nG > 1L) results$Means$group <- group.label[results$Means$group]
+    class(results$Means) <- c("lavaan.data.frame","data.frame")
+  }
+  ## Thresholds, if  applicable
+  if (length(ordvars)) {
+    results$Thresholds <- comb.results[comb.results$op == "|",
+                                  c("lhs","rhs","group","est","fmi")]
+    colnames(results$Thresholds)[c(1, 2, 4)] <- c("variable","threshold","coef")
+    if (nG > 1L) results$Thresholds$group <- group.label[results$Thresholds$group]
+    class(results$Thresholds) <- c("lavaan.data.frame","data.frame")
+  }
+
+  ## return results, with message if using null model
+  if (method == "null")
+    results$message <- paste("Null-model estimates may not be as",
+                             "precise as saturated-model estimates.")
+  results
 }
 
-#### function to produce a parameter table for the saturated model
-satParFMI <- function(dat.imp, var.names=NULL, groups=NULL){
-  
-  if(!is.null(groups)){
-    ngroups <- length(table(dat.imp[[1]][,groups]))
-  } else {
-    ngroups <- 1
-  }
-  
-  # gets the parameter table from the null model
-  par.null <- nullParFMI(dat.imp, var.names, groups=groups)
-  lhs.diag <- par.null$lhs
-  op.diag <- par.null$op
-  rhs.diag <- par.null$rhs
-  gnull <- par.null$group
-  #combine the variable names to set al the covariances
-  combs <- t(combn(var.names, 2))
-  lhs.up <- rep(combs[, 1],times=ngroups)
-  op.up <- rep("~~", length(lhs.up))
-  rhs.up <- rep(combs[, 2],times=ngroups)
-  galt <- sort(rep(1:ngroups,times=length(lhs.up)/ngroups))
-  #put together the null table and the covariances
-  lhs.all <- c(lhs.up, lhs.diag)
-  id <- seq(1:length(lhs.all))
-  op.all <- c(op.up, op.diag)
-  rhs.all <- c(rhs.up, rhs.diag)
-  user <- rep(1,length(lhs.all))
-  group <- as.integer(c(galt,gnull))
-  free <- as.integer(id)
-  ustart <- rep(NA, length(lhs.all))
-  exo <- rep(0, length(lhs.all))
-  label <- rep("", length(lhs.all))
-  plabel <- rep("", length(lhs.all))
-  par.sat <- list(id, lhs.all, op.all, rhs.all, user, group,
-                  free, ustart, exo, label, plabel)
-  names(par.sat) <- c("id", "lhs", "op", "rhs", "user", "group", "free", "ustart", "exo", "label", "plabel")
-  return(par.sat)
-}
 
-#### function to produce a parameter table for the null model
-nullParFMI <- function(dat.imp, var.names=NULL, groups=NULL){
-  
-  if(!is.null(groups)){
-    ngroups <- length(table(dat.imp[[1]][,groups]))
-  } else {
-    ngroups <- 1
-  }
-  
-  lhs.diag1 <- rep(c(var.names),times=ngroups)
-  op.diag1 <- rep("~~",ngroups*(length(var.names)))
-  rhs.diag1 <- rep(var.names,times=ngroups)
-  group1 <- sort(rep(1:ngroups,times=length(lhs.diag1)/ngroups))
-  
-  lhs.diag2 <- rep(c(var.names),times=ngroups)
-  op.diag2 <- rep("~1",ngroups*(length(var.names)))
-  rhs.diag2 <- rep("",ngroups*length(var.names))
-  group2 <- sort(rep(1:ngroups,times=length(lhs.diag2)/ngroups))
-  
-  lhs.diag <- c(lhs.diag1, lhs.diag2)
-  op.diag <- c(op.diag1, op.diag2)
-  rhs.diag <- c(rhs.diag1, rhs.diag2)
-  group <- c(group1, group2)
-  first <- data.frame(lhs.diag,op.diag,rhs.diag,group)
-  first <- first[order(first$group),]
-  id <- seq(1:length(lhs.diag))
-  user <- rep(1,length(lhs.diag))
-  free <- as.integer(id)
-  ustart <- rep(NA, length(lhs.diag))
-  exo <- rep(0, length(lhs.diag))
-  label <- rep("", length(lhs.diag))
-  plabel <- rep("", length(lhs.diag))
-  null.sat.fmi <- list(id, as.character(first$lhs.diag), as.character(first$op.diag), 
-                       as.character(first$rhs.diag), user, first$group,
-                       free, ustart, exo, label, plabel)
-  names(null.sat.fmi) <- c("id","lhs","op","rhs","user","group","free","ustart","exo","label","plabel")
-  return(null.sat.fmi)
-}

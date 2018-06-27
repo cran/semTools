@@ -1,26 +1,88 @@
-mvrnonnorm <- function(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical = FALSE) {
-    p <- length(mu)
-    if (!all(dim(Sigma) == c(p, p))) stop("incompatible arguments")
-    eS <- eigen(Sigma, symmetric = TRUE)
-    ev <- eS$values
-    if (!all(ev >= -1e-06 * abs(ev[1L]))) 
-        stop("'Sigma' is not positive definite")
-	X <- NULL
-	if(is.null(skewness) && is.null(kurtosis)) {
-		X <- MASS::mvrnorm(n=n, mu=mu, Sigma=Sigma, empirical = empirical)
-	} else {
-		if(empirical) warnings("The empirical argument does not work when the Vale and Maurelli's method is used.")
-		if(is.null(skewness)) skewness <- rep(0, p)
-		if(is.null(kurtosis)) kurtosis <- rep(0, p)
-		Z <- ValeMaurelli1983copied(n = n, COR = cov2cor(Sigma), skewness = skewness, kurtosis = kurtosis)
-		TMP <- scale(Z, center = FALSE, scale = 1/sqrt(diag(Sigma)))[,,drop=FALSE]
-		X <- sweep(TMP, MARGIN=2, STATS=mu, FUN="+")
-	}	
-	X
+### Yves Rosseel, Sunthud Pornprasertmanit, & Terrence D. Jorgensen
+### Last updated: 9 March 2018
+
+
+#' Generate Non-normal Data using Vale and Maurelli (1983) method
+#'
+#' Generate Non-normal Data using Vale and Maurelli (1983) method. The function
+#' is designed to be as similar as the popular \code{mvrnorm} function in the
+#' \code{MASS} package. The codes are copied from \code{mvrnorm} function in
+#' the \code{MASS} package for argument checking and \code{lavaan} package for
+#' data generation using Vale and Maurelli (1983) method.
+#'
+#'
+#' @importFrom stats cov2cor
+#'
+#' @param n Sample size
+#' @param mu A mean vector. If elements are named, those will be used as
+#' variable names in the returned data matrix.
+#' @param Sigma A positive-definite symmetric matrix specifying the covariance
+#' matrix of the variables. If rows or columns are named (and \code{mu} is
+#' unnamed), those will be used as variable names in the returned data matrix.
+#' @param skewness A vector of skewness of the variables
+#' @param kurtosis A vector of excessive kurtosis of the variables
+#' @param empirical If \code{TRUE}, \code{mu} and \code{Sigma} specify the
+#' empirical rather than population mean and covariance matrix
+#' @return A data matrix
+#' @author The original function is the \code{\link[lavaan]{simulateData}}
+#' function written by Yves Rosseel in the \code{lavaan} package. The function
+#' is adjusted for a convenient usage by Sunthud Pornprasertmanit
+#' (\email{psunthud@@gmail.com}). Terrence D. Jorgensen added the feature to
+#' retain variable names from \code{mu} or \code{Sigma}.
+#' @references Vale, C. D. & Maurelli, V. A. (1983). Simulating multivariate
+#' nonormal distributions. \emph{Psychometrika, 48}(3), 465--471.
+#' doi:10.1007/BF02293687
+#' @examples
+#'
+#' set.seed(123)
+#' mvrnonnorm(20, c(1, 2), matrix(c(10, 2, 2, 5), 2, 2),
+#' 	skewness = c(5, 2), kurtosis = c(3, 3))
+#' ## again, with variable names specified in mu
+#' set.seed(123)
+#' mvrnonnorm(20, c(a = 1, b = 2), matrix(c(10, 2, 2, 5), 2, 2),
+#' 	skewness = c(5, 2), kurtosis = c(3, 3))
+#'
+#' @export
+mvrnonnorm <- function(n, mu, Sigma, skewness = NULL,
+                       kurtosis = NULL, empirical = FALSE) {
+  ## number of variables
+  p <- length(mu)
+  if (!all(dim(Sigma) == c(p, p))) stop("incompatible arguments")
+  ## save variable names, if they exist
+  varnames <- names(mu)
+  if (is.null(varnames)) varnames <- rownames(Sigma)
+  if (is.null(varnames)) varnames <- colnames(Sigma)
+  ## check for NPD
+  eS <- eigen(Sigma, symmetric = TRUE)
+  ev <- eS$values
+  if (!all(ev >= -1e-06 * abs(ev[1L])))
+    stop("'Sigma' is not positive definite")
+  ## simulate X <- NULL
+  if (is.null(skewness) && is.null(kurtosis)) {
+    X <- MASS::mvrnorm(n = n, mu = mu, Sigma = Sigma, empirical = empirical)
+  } else {
+    if (empirical) warning(c("The empirical argument does not work when the ",
+                             "Vale and Maurelli's method is used."))
+    if (is.null(skewness)) skewness <- rep(0, p)
+    if (is.null(kurtosis)) kurtosis <- rep(0, p)
+    Z <- ValeMaurelli1983copied(n = n, COR = cov2cor(Sigma),
+                                skewness = skewness, kurtosis = kurtosis)
+    TMP <- scale(Z, center = FALSE, scale = 1/sqrt(diag(Sigma)))[ , , drop = FALSE]
+    X <- sweep(TMP, MARGIN = 2, STATS = mu, FUN = "+")
+  }
+  colnames(X) <- varnames
+  X
 }
 
-# Copied from lavaan package
-ValeMaurelli1983copied <- function(n=100L, COR, skewness, kurtosis, debug = FALSE) {
+
+## ----------------
+## Hidden Functions
+## ----------------
+
+## Copied from lavaan package
+#' @importFrom stats nlminb
+ValeMaurelli1983copied <- function(n = 100L, COR, skewness, kurtosis,
+                                   debug = FALSE) {
 
     fleishman1978_abcd <- function(skewness, kurtosis) {
         system.function <- function(x, skewness, kurtosis) {
@@ -33,10 +95,9 @@ ValeMaurelli1983copied <- function(n=100L, COR, skewness, kurtosis, debug = FALS
             sum(eq^2) ## SS
         }
 
-        out <- nlminb(start=c(1,0,0), objective=system.function,
-                      scale=10,
-                      control=list(trace=0),
-                      skewness=skewness, kurtosis=kurtosis)
+        out <- nlminb(start = c(1, 0, 0), objective = system.function,
+                      scale = 10, control = list(trace = 0),
+                      skewness = skewness, kurtosis = kurtosis)
         if(out$convergence != 0) warning("no convergence")
         b. <- out$par[1L]; c. <- out$par[2L]; d. <- out$par[3L]; a. <- -c.
         c(a.,b.,c.,d.)
@@ -122,3 +183,4 @@ ValeMaurelli1983copied <- function(n=100L, COR, skewness, kurtosis, debug = FALS
 
     X
 }
+
