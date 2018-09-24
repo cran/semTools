@@ -6,10 +6,6 @@
 \alias{sem.2stage}
 \alias{growth.2stage}
 \alias{lavaan.2stage}
-\alias{lavaan.2stage}
-\alias{cfa.2stage}
-\alias{sem.2stage}
-\alias{growth.2stage}
 \title{Fit a lavaan model using 2-Stage Maximum Likelihood (TSML) estimation for
 missing data.}
 \usage{
@@ -127,8 +123,8 @@ anova(out, outc)
 
 }
 \references{
-Savalei, V., & Bentler, P. M. (2009). A two-stage approach to
-missing data: Theory and application to auxiliary variables.
+Savalei, V., & Bentler, P. M. (2009). A two-stage approach to missing data:
+Theory and application to auxiliary variables.
 \emph{Structural Equation Modeling, 16}(3), 477--497.
 doi:10.1080/10705510903008238
 
@@ -141,6 +137,5 @@ doi:10.1080/10705511.2014.882692
 \code{\linkS4class{twostage}}
 }
 \author{
-Terrence D. Jorgensen (University of Amsterdam;
-\email{TJorgensen314@gmail.com})
+Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }

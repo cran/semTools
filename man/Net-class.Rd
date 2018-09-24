@@ -5,8 +5,6 @@
 \alias{Net-class}
 \alias{show,Net-method}
 \alias{summary,Net-method}
-\alias{show,Net-method}
-\alias{summary,Net-method}
 \title{Class For the Result of Nesting and Equivalence Testing}
 \usage{
 \S4method{show}{Net}(object)
@@ -48,6 +46,5 @@ multiple models
 \code{\link{net}}
 }
 \author{
-Terrence D. Jorgensen (University of Amsterdam;
-\email{TJorgensen314@gmail.com})
+Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }

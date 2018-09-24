@@ -1,129 +1,152 @@
 ### Sunthud Pornprasertmanit & Yves Rosseel
-### Last updated: 13 May 2018
+### Last updated: 1 September 2018
 
-#' Measurement Invariance Tests Within Person
-#'
-#' Testing measurement invariance across timepoints (longitudinal) or any
-#' context involving the use of the same scale in one case (e.g., a dyad case
-#' with husband and wife answering the same scale). The measurement invariance
-#' uses a typical sequence of model comparison tests. This function currently
-#' works with only one scale.
-#'
-#' If \code{strict = FALSE}, the following four models are tested in order:
-#' \enumerate{
-#' \item Model 1: configural invariance. The same factor structure is
-#'   imposed on all units.
-#' \item Model 2: weak invariance. The factor loadings are constrained to be
-#'  equal across units.
-#' \item Model 3: strong invariance. The factor loadings and intercepts are
-#'  constrained to be equal across units.
-#' \item Model 4: The factor loadings, intercepts and means are constrained to
-#'  be equal across units.
-#' }
-#'
-#' Each time a more restricted model is fitted, a \eqn{\Delta\chi^2} test is
-#' reported, comparing the current model with the previous one, and comparing
-#' the current model to the baseline model (Model 1). In addition, the
-#' difference in CFA is also reported (\eqn{\Delta}CFI).
-#'
-#' If \code{strict = TRUE}, the following five models are tested in order:
-#'
-#' \enumerate{
-#' \item Model 1: configural invariance. The same factor structure is imposed
-#'  on all units.
-#' \item Model 2: weak invariance. The factor loadings are constrained to be
-#'  equal across units.
-#' \item Model 3: strong invariance. The factor loadings and intercepts are
-#'  constrained to be equal across units.
-#' \item Model 4: strict invariance. The factor loadings, intercepts and
-#'  residual variances are constrained to be equal across units.
-#' \item Model 5: The factor loadings, intercepts, residual variances and
-#'  means are constrained to be equal across units.
-#' }
-#'
-#' Note that if the \eqn{\chi^2} test statistic is scaled (eg. a Satorra-Bentler
-#' or Yuan-Bentler test statistic), a special version of the \eqn{\Delta\chi^2}
-#' test is used as described in \url{http://www.statmodel.com/chidiff.shtml}
-#'
-#' @aliases longInvariance longInvariance
-#' @param model lavaan syntax or parameter table
-#' @param varList A list containing indicator names of factors used in the
-#' invariance testing, such as the list that the first element is the vector of
-#' indicator names in the first timepoint and the second element is the vector
-#' of indicator names in the second timepoint. The order of indicator names
-#' should be the same (but measured in different times or different units).
-#' @param auto The order of autocorrelation on the measurement errors on the
-#' similar items across factor (e.g., Item 1 in Time 1 and Time 2). If 0 is
-#' specified, the autocorrelation will be not imposed. If 1 is specified, the
-#' autocorrelation will imposed for the adjacent factor listed in
-#' \code{varList}. The maximum number can be specified is the number of factors
-#' specified minus 1. If \code{"all"} is specified, the maximum number of order
-#' will be used.
-#' @param constrainAuto If \code{TRUE}, the function will equate the
-#' auto-\emph{covariance} to be equal within the same item across factors. For
-#' example, the covariance of item 1 in time 1 and time 2 is equal to the
-#' covariance of item 1 in time 2 and time 3.
-#' @param fixed.x See \code{\link[lavaan]{lavaan}.}
-#' @param std.lv See \code{\link[lavaan]{lavaan}.}
-#' @param group See \code{\link[lavaan]{lavaan}.}
-#' @param group.equal See \code{\link[lavaan]{lavaan}.}
-#' @param group.partial See \code{\link[lavaan]{lavaan}.}
-#' @param strict If \code{TRUE}, the sequence requires strict invariance. See
-#' @param warn See \code{\link[lavaan]{lavaan}.}
-#' @param debug See \code{\link[lavaan]{lavaan}.}
-#' details for more information.
-#' @param quiet If \code{FALSE} (default), a summary is printed out containing
-#' an overview of the different models that are fitted, together with some
-#' model comparison tests. If \code{TRUE}, no summary is printed.
-#' @param fit.measures Fit measures used to calculate the differences between
-#'   nested models.
-#' @param baseline.model custom baseline model passed to
-#'  \code{\link[lavaan]{fitMeasures}}
-#' @param method The method used to calculate likelihood ratio test. See
-#'   \code{\link[lavaan]{lavTestLRT}} for available options
-#' @param ... Additional arguments in the \code{\link[lavaan]{lavaan}}
-#' function. See also \code{\link[lavaan]{lavOptions}}
-#' @return Invisibly, all model fits in the sequence are returned as a list.
-#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
-#'
-#'  Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
-#'
-#'  Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
-#' @seealso \code{\link{measurementinvariance}} For the measurement invariance
-#' test between groups
-#' @references Vandenberg, R. J., and Lance, C. E. (2000). A review and
-#' synthesis of the measurement invariance literature: Suggestions, practices,
-#' and recommendations for organizational research. \emph{Organizational
-#' Research Methods, 3}(1), 4--70. doi:10.1177/109442810031002
-#' @examples
-#'
-#' model <- ' f1t1 =~ y1t1 + y2t1 + y3t1
-#'            f1t2 =~ y1t2 + y2t2 + y3t2
-#' 			      f1t3 =~ y1t3 + y2t3 + y3t3 '
-#'
-#' ## Create list of variables
-#' var1 <- c("y1t1", "y2t1", "y3t1")
-#' var2 <- c("y1t2", "y2t2", "y3t2")
-#' var3 <- c("y1t3", "y2t3", "y3t3")
-#' constrainedVar <- list(var1, var2, var3)
-#'
-#' ## Invariance of the same factor across timepoints
-#' longInvariance(model, auto = 1, constrainAuto = TRUE,
-#'                varList = constrainedVar, data = exLong)
-#'
-#' ## Invariance of the same factor across timepoints and groups
-#' longInvariance(model, auto = 1, constrainAuto = TRUE,
-#'                varList = constrainedVar, data = exLong, group = "sex",
-#' 	              group.equal = c("loadings", "intercepts"))
-#'
-#' @export
+##' Measurement Invariance Tests Within Person
+##'
+##' Testing measurement invariance across timepoints (longitudinal) or any
+##' context involving the use of the same scale in one case (e.g., a dyad case
+##' with husband and wife answering the same scale). The measurement invariance
+##' uses a typical sequence of model comparison tests. This function currently
+##' works with only one scale, and only with continuous indicators.
+##'
+##' If \code{strict = FALSE}, the following four models are tested in order:
+##' \enumerate{
+##' \item Model 1: configural invariance. The same factor structure is
+##'   imposed on all units.
+##' \item Model 2: weak invariance. The factor loadings are constrained to be
+##'  equal across units.
+##' \item Model 3: strong invariance. The factor loadings and intercepts are
+##'  constrained to be equal across units.
+##' \item Model 4: The factor loadings, intercepts and means are constrained to
+##'  be equal across units.
+##' }
+##'
+##' Each time a more restricted model is fitted, a \eqn{\Delta\chi^2} test is
+##' reported, comparing the current model with the previous one, and comparing
+##' the current model to the baseline model (Model 1). In addition, the
+##' difference in CFA is also reported (\eqn{\Delta}CFI).
+##'
+##' If \code{strict = TRUE}, the following five models are tested in order:
+##'
+##' \enumerate{
+##' \item Model 1: configural invariance. The same factor structure is imposed
+##'  on all units.
+##' \item Model 2: weak invariance. The factor loadings are constrained to be
+##'  equal across units.
+##' \item Model 3: strong invariance. The factor loadings and intercepts are
+##'  constrained to be equal across units.
+##' \item Model 4: strict invariance. The factor loadings, intercepts and
+##'  residual variances are constrained to be equal across units.
+##' \item Model 5: The factor loadings, intercepts, residual variances and
+##'  means are constrained to be equal across units.
+##' }
+##'
+##' Note that if the \eqn{\chi^2} test statistic is scaled (eg. a Satorra-Bentler
+##' or Yuan-Bentler test statistic), a special version of the \eqn{\Delta\chi^2}
+##' test is used as described in \url{http://www.statmodel.com/chidiff.shtml}
+##'
+##'
+##' @param model lavaan syntax or parameter table
+##' @param varList A list containing indicator names of factors used in the
+##'   invariance testing, such as the list that the first element is the vector
+##'   of indicator names in the first timepoint and the second element is the
+##'   vector of indicator names in the second timepoint. The order of indicator
+##'   names should be the same (but measured in different times or different
+##'   units).
+##' @param auto The order of autocorrelation on the measurement errors on the
+##'   similar items across factor (e.g., Item 1 in Time 1 and Time 2). If 0 is
+##'   specified, the autocorrelation will be not imposed. If 1 is specified,
+##'   the autocorrelation will imposed for the adjacent factor listed in
+##'   \code{varList}. The maximum number can be specified is the number of
+##'   factors specified minus 1. If \code{"all"} is specified, the maximum
+##'   number of order will be used.
+##' @param constrainAuto If \code{TRUE}, the function will equate the
+##'   auto-\emph{covariance} to be equal within the same item across factors.
+##'   For example, the covariance of item 1 in time 1 and time 2 is equal to
+##'   the covariance of item 1 in time 2 and time 3.
+##' @param fixed.x See \code{\link[lavaan]{lavaan}.}
+##' @param std.lv See \code{\link[lavaan]{lavaan}.}
+##' @param group See \code{\link[lavaan]{lavaan}.}
+##' @param group.equal See \code{\link[lavaan]{lavaan}.}
+##' @param group.partial See \code{\link[lavaan]{lavaan}.}
+##' @param strict If \code{TRUE}, the sequence requires strict invariance. See
+##' @param warn See \code{\link[lavaan]{lavaan}.}
+##' @param debug See \code{\link[lavaan]{lavaan}.} details for more information.
+##' @param quiet If \code{FALSE} (default), a summary is printed out containing
+##'   an overview of the different models that are fitted, together with some
+##'   model comparison tests. If \code{TRUE}, no summary is printed.
+##' @param fit.measures Fit measures used to calculate the differences between
+##'   nested models.
+##' @param baseline.model custom baseline model passed to
+##'  \code{\link[lavaan]{fitMeasures}}
+##' @param method The method used to calculate likelihood ratio test. See
+##'   \code{\link[lavaan]{lavTestLRT}} for available options
+##' @param ... Additional arguments in the \code{\link[lavaan]{lavaan}}
+##'   function. See also \code{\link[lavaan]{lavOptions}}
+##'
+##' @return Invisibly, all model fits in the sequence are returned as a list.
+##'
+##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+##'
+##'  Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
+##'
+##'  Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
+##'
+##' @references Vandenberg, R. J., and Lance, C. E. (2000). A review and
+##'   synthesis of the measurement invariance literature: Suggestions,
+##'   practices, and recommendations for organizational research.
+##'   \emph{Organizational Research Methods, 3}(1), 4--70.
+##'   doi:10.1177/109442810031002
+##'
+##' @examples
+##'
+##' model <- ' f1t1 =~ y1t1 + y2t1 + y3t1
+##'            f1t2 =~ y1t2 + y2t2 + y3t2
+##' 			      f1t3 =~ y1t3 + y2t3 + y3t3 '
+##'
+##' ## Create list of variables
+##' var1 <- c("y1t1", "y2t1", "y3t1")
+##' var2 <- c("y1t2", "y2t2", "y3t2")
+##' var3 <- c("y1t3", "y2t3", "y3t3")
+##' constrainedVar <- list(var1, var2, var3)
+##'
+##' ## Invariance of the same factor across timepoints
+##' longInvariance(model, auto = 1, constrainAuto = TRUE,
+##'                varList = constrainedVar, data = exLong)
+##'
+##' ## Invariance of the same factor across timepoints and groups
+##' longInvariance(model, auto = 1, constrainAuto = TRUE,
+##'                varList = constrainedVar, data = exLong, group = "sex",
+##' 	              group.equal = c("loadings", "intercepts"))
+##'
+##' @name longInvariance-deprecated
+##' @usage
+##' longInvariance(model, varList, auto = "all", constrainAuto = FALSE,
+##'                fixed.x = TRUE, std.lv = FALSE, group = NULL,
+##'                group.equal = "", group.partial = "", strict = FALSE,
+##'                warn = TRUE, debug = FALSE, quiet = FALSE,
+##'                fit.measures = "default", baseline.model = NULL,
+##'                method = "satorra.bentler.2001", ...)
+##' @seealso \code{\link{semTools-deprecated}}
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
+##'
+##' @export
 longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE,
                            fixed.x = TRUE, std.lv = FALSE, group = NULL,
                            group.equal = "", group.partial = "", strict = FALSE,
                            warn = TRUE, debug = FALSE, quiet = FALSE,
                            fit.measures = "default", baseline.model = NULL,
                            method = "satorra.bentler.2001", ...) {
-	List <- list(...)
+
+  .Deprecated(msg = c("The longInvariance function is deprecated, and ",
+                      "it will cease to be included in future versions of ",
+                      "semTools. See help('semTools-deprecated) for details."))
+
+  List <- list(...)
 
 	# Find the number of groups
 	ngroups <- 1
@@ -354,8 +377,53 @@ longInvariance <- function(model, varList, auto = "all", constrainAuto = FALSE,
 ## Hidden Functions
 ## ----------------
 
-# freeParTable: Free elements in parameter table
+# rearrangeFreeElement: Rearrange the number listed in 'free' in parameter tables
+rearrangeFreeElement <- function(vec) {
+	vec2 <- vec
+	vec <- vec[vec != 0]
+	uvec <- unique(vec)
+	newvec <- 1:length(unique(vec))
+	vec2[vec2 != 0] <- newvec[match(vec, uvec)]
+	class(vec2) <- "integer"
+	vec2
+}
 
+# rearrangept: Rearrange parameter table and plabel
+rearrangept <- function(pt) {
+
+  createplabel <- function(num) {
+  	result <- paste0(".p", num, ".")
+  	result[num == 0] <- ""
+  	result
+  }
+
+	oldfree <- pt$free
+	newfree <- rearrangeFreeElement(oldfree)
+	oldplabel <- pt$plabel
+	newplabel <- createplabel(seq_along(pt$op))
+	eqpos <- which(pt$op == "==")
+	newplabel[eqpos] <- ""
+	if (length(eqpos) > 0) {
+		eqlhs <- pt$lhs[eqpos]
+		eqrhs <- pt$rhs[eqpos]
+		matchlhs <- match(eqlhs, oldplabel)
+		matchrhs <- match(eqrhs, oldplabel)
+		neweqlhs <- newplabel[matchlhs]
+		neweqrhs <- newplabel[matchrhs]
+		neweqlhs[is.na(matchlhs)] <- eqlhs[is.na(matchlhs)]
+		neweqrhs[is.na(matchrhs)] <- eqrhs[is.na(matchrhs)]
+		pt$lhs[eqpos] <- neweqlhs
+		pt$rhs[eqpos] <- neweqrhs
+	}
+	pt$free <- newfree
+	pt$plabel <- newplabel
+	pt
+}
+
+
+
+# freeParTable: Free elements in parameter table
+#FIXME: used in singleParamTest and partialInvariance
 freeParTable <- function(parTable, lhs, op, rhs, group, ustart = NA) {
 	parTable$start <- parTable$est <- parTable$se <- NULL
 	target <- cbind(lhs, op, rhs, group)
@@ -387,16 +455,8 @@ freeParTable <- function(parTable, lhs, op, rhs, group, ustart = NA) {
 	parTable
 }
 
-# removeEqCon: Remove equality constraints
-
-removeEqCon <- function(pt, element) {
-	pt <- lapply(pt, "[", -element)
-	pt$id <- seq_along(pt$id)
-	pt
-}
-
 # fixParTable: Fix elements in parameter table
-
+#FIXME: used in singleParamTest and partialInvariance
 fixParTable <- function(parTable, lhs, op, rhs, group, ustart = NA) {
 	parTable$start <- parTable$est <- parTable$se <- NULL
 	target <- cbind(lhs, op, rhs, group)
@@ -423,7 +483,7 @@ fixParTable <- function(parTable, lhs, op, rhs, group, ustart = NA) {
 }
 
 # constrainParTable: Impose equality constraints in any set of elements in the parameter table
-
+#FIXME: used in partialInvariance
 constrainParTable <- function(parTable, lhs, op, rhs, group) {
 	parTable$start <- parTable$est <- parTable$se <- NULL
 	target <- cbind(lhs, op, rhs, group)
@@ -441,7 +501,7 @@ constrainParTable <- function(parTable, lhs, op, rhs, group) {
 }
 
 # matchElement: Find the number of row that have the specification in vec (lhs, op, rhs, group)
-
+#FIXME: used in partialInvariance
 matchElement <- function(parTable, vec) {
 	if (is.null(parTable$group)) {
 		return(which((parTable$lhs == vec[1]) & (parTable$op == vec[2]) & (parTable$rhs == vec[3])))
@@ -450,50 +510,7 @@ matchElement <- function(parTable, vec) {
 	}
 }
 
-# rearrangeFreeElement: Rearrange the number listed in 'free' in parameter tables
-
-rearrangeFreeElement <- function(vec) {
-	vec2 <- vec
-	vec <- vec[vec != 0]
-	uvec <- unique(vec)
-	newvec <- 1:length(unique(vec))
-	vec2[vec2 != 0] <- newvec[match(vec, uvec)]
-	class(vec2) <- "integer"
-	vec2
-}
-
-createplabel <- function(num) {
-	result <- paste0(".p", num, ".")
-	result[num == 0] <- ""
-	result
-}
-
-# rearrangept: Rearrange parameter table and plabel
-
-rearrangept <- function(pt) {
-	oldfree <- pt$free
-	newfree <- rearrangeFreeElement(oldfree)
-	oldplabel <- pt$plabel
-	newplabel <- createplabel(seq_along(pt$op))
-	eqpos <- which(pt$op == "==")
-	newplabel[eqpos] <- ""
-	if (length(eqpos) > 0) {
-		eqlhs <- pt$lhs[eqpos]
-		eqrhs <- pt$rhs[eqpos]
-		matchlhs <- match(eqlhs, oldplabel)
-		matchrhs <- match(eqrhs, oldplabel)
-		neweqlhs <- newplabel[matchlhs]
-		neweqrhs <- newplabel[matchrhs]
-		neweqlhs[is.na(matchlhs)] <- eqlhs[is.na(matchlhs)]
-		neweqrhs[is.na(matchrhs)] <- eqrhs[is.na(matchrhs)]
-		pt$lhs[eqpos] <- neweqlhs
-		pt$rhs[eqpos] <- neweqrhs
-	}
-	pt$free <- newfree
-	pt$plabel <- newplabel
-	pt
-}
-
+#FIXME: used in partialInvariance
 getValue <- function(parTable, est, lhs, op, rhs, group) {
 	target <- cbind(lhs, op, rhs, group)
 	element <- apply(target, 1, matchElement, parTable = parTable)
@@ -503,6 +520,16 @@ getValue <- function(parTable, est, lhs, op, rhs, group) {
 	out
 }
 
+
+# removeEqCon: Remove equality constraints
+#FIXME: used in singleParamTest
+removeEqCon <- function(pt, element) {
+	pt <- lapply(pt, "[", -element)
+	pt$id <- seq_along(pt$id)
+	pt
+}
+
+#FIXME: used in singleParamTest
 patMerge <- function (pt1 = NULL, pt2 = NULL, remove.duplicated = FALSE,
                       fromLast = FALSE, warn = TRUE) {
   pt1 <- as.data.frame(pt1, stringsAsFactors = FALSE)

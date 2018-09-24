@@ -4,8 +4,8 @@
 \alias{monteCarloMed}
 \title{Monte Carlo Confidence Intervals to Test Complex Indirect Effects}
 \usage{
-monteCarloMed(expression, ..., ACM = NULL, object = NULL, rep = 20000,
-  CI = 95, plot = FALSE, outputValues = FALSE)
+monteCarloMed(expression, ..., ACM = NULL, object = NULL,
+  rep = 20000, CI = 95, plot = FALSE, outputValues = FALSE)
 }
 \arguments{
 \item{expression}{A character scalar representing the computation of an
@@ -111,7 +111,7 @@ b2param <- 1
 ## Asymptotic covariance matrix from analyses
 AC <- matrix(c(1, .00002, .00003,
                .00002, 1, .00002,
-					      .00003, .00002, 1), nrow = 3, byrow = TRUE)
+               .00003, .00002, 1), nrow = 3, byrow = TRUE)
 ## Compute CI do not include a plot
 monteCarloMed(med, coef1 = aparam, coef2 = b1param,
               coef3 = b2param, ACM = AC)

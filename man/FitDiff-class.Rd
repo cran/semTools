@@ -5,13 +5,11 @@
 \alias{FitDiff-class}
 \alias{show,FitDiff-method}
 \alias{summary,FitDiff-method}
-\alias{show,FitDiff-method}
-\alias{summary,FitDiff-method}
 \title{Class For Representing A Template of Model Fit Comparisons}
 \usage{
 \S4method{show}{FitDiff}(object)
 
-\S4method{summary}{FitDiff}(object, fit.measures = "default")
+\S4method{summary}{FitDiff}(object, fit.measures = "default", nd = 3)
 }
 \arguments{
 \item{object}{object of class \code{FitDiff}}
@@ -19,8 +17,10 @@
 \item{fit.measures}{\code{character} vector naming fit indices the user can
 request from \code{\link[lavaan]{fitMeasures}}. If \code{"default"}, the
 fit measures will be \code{c("chisq", "df", "pvalue", "cfi", "tli",
-"rmsea", "srmr", "aic", "bic")}. If \code{"all"}, all available fit measures
-will be returned.}
+"rmsea", "srmr", "aic", "bic")}. If \code{"all"}, all available fit
+measures will be returned.}
+
+\item{nd}{number of digits printed}
 }
 \description{
 This class contains model fit measures and model fit comparisons among
@@ -29,14 +29,15 @@ multiple models
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{The name of each model}
+\item{\code{name}}{\code{character}. The name of each model}
 
-\item{\code{nested}}{Model fit comparisons between adjacent nested models that are
-ordered based on their degrees of freedom (\emph{df})}
+\item{\code{model.class}}{\code{character}. One class to which each model belongs}
 
-\item{\code{ordernested}}{The order of nested models regarding to their \emph{df}}
+\item{\code{nested}}{\code{data.frame}. Model fit comparisons between adjacently
+nested models that are ordered by their degrees of freedom (\emph{df})}
 
-\item{\code{fit}}{Fit measures of all models specified in the \code{name} slot}
+\item{\code{fit}}{\code{data.frame}. Fit measures of all models specified in the
+\code{name} slot, ordered by their \emph{df}}
 }}
 
 \section{Objects from the Class}{
@@ -46,11 +47,11 @@ ordered based on their degrees of freedom (\emph{df})}
 
 \examples{
 
-HW.model <- ' visual =~ x1 + x2 + x3
+HS.model <- ' visual =~ x1 + x2 + x3
               textual =~ x4 + x5 + x6
               speed =~ x7 + x8 + x9 '
 
-out <- measurementInvariance(model = HW.model, data = HolzingerSwineford1939,
+out <- measurementInvariance(model = HS.model, data = HolzingerSwineford1939,
                              group = "school", quiet = TRUE)
 modelDiff <- compareFit(out)
 summary(modelDiff)
@@ -70,5 +71,8 @@ clipboard(modelDiff)
 \code{\link{compareFit}}; \code{\link{clipboard}}
 }
 \author{
-Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
+Terrence D. Jorgensen (University of Amsterdam;
+  \email{TJorgensen314@gmail.com})
+
+  Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
 }

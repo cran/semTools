@@ -19,9 +19,7 @@ functions a \emph{suite}. Our suites include:
   \code{\link{miPowerFit}}, and
   \code{\link{chisqSmallN}}}
 \item{Measurement Invariance:
-  \code{\link{measurementInvariance}},
-  \code{\link{measurementInvarianceCat}},
-  \code{\link{longInvariance}},
+  \code{\link{measEq.syntax}},
   \code{\link{partialInvariance}},
   \code{\link{partialInvarianceCat}}, and
   \code{\link{permuteMeasEq}}}

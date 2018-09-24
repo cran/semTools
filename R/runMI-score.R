@@ -1,7 +1,7 @@
 ### Terrence D. Jorgensen & Yves Rosseel
-### Last updated: 25 June 2018
-### classic score test (= Lagrange Multiplier test)
-### borrowed source code from lavaan/R/lav_test_score.R
+### Last updated: 15 September 2018
+### Pooled score test (= Lagrange Multiplier test) for multiple imputations
+### Borrowed source code from lavaan/R/lav_test_score.R
 
 ## this function can run two modes:
 ## MODE 1: 'add'
@@ -12,148 +12,155 @@
 
 
 
-#' Score Test for Multiple Imputations
-#'
-#' Score test (or Lagrange multiplier test) for lavaan models fitted to
-#' multiple imputed data sets. Statistics for releasing one or more
-#' fixed or constrained parameters in model can be calculated by pooling
-#' the gradient and information matrices pooled across imputed data sets
-#' using Rubin's (1987) rules, or by pooling the score test statistics
-#' across imputed data sets (Li, Meng, Raghunathan, & Rubin, 1991).
-#'
-#' @aliases lavTestScore.mi
-#' @importFrom lavaan lavListInspect parTable
-#' @importFrom stats cov pchisq pf
-#' @importFrom methods getMethod
-#'
-#' @param object An object of class \code{\linkS4class{lavaan}}.
-#' @param add Either a \code{character} string (typically between single
-#'  quotes) or a parameter table containing additional (currently fixed-to-zero)
-#'  parameters for which the score test must be computed.
-#' @param release Vector of \code{integer}s. The indices of the \emph{equality}
-#'  constraints that should be released. The indices correspond to the order of
-#'  the equality constraints as they appear in the parameter table.
-#' @param type \code{character} indicating which pooling method to use.
-#' \code{"Rubin"} indicates Rubin's (1987) rules will be applied to the
-#'  gradient and information, and those pooled values will be used to
-#'  calculate modification indices in the usual manner. \code{"D2"} (default),
-#' \code{"LMRR"}, or \code{"Li.et.al"} indicate that modification indices
-#'  calculated from each imputed data set will be pooled across imputations,
-#'  as described in Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010).
-#' @param scale.W \code{logical}. If \code{FALSE} (default), the pooled
-#'  information matrix is calculated as the weighted sum of the
-#'  within-imputation and between-imputation components. Otherwise, the pooled
-#'  information is calculated by scaling the within-imputation component by the
-#'  average relative increase in variance (ARIV; see Enders, 2010, p. 235).
-#'  Not recommended, and ignored (irrelevant) if \code{type = "D2"}.
-#' @param asymptotic \code{logical}. If \code{FALSE} (default when using
-#'  \code{add} to test adding fixed parameters to the model), the pooled test
-#'  will be returned as an \emph{F}-distributed variable with numerator
-#'  (\code{df1}) and denominator (\code{df2}) degrees of freedom.
-#'  If \code{TRUE}, the pooled \emph{F} statistic will be multiplied by its
-#'  \code{df1} on the assumption that its \code{df2} is sufficiently large
-#'  enough that the statistic will be asymptotically \eqn{\chi^2} distributed
-#'  with \code{df1}. When using the \code{release} argument, \code{asymptotic}
-#'  will be set to \code{TRUE} because (A)RIV can only be calculated for
-#'  \code{add}ed parameters.
-#' @param univariate \code{logical}. If \code{TRUE}, compute the univariate
-#'  score statistics, one for each constraint.
-#' @param cumulative \code{logical}. If \code{TRUE}, order the univariate score
-#'  statistics from large to small, and compute a series of multivariate
-#'  score statistics, each time including an additional constraint in the test.
-#' @param epc \code{logical}. If \code{TRUE}, and we are releasing existing
-#'  constraints, compute the expected parameter changes for the existing (free)
-#'  parameters (and any specified with \code{add}), if all constraints
-#'  were released. For EPCs associated with a particular (1-\emph{df})
-#'  constraint, only specify one parameter in \code{add} or one constraint in
-#'  \code{release}.
-#' @param verbose \code{logical}. Not used for now.
-#' @param warn \code{logical}. If \code{TRUE}, print out warnings if they occur.
-#'
-#' @return
-#'  A list containing at least one \code{data.frame}:
-#'  \itemize{
-#'    \item{\code{$test}: The total score test, with columns for the score
-#'      test statistic (\code{X2}), the degrees of freedom (\code{df}), and
-#'      a \emph{p} value under the \eqn{\chi^2} distribution (\code{p.value}).}
-#'    \item{\code{$uni}: Optional (if \code{univariate=TRUE}).
-#'      Each 1-\emph{df} score test, equivalent to modification indices.}
-#'    \item{\code{$cumulative}: Optional (if \code{cumulative=TRUE}).
-#'      Cumulative score tests.}
-#'    \item{\code{$epc}: Optional (if \code{epc=TRUE}). Parameter estimates,
-#'      expected parameter changes, and expected parameter values if all
-#'      the tested constraints were freed.}
-#'  }
-#' See \code{\link[lavaan]{lavTestScore}} for details.
-#'
-#' @author
-#'   Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
-#'
-#' Adapted from \pkg{lavaan} source code, written by
-#'   Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
-#'
-#' \code{type = "Rubin"} method proposed by
-#'   Maxwell Mansolf (University of California, Los Angeles;
-#'   \email{mamansolf@@gmail.com})
-#'
-#' @references
-#' Bentler, P. M., & Chou, C.-P. (1992). Some new covariance structure model
-#' improvement statistics. \emph{Sociological Methods & Research, 21}(2),
-#' 259--282. doi:10.1177/0049124192021002006
-#'
-#' Enders, C. K. (2010). \emph{Applied missing data analysis}.
-#' New York, NY: Guilford.
-#'
-#' Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
-#' Significance levels from repeated \emph{p}-values with multiply-imputed data.
-#' \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-#' \url{http://www.jstor.org/stable/24303994}
-#'
-#' Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
-#' New York, NY: Wiley.
-#'
-#' @examples
-#'  \dontrun{
-#' ## impose missing data for example
-#' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
-#'                                       "ageyr","agemo","school")]
-#' set.seed(12345)
-#' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
-#' age <- HSMiss$ageyr + HSMiss$agemo/12
-#' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
-#'
-#' ## impute missing data
-#' library(Amelia)
-#' set.seed(12345)
-#' HS.amelia <- amelia(HSMiss, m = 20, noms = "school", p2s = FALSE)
-#' imps <- HS.amelia$imputations
-#'
-#' ## specify CFA model from lavaan's ?cfa help page
-#' HS.model <- '
-#'   speed =~ c(L1, L1)*x7 + c(L1, L1)*x8 + c(L1, L1)*x9
-#' '
-#'
-#' out <- cfa.mi(HS.model, data = imps, group = "school", std.lv = TRUE)
-#'
-#' ## Mode 1: Score test for releasing equality constraints
-#'
-#' ## default type: Li et al.'s (1991) "D2" method
-#' lavTestScore.mi(out, cumulative = TRUE)
-#' ## Rubin's rules
-#' lavTestScore.mi(out, type = "Rubin")
-#'
-#' ## Mode 2: Score test for adding currently fixed-to-zero parameters
-#' lavTestScore.mi(out, add = 'x7 ~~ x8 + x9')
-#'
-#' }
-#'
-#' @export
+##' Score Test for Multiple Imputations
+##'
+##' Score test (or "Lagrange multiplier" test) for lavaan models fitted to
+##' multiple imputed data sets. Statistics for releasing one or more
+##' fixed or constrained parameters in model can be calculated by pooling
+##' the gradient and information matrices pooled across imputed data sets
+##' using Rubin's (1987) rules, or by pooling the score test statistics
+##' across imputed data sets (Li, Meng, Raghunathan, & Rubin, 1991).
+##'
+##' @aliases lavTestScore.mi
+##' @importFrom lavaan lavListInspect parTable
+##' @importFrom stats cov pchisq pf
+##' @importFrom methods getMethod
+##'
+##' @param object An object of class \code{\linkS4class{lavaan.mi}}.
+##' @param add Either a \code{character} string (typically between single
+##'  quotes) or a parameter table containing additional (currently fixed-to-zero)
+##'  parameters for which the score test must be computed.
+##' @param release Vector of \code{integer}s. The indices of the \emph{equality}
+##'  constraints that should be released. The indices correspond to the order of
+##'  the equality constraints as they appear in the parameter table.
+##' @param test \code{character} indicating which pooling method to use.
+##' \code{"Rubin"} indicates Rubin's (1987) rules will be applied to the
+##'  gradient and information, and those pooled values will be used to
+##'  calculate modification indices in the usual manner. \code{"D2"} (default),
+##' \code{"LMRR"}, or \code{"Li.et.al"} indicate that modification indices
+##'  calculated from each imputed data set will be pooled across imputations,
+##'  as described in Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010).
+##' @param scale.W \code{logical}. If \code{FALSE} (default), the pooled
+##'  information matrix is calculated as the weighted sum of the
+##'  within-imputation and between-imputation components. Otherwise, the pooled
+##'  information is calculated by scaling the within-imputation component by the
+##'  average relative increase in variance (ARIV; see Enders, 2010, p. 235).
+##'  Not recommended, and ignored (irrelevant) if \code{test = "D2"}.
+##' @param asymptotic \code{logical}. If \code{FALSE} (default when using
+##'  \code{add} to test adding fixed parameters to the model), the pooled test
+##'  will be returned as an \emph{F}-distributed variable with numerator
+##'  (\code{df1}) and denominator (\code{df2}) degrees of freedom.
+##'  If \code{TRUE}, the pooled \emph{F} statistic will be multiplied by its
+##'  \code{df1} on the assumption that its \code{df2} is sufficiently large
+##'  enough that the statistic will be asymptotically \eqn{\chi^2} distributed
+##'  with \code{df1}. When using the \code{release} argument, \code{asymptotic}
+##'  will be set to \code{TRUE} because (A)RIV can only be calculated for
+##'  \code{add}ed parameters.
+##' @param univariate \code{logical}. If \code{TRUE}, compute the univariate
+##'  score statistics, one for each constraint.
+##' @param cumulative \code{logical}. If \code{TRUE}, order the univariate score
+##'  statistics from large to small, and compute a series of multivariate
+##'  score statistics, each time including an additional constraint in the test.
+##' @param epc \code{logical}. If \code{TRUE}, and we are releasing existing
+##'  constraints, compute the expected parameter changes for the existing (free)
+##'  parameters (and any specified with \code{add}), if all constraints
+##'  were released. For EPCs associated with a particular (1-\emph{df})
+##'  constraint, only specify one parameter in \code{add} or one constraint in
+##'  \code{release}.
+##' @param verbose \code{logical}. Not used for now.
+##' @param warn \code{logical}. If \code{TRUE}, print warnings if they occur.
+##' @param information \code{character} indicating the type of information
+##'   matrix to use (check \code{\link{lavInspect}} for available options).
+##'   \code{"expected"} information is the default, which provides better
+##'   control of Type I errors.
+##'
+##' @return
+##'  A list containing at least one \code{data.frame}:
+##'  \itemize{
+##'    \item{\code{$test}: The total score test, with columns for the score
+##'      test statistic (\code{X2}), the degrees of freedom (\code{df}), and
+##'      a \emph{p} value under the \eqn{\chi^2} distribution (\code{p.value}).}
+##'    \item{\code{$uni}: Optional (if \code{univariate=TRUE}).
+##'      Each 1-\emph{df} score test, equivalent to modification indices.}
+##'    \item{\code{$cumulative}: Optional (if \code{cumulative=TRUE}).
+##'      Cumulative score tests.}
+##'    \item{\code{$epc}: Optional (if \code{epc=TRUE}). Parameter estimates,
+##'      expected parameter changes, and expected parameter values if all
+##'      the tested constraints were freed.}
+##'  }
+##' See \code{\link[lavaan]{lavTestScore}} for details.
+##'
+##' @author
+##'   Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
+##'
+##' Adapted from \pkg{lavaan} source code, written by
+##'   Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
+##'
+##' \code{test = "Rubin"} method proposed by
+##'   Maxwell Mansolf (University of California, Los Angeles;
+##'   \email{mamansolf@@gmail.com})
+##'
+##' @references
+##'   Bentler, P. M., & Chou, C.-P. (1992). Some new covariance structure model
+##'   improvement statistics. \emph{Sociological Methods & Research, 21}(2),
+##'   259--282. doi:10.1177/0049124192021002006
+##'
+##'   Enders, C. K. (2010). \emph{Applied missing data analysis}.
+##'   New York, NY: Guilford.
+##'
+##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
+##'   Significance levels from repeated \emph{p}-values with multiply-imputed
+##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
+##'   \url{https://www.jstor.org/stable/24303994}
+##'
+##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+##'   New York, NY: Wiley.
+##'
+##' @seealso \code{\link[lavaan]{lavTestScore}}
+##'
+##' @examples
+##'  \dontrun{
+##' ## impose missing data for example
+##' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
+##'                                       "ageyr","agemo","school")]
+##' set.seed(12345)
+##' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
+##' age <- HSMiss$ageyr + HSMiss$agemo/12
+##' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
+##'
+##' ## impute missing data
+##' library(Amelia)
+##' set.seed(12345)
+##' HS.amelia <- amelia(HSMiss, m = 20, noms = "school", p2s = FALSE)
+##' imps <- HS.amelia$imputations
+##'
+##' ## specify CFA model from lavaan's ?cfa help page
+##' HS.model <- '
+##'   speed =~ c(L1, L1)*x7 + c(L1, L1)*x8 + c(L1, L1)*x9
+##' '
+##'
+##' out <- cfa.mi(HS.model, data = imps, group = "school", std.lv = TRUE)
+##'
+##' ## Mode 1: Score test for releasing equality constraints
+##'
+##' ## default test: Li et al.'s (1991) "D2" method
+##' lavTestScore.mi(out, cumulative = TRUE)
+##' ## Rubin's rules
+##' lavTestScore.mi(out, test = "Rubin")
+##'
+##' ## Mode 2: Score test for adding currently fixed-to-zero parameters
+##' lavTestScore.mi(out, add = 'x7 ~~ x8 + x9')
+##'
+##' }
+##'
+##' @export
 lavTestScore.mi <- function(object, add = NULL, release = NULL,
-                            type = c("D2","Rubin"), scale.W = FALSE,
+                            test = c("D2","Rubin"), scale.W = FALSE,
                             asymptotic = !is.null(add), # as F or chi-squared
                             univariate = TRUE, cumulative = FALSE,
                             #standardized = TRUE, #FIXME: add std.lv and std.all if(epc)?
-                            epc = FALSE, verbose = FALSE, warn = TRUE) {
+                            epc = FALSE, verbose = FALSE, warn = TRUE,
+                            information = "expected") {
   stopifnot(inherits(object, "lavaan.mi"))
   lavoptions <- object@Options
 
@@ -161,7 +168,9 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
   useSE[is.na(useSE)] <- FALSE
   useImps <- useSE & sapply(object@convergence, "[[", i = "converged")
   m <- sum(useImps)
-  type <- tolower(type[1])
+  test <- tolower(test[1])
+  if (test %in% c("d2", "LMRR", "Li.et.al")) test <- "D2"
+  if (!test %in% c("D2","rubin")) stop('Invalid choice of "test" argument.')
 
   ## check if model has converged
   if (m == 0L) stop("No models converged. Score tests unavailable.")
@@ -185,7 +194,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
   oldCall <- object@lavListCall
   #oldCall$model <- parTable(object) # FIXME: necessary?
 
-  if (type == "d2") {
+  if (test == "D2") {
     if (!is.null(oldCall$parallel)) {
       if (oldCall$parallel == "snow") {
         oldCall$parallel <- "no"
@@ -201,7 +210,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       out <- try(lavaan::lavTestScore(obj, add = add, release = release,
                                       cumulative = cumulative,
                                       univariate = univariate, epc = epc,
-                                      warn = FALSE), silent = TRUE)
+                                      warn = FALSE, information = information),
+                 silent = TRUE)
       if (inherits(out, "try-error")) return(NULL)
       out
     }
@@ -283,7 +293,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     }
 
     return(OUT)
-  } # else type == "Rubin", making 'scale.W=' relevant
+  } # else test == "Rubin", making 'scale.W=' relevant
 
   ## number of free parameters (regardless of whether they are constrained)
   npar <- object@Model@nx.free
@@ -307,14 +317,20 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     ## call lavaanList() to fit augmented model (do.fit = FALSE)
     oldCall$FUN <- function(obj) {
       ngroups <- lavaan::lavInspect(obj, "ngroups")
+      nlevels <- obj@Data@nlevels #FIXME: lavListInspect(obj, "nlevels")
 
       ## --------------------------------------
       ## borrowed code from lav_object_extend()
       ## --------------------------------------
 
+      ## select columns that should always be included below
+      myCols <- c("lhs","op","rhs")
+      if (ngroups > 1L) myCols <- c(myCols,"block","group")
+      if (nlevels > 1L) myCols <- c(myCols,"block","level")
+      myCols <- unique(myCols)
+
       # partable original model
-      oldPT <- lavaan::parTable(obj)[c("lhs","op","rhs","block","group",
-                                       "free","label","plabel")]
+      oldPT <- lavaan::parTable(obj)[c(myCols, "free","label","plabel")]
       # replace 'start' column, since lav_model will fill these in in GLIST
       oldPT$start <- lavaan::parameterEstimates(obj, remove.system.eq = FALSE,
                                                 remove.def = FALSE,
@@ -322,9 +338,6 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
                                                 remove.ineq = FALSE)$est
 
       # add new parameters, extend model
-      myCols <- c("lhs","op","rhs")
-      #FIXME: add "level" column?  how to check for multilevel data?
-      if (ngroups > 1L) myCols <- c(myCols,"block","group")
       # ADD <- lavaan::modindices(obj, standardized = FALSE)[myCols]
       if (is.list(add)) {
         stopifnot(!is.null(add$lhs),
@@ -333,7 +346,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
         ADD <- as.data.frame(add)
       } else if (is.character(add)) {
         ADD <- lavaan::lavaanify(add, ngroups = ngroups)
-        ADD <- ADD[,c("lhs","op","rhs","block","user","label")]
+        ADD <- ADD[ , c(myCols, "user","label")]
         remove.idx <- which(ADD$user == 0)
         if (length(remove.idx) > 0L) {
           ADD <- ADD[-remove.idx,]
@@ -366,7 +379,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
                              sloth1          = obj@h1)
       ## ---------------------------------
       list(gradient = lavaan::lavInspect(obj2, "gradient"),
-           information = lavaan::lavInspect(obj2, "information"),
+           information = lavaan::lavInspect(obj2, paste("information",
+                                                        information, sep = ".")),
            nadd = nrow(ADD), parTable = lavaan::parTable(obj2))
     }
     FIT <- eval(as.call(oldCall))
@@ -418,7 +432,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     }
 
     PT <- FIT@funList[[ which(useImps)[1] ]]$parTable
-    PT$group <- PT$block
+    if (is.null(PT$group)) PT$group <- PT$block
     # lhs/rhs
     lhs <- lavaan::lav_partable_labels(PT)[ PT$user == 10L ]
     op <- rep("==", nadd)
@@ -442,7 +456,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     ## use lavaanList() to get gradient/information from each imputation
     oldCall$FUN <- function(obj) {
       list(gradient = lavaan::lavInspect(obj, "gradient"),
-           information = lavaan::lavInspect(obj, "information"))
+           information = lavaan::lavInspect(obj, paste("information",
+                                                       information, sep = ".")))
     }
     FIT <- eval(as.call(oldCall))
     ## pool gradients and information matrices
@@ -630,6 +645,9 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
   }
 
   if (epc) {
+    ngroups <- lavaan::lavInspect(object, "ngroups")
+    nlevels <- object@Data@nlevels #FIXME: lavListInspect(object, "nlevels")
+
     ################# source code Yves commented out.
     ################# Calculates 1 EPC-vector per constraint.
     ################# Better to call lavTestScore() multiple times?  Ugh...
@@ -655,12 +673,14 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
 
     # create epc table for the 'free' parameters
     myCoefs <- getMethod("coef","lavaan.mi")(object)
-    myCols <- c("lhs","op","rhs","group","user","free","label","plabel")
+    myCols <- c("lhs","op","rhs","group")
+    if (ngroups > 1L) myCols <- c(myCols, "block","group")
+    if (nlevels > 1L) myCols <- c(myCols, "block","level")
+    myCols <- c(unique(myCols), "user","free","label","plabel")
     LIST <- if (!is.null(add) && nchar(add) > 0L) {
       PT[ , myCols]
     } else parTable(object)[ , myCols]
 
-    if (lavListInspect(object, "ngroups") == 1L) LIST$group <- NULL
     nonpar.idx <- which(LIST$op %in% c("==", ":=", "<", ">"))
     if (length(nonpar.idx) > 0L) LIST <- LIST[ -nonpar.idx , ]
 

@@ -6,10 +6,6 @@
 \alias{cfa.mi}
 \alias{sem.mi}
 \alias{growth.mi}
-\alias{lavaan.mi}
-\alias{cfa.mi}
-\alias{sem.mi}
-\alias{growth.mi}
 \title{Fit a lavaan Model to Multiple Imputed Data Sets}
 \usage{
 runMI(model, data, fun = "lavaan", ..., m, miArgs = list(),
@@ -57,8 +53,8 @@ the user-supplied function should explicitly call \code{library} or use
 
 \item{miArgs}{Addition arguments for the multiple-imputation function
 (\code{miPackage}). The arguments should be put in a list (see example
-below). Ignored if \code{data} is already a \code{list} of imputed data sets
-or a \code{lavaan.mi} object.}
+below). Ignored if \code{data} is already a \code{list} of imputed data
+sets or a \code{lavaan.mi} object.}
 
 \item{miPackage}{Package to be used for imputation. Currently these
 functions only support \code{"Amelia"} or \code{"mice"} for imputation.
@@ -114,28 +110,47 @@ summary(out1, ci = FALSE, stand = TRUE, rsq = TRUE)
 
 ## model fit. D3 includes information criteria
 anova(out1)
-anova(out1, test = "D2", indices = TRUE) # request D2 and fit indices
-
+## equivalently:
+lavTestLRT.mi(out1)
+## request D2
+anova(out1, test = "D2")
+## request fit indices
+fitMeasures(out1)
 
 
 ## fit multigroup model without invariance constraints
-mgfit1 <- cfa.mi(HS.model, data = imps, estimator = "mlm", group = "school")
+mgfit.config <- cfa.mi(HS.model, data = imps, estimator = "mlm",
+                       group = "school")
 ## add invariance constraints, and use previous fit as "data"
-mgfit0 <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm", group = "school",
-                 group.equal = c("loadings","intercepts"))
+mgfit.metric <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm"
+                       group = "school", group.equal = "loadings")
+mgfit.scalar <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm"
+                       group = "school",
+                       group.equal = c("loadings","intercepts"))
 
-## compare fit (scaled likelihood ratio test)
-anova(mgfit0, h1 = mgfit1)
+## compare fit of 2 models to test metric invariance
+## (scaled likelihood ratio test)
+lavTestLRT.mi(mgfit.metric, h1 = mgfit.config)
+## To compare multiple models, you must use anova()
+anova(mgfit.config, mgfit.metric, mgfit.scalar)
+## or compareFit(), which also includes fit indices for comparison
+## (optional: name the models)
+compareFit(config = mgfit.config, metric = mgfit.metric,
+           scalar = mgfit.scalar,
+           argsLRT = list(test = "D2", method = "satorra.bentler.2010"))
 
-## correlation residuals
-resid(mgfit0, type = "cor.bentler")
+## correlation residuals to investigate local misfit
+resid(mgfit.scalar, type = "cor.bentler")
+## modification indices for fixed parameters, to investigate local misfit
+modindices.mi(mgfit.scalar)
+## or lavTestScore.mi for modification indices about equality constraints
+lavTestScore.mi(mgfit.scalar)
 
-
-## use D1 to test a parametrically nested model (whether latent means are ==)
-anova(mgfit0, test = "D1", constraints = '
-      .p70. == 0
-      .p71. == 0
-      .p72. == 0')
+## Wald test of whether latent means are == (fix 3 means to zero in group 2)
+eq.means <- ' .p70. == 0
+              .p71. == 0
+              .p72. == 0 '
+lavTestWald.mi(mgfit.scalar, constraints = eq.means)
 
 
 
@@ -154,7 +169,7 @@ catout <- cfa.mi(' f =~ u1 + u2 + u3 + u4 ', data = datCat,
                         zeroCells = lavaan::lavInspect(fit, "zero.cell.tables"))
                  })
 summary(catout)
-anova(catout, indices = "all") # note the scaled versions of indices, too
+fitMeasures(catout, indices = "all") # scaled versions of indices, too
 
 ## extract custom output
 sapply(catout@funList, function(x) x$wrmr) # WRMR for each imputation
@@ -166,12 +181,12 @@ catout@funList[[2]]$zeroCells # zero-cell tables for second imputation ...
 }
 \references{
 Enders, C. K. (2010). \emph{Applied missing data analysis}. New
-York, NY: Guilford.
+  York, NY: Guilford.
 
-Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
-New York, NY: Wiley.
+  Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+  New York, NY: Wiley.
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam;
-\email{TJorgensen314@gmail.com})
+  \email{TJorgensen314@gmail.com})
 }
