@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Yves Rosseel
-### Last updated: 15 September 2018
+### Last updated: 29 August 2019
 ### Pooled score test (= Lagrange Multiplier test) for multiple imputations
 ### Borrowed source code from lavaan/R/lav_test_score.R
 
@@ -17,9 +17,10 @@
 ##' Score test (or "Lagrange multiplier" test) for lavaan models fitted to
 ##' multiple imputed data sets. Statistics for releasing one or more
 ##' fixed or constrained parameters in model can be calculated by pooling
-##' the gradient and information matrices pooled across imputed data sets
-##' using Rubin's (1987) rules, or by pooling the score test statistics
-##' across imputed data sets (Li, Meng, Raghunathan, & Rubin, 1991).
+##' the gradient and information matrices pooled across imputed data sets,
+##' analogous to Li, Meng, Raghunathan, & Rubin's (1991) proposed Wald test, or
+##' by pooling the complete-data score-test statistics across imputed data sets
+##' (Li et al., 1991).
 ##'
 ##' @aliases lavTestScore.mi
 ##' @importFrom lavaan lavListInspect parTable
@@ -34,18 +35,28 @@
 ##'  constraints that should be released. The indices correspond to the order of
 ##'  the equality constraints as they appear in the parameter table.
 ##' @param test \code{character} indicating which pooling method to use.
-##' \code{"Rubin"} indicates Rubin's (1987) rules will be applied to the
-##'  gradient and information, and those pooled values will be used to
-##'  calculate modification indices in the usual manner. \code{"D2"} (default),
-##' \code{"LMRR"}, or \code{"Li.et.al"} indicate that modification indices
+##'  \code{"D1"} indicates Li, Meng, Raghunathan, & Rubin's (1991) proposed Wald
+##'  test will be applied to the gradient and information, and those pooled
+##'  values will be used to calculate score-test statistics in the usual manner.
+##'  \code{"D2"} (default) indicates that complete-data score-test statistics
 ##'  calculated from each imputed data set will be pooled across imputations,
-##'  as described in Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010).
-##' @param scale.W \code{logical}. If \code{FALSE} (default), the pooled
+##'  as described in Li et al. (1991) and Enders (2010).
+##' @param scale.W \code{logical}. If \code{FALSE}, the pooled
 ##'  information matrix is calculated as the weighted sum of the
 ##'  within-imputation and between-imputation components. Otherwise, the pooled
 ##'  information is calculated by scaling the within-imputation component by the
-##'  average relative increase in variance (ARIV; see Enders, 2010, p. 235).
-##'  Not recommended, and ignored (irrelevant) if \code{test = "D2"}.
+##'  average relative increase in variance (ARIV; see Enders, 2010, p. 235),
+##'  which is \emph{only} consistent when requesting the \emph{F} test (i.e.,
+##'  \code{asymptotic = FALSE}.  Ignored (irrelevant) if \code{test = "D2"}.
+##' @param omit.imps \code{character} vector specifying criteria for omitting
+##'  imputations from pooled results.  Can include any of
+##'  \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'  default setting, which excludes any imputations that did not
+##'  converge or for which standard errors could not be computed.  The
+##'  last option (\code{"no.npd"}) would exclude any imputations which
+##'  yielded a nonpositive definite covariance matrix for observed or
+##'  latent variables, which would include any "improper solutions" such
+##'  as Heywood cases.
 ##' @param asymptotic \code{logical}. If \code{FALSE} (default when using
 ##'  \code{add} to test adding fixed parameters to the model), the pooled test
 ##'  will be returned as an \emph{F}-distributed variable with numerator
@@ -67,6 +78,10 @@
 ##'  were released. For EPCs associated with a particular (1-\emph{df})
 ##'  constraint, only specify one parameter in \code{add} or one constraint in
 ##'  \code{release}.
+##' @param standardized If \code{TRUE}, two extra columns (\code{sepc.lv} and
+##'  \code{sepc.all}) in the \code{$epc} table will contain standardized values
+##'  for the EPCs. See \code{\link{lavTestScore}}.
+##' @param cov.std \code{logical}. See \code{\link{standardizedSolution}}.
 ##' @param verbose \code{logical}. Not used for now.
 ##' @param warn \code{logical}. If \code{TRUE}, print warnings if they occur.
 ##' @param information \code{character} indicating the type of information
@@ -78,14 +93,20 @@
 ##'  A list containing at least one \code{data.frame}:
 ##'  \itemize{
 ##'    \item{\code{$test}: The total score test, with columns for the score
-##'      test statistic (\code{X2}), the degrees of freedom (\code{df}), and
-##'      a \emph{p} value under the \eqn{\chi^2} distribution (\code{p.value}).}
+##'      test statistic (\code{X2}), its degrees of freedom (\code{df}), its
+##'      \emph{p} value under the \eqn{\chi^2} distribution (\code{p.value}),
+##'      and if \code{asymptotic=FALSE}, the average relative invrease in
+##'      variance (ARIV) used to calculate the denominator \emph{df} is also
+##'      returned as a missing-data diagnostic, along with the fraction missing
+##'      information (FMI = ARIV / (1 + ARIV)).}
 ##'    \item{\code{$uni}: Optional (if \code{univariate=TRUE}).
-##'      Each 1-\emph{df} score test, equivalent to modification indices.}
+##'      Each 1-\emph{df} score test, equivalent to modification indices. Also
+##'      includes EPCs if \code{epc=TRUE}, and RIV and FMI if
+##'      \code{asymptotic=FALSE}.}
 ##'    \item{\code{$cumulative}: Optional (if \code{cumulative=TRUE}).
-##'      Cumulative score tests.}
+##'      Cumulative score tests, with ARIV and FMI if \code{asymptotic=FALSE}.}
 ##'    \item{\code{$epc}: Optional (if \code{epc=TRUE}). Parameter estimates,
-##'      expected parameter changes, and expected parameter values if all
+##'      expected parameter changes, and expected parameter values if ALL
 ##'      the tested constraints were freed.}
 ##'  }
 ##' See \code{\link[lavaan]{lavTestScore}} for details.
@@ -96,7 +117,7 @@
 ##' Adapted from \pkg{lavaan} source code, written by
 ##'   Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
 ##'
-##' \code{test = "Rubin"} method proposed by
+##' \code{test = "D1"} method proposed by
 ##'   Maxwell Mansolf (University of California, Los Angeles;
 ##'   \email{mamansolf@@gmail.com})
 ##'
@@ -111,10 +132,7 @@
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
 ##'   Significance levels from repeated \emph{p}-values with multiply-imputed
 ##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   \url{https://www.jstor.org/stable/24303994}
-##'
-##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
-##'   New York, NY: Wiley.
+##'   https://www.jstor.org/stable/24303994
 ##'
 ##' @seealso \code{\link[lavaan]{lavTestScore}}
 ##'
@@ -145,8 +163,8 @@
 ##'
 ##' ## default test: Li et al.'s (1991) "D2" method
 ##' lavTestScore.mi(out, cumulative = TRUE)
-##' ## Rubin's rules
-##' lavTestScore.mi(out, test = "Rubin")
+##' ## Li et al.'s (1991) "D1" method
+##' lavTestScore.mi(out, test = "D1")
 ##'
 ##' ## Mode 2: Score test for adding currently fixed-to-zero parameters
 ##' lavTestScore.mi(out, add = 'x7 ~~ x8 + x9')
@@ -155,22 +173,29 @@
 ##'
 ##' @export
 lavTestScore.mi <- function(object, add = NULL, release = NULL,
-                            test = c("D2","Rubin"), scale.W = FALSE,
-                            asymptotic = !is.null(add), # as F or chi-squared
+                            test = c("D2","D1"), scale.W = !asymptotic,
+                            omit.imps = c("no.conv","no.se"),
+                            asymptotic = is.null(add), # as F or chi-squared
                             univariate = TRUE, cumulative = FALSE,
-                            #standardized = TRUE, #FIXME: add std.lv and std.all if(epc)?
-                            epc = FALSE, verbose = FALSE, warn = TRUE,
-                            information = "expected") {
+                            epc = FALSE, standardized = epc, cov.std = epc,
+                            verbose = FALSE, warn = TRUE, information = "expected") {
   stopifnot(inherits(object, "lavaan.mi"))
   lavoptions <- object@Options
 
-  useSE <- sapply(object@convergence, "[[", i = "SE")
-  useSE[is.na(useSE)] <- FALSE
-  useImps <- useSE & sapply(object@convergence, "[[", i = "converged")
+  useImps <- rep(TRUE, length(object@DataList))
+  if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
+  if ("no.se" %in% omit.imps) useImps <- useImps & sapply(object@convergence, "[[", i = "SE")
+  if ("no.npd" %in% omit.imps) {
+    Heywood.lv <- sapply(object@convergence, "[[", i = "Heywood.lv")
+    Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
+    useImps <- useImps & !(Heywood.lv | Heywood.ov)
+  }
   m <- sum(useImps)
-  test <- tolower(test[1])
-  if (test %in% c("d2", "LMRR", "Li.et.al")) test <- "D2"
-  if (!test %in% c("D2","rubin")) stop('Invalid choice of "test" argument.')
+  if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
+  useImps <- which(useImps)
+
+  test <- toupper(test[1])
+  if (!test %in% c("D2","D1")) stop('Invalid choice of "test" argument.')
 
   ## check if model has converged
   if (m == 0L) stop("No models converged. Score tests unavailable.")
@@ -208,8 +233,9 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     ## call lavaanList() again to run lavTestScore() on each imputation
     oldCall$FUN <- function(obj) {
       out <- try(lavaan::lavTestScore(obj, add = add, release = release,
-                                      cumulative = cumulative,
                                       univariate = univariate, epc = epc,
+                                      cumulative = cumulative, cov.std = cov.std,
+                                      standardized = standardized,
                                       warn = FALSE, information = information),
                  silent = TRUE)
       if (inherits(out, "try-error")) return(NULL)
@@ -221,10 +247,11 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     if (all(noScores)) stop("No success using lavTestScore() on any imputations.")
 
     ## template to fill in pooled values
-    OUT <- FIT@funList[[ which(useImps & !noScores)[1] ]]
+    OUT <- FIT@funList[[ intersect(useImps, which(!noScores))[1] ]]
 
     ## at a minimum, pool the total score test
-    chiList <- sapply(FIT@funList[useImps & !noScores], function(x) x$test$X2)
+    chiList <- sapply(FIT@funList[intersect(useImps, which(!noScores))],
+                      function(x) x$test$X2)
     chiPooled <- calculate.D2(chiList, DF = OUT$test$df, asymptotic)
     OUT$test$X2 <- chiPooled[1]
     if (!asymptotic) {
@@ -234,6 +261,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       OUT$test$p.value <- NULL # so it appears after "df2" column
     }
     OUT$test$p.value <- chiPooled[["pvalue"]]
+    OUT$test$ariv <- chiPooled[["ariv"]]
+    OUT$test$fmi <- chiPooled[["fmi"]]
 
     ## univariate?
     if (univariate) {
@@ -242,9 +271,15 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
         OUT$uni$p.value <- NULL # so it appears after "df2" column
         OUT$uni$df2 <- NA
         OUT$uni$p.value <- NA
+        OUT$uni$riv <- NA
+        OUT$uni$fmi <- NA
+        if ("epc" %in% colnames(OUT$uni)) {
+          OUT$uni$epc <- NULL # so it appears after "p.value"
+          OUT$uni$epc <- NA # fill in below
+        }
       }
       for (i in 1:nrow(OUT$uni)) {
-        chiList <- sapply(FIT@funList[useImps & !noScores],
+        chiList <- sapply(FIT@funList[intersect(useImps, which(!noScores))],
                           function(x) x$uni$X2[i] )
         chiPooled <- calculate.D2(chiList, DF = OUT$uni$df[i], asymptotic)
         if (!asymptotic) {
@@ -252,9 +287,15 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
           OUT$uni$df2[i] <- chiPooled[["df2"]]
         } else OUT$uni$X2[i] <- chiPooled[[1]]
         OUT$uni$p.value[i] <- chiPooled[["pvalue"]]
+        OUT$uni$riv[i] <- chiPooled[["ariv"]]
+        OUT$uni$fmi[i]  <- chiPooled[["fmi"]]
+        if ("epc" %in% colnames(OUT$uni)) {
+          epcUniList <- sapply(FIT@funList[intersect(useImps, which(!noScores))],
+                               function(x) x$uni$epc[i] )
+          OUT$uni$epc[i] <- mean(epcUniList)
+        }
       }
       if (!asymptotic) names(OUT$uni)[names(OUT$uni) == "df"] <- "df1"
-      #FIXME: If Yves allows EPC here, add it if(epc)
     }
 
     ## cumulative?
@@ -264,9 +305,11 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
         OUT$cumulative$p.value <- NULL # so it appears after "df2" column
         OUT$cumulative$df2 <- NA
         OUT$cumulative$p.value <- NA
+        OUT$cumulative$ariv <- NA
+        OUT$cumulative$fmi <- NA
       }
       for (i in 1:nrow(OUT$cumulative)) {
-        chiList <- sapply(FIT@funList[useImps & !noScores],
+        chiList <- sapply(FIT@funList[intersect(useImps, which(!noScores))],
                           function(x) x$cumulative$X2[i] )
         chiPooled <- calculate.D2(chiList, DF = OUT$cumulative$df[i], asymptotic)
         if (!asymptotic) {
@@ -274,26 +317,40 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
           OUT$cumulative$df2[i] <- chiPooled[["df2"]]
         } else OUT$cumulative$X2[i] <- chiPooled[[1]]
         OUT$cumulative$p.value[i] <- chiPooled[["pvalue"]]
+        OUT$cumulative$ariv[i] <- chiPooled[["ariv"]]
+        OUT$cumulative$fmi[i]  <- chiPooled[["fmi"]]
       }
       if (!asymptotic) names(OUT$cumulative)[names(OUT$cumulative) == "df"] <- "df1"
     }
 
     ## EPCs?
     if (epc) {
-      estList <- lapply(FIT@funList[useImps & !noScores],
+      estList <- lapply(FIT@funList[intersect(useImps, which(!noScores))],
                         function(x) x$epc$est)
       OUT$epc$est <- rowMeans(do.call(cbind, estList))
 
-      epcList <- lapply(FIT@funList[useImps & !noScores],
+      epcList <- lapply(FIT@funList[intersect(useImps, which(!noScores))],
                         function(x) x$epc$epc)
       OUT$epc$epc <- rowMeans(do.call(cbind, epcList))
 
       OUT$epc$epv <- OUT$epc$est + OUT$epc$epc
-      #FIXME: if (standardized) repeat for std.lv and std.all
+      if (standardized) {
+        sepcList <- lapply(FIT@funList[intersect(useImps, which(!noScores))],
+                           function(x) x$epc$sepc.lv)
+        OUT$epc$sepc.lv <- rowMeans(do.call(cbind, sepcList))
+        sepcList <- lapply(FIT@funList[intersect(useImps, which(!noScores))],
+                           function(x) x$epc$sepc.all)
+        OUT$epc$sepc.all <- rowMeans(do.call(cbind, sepcList))
+        if ("sepc.nox" %in% colnames(FIT@funList[intersect(useImps, which(!noScores))][[1]])) {
+          sepcList <- lapply(FIT@funList[intersect(useImps, which(!noScores))],
+                             function(x) x$epc$sepc.nox)
+          OUT$epc$sepc.nox <- rowMeans(do.call(cbind, sepcList))
+        }
+      }
     }
 
     return(OUT)
-  } # else test == "Rubin", making 'scale.W=' relevant
+  } # else test == "D1", making 'scale.W=' relevant
 
   ## number of free parameters (regardless of whether they are constrained)
   npar <- object@Model@nx.free
@@ -381,9 +438,15 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       list(gradient = lavaan::lavInspect(obj2, "gradient"),
            information = lavaan::lavInspect(obj2, paste("information",
                                                         information, sep = ".")),
+           #TODO: Max wants to calculate EPCs as averages across imputations.
+           #      Run lavTestScore(epc=TRUE) here?  or be consistent...
            nadd = nrow(ADD), parTable = lavaan::parTable(obj2))
     }
     FIT <- eval(as.call(oldCall))
+
+    ## obtain list of inverted Jacobians: within-impuation covariance matrices
+    R.model <- object@Model@con.jac[,,drop = FALSE]
+    nadd <- FIT@funList[[ useImps[1] ]]$nadd
 
     ## pool gradients and information matrices
     gradList <- lapply(FIT@funList[useImps], "[[", i = "gradient")
@@ -401,7 +464,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       inv.W <- MASS::ginv(W)
     }
     ## relative increase in variance due to missing data
-    ariv <- (1 + 1/m)/nrow(B) * sum(diag(B %*% inv.W))
+    ariv <- (1 + 1/m)/nadd * sum(diag(B %*% inv.W)) # ONLY relevant for scaling full INFO matrix
 
     if (scale.W) {
       information <- (1 + ariv) * W  # Enders (2010, p. 235) eqs. 8.20-21
@@ -410,9 +473,6 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       information <- W + B + (1/m)*B  # Enders (2010, p. 235) eq. 8.19
     }
 
-    ## obtain list of inverted Jacobians: within-impuation covariance matrices
-    R.model <- object@Model@con.jac[,,drop = FALSE]
-    nadd <- FIT@funList[[ which(useImps)[1] ]]$nadd
     if (nrow(R.model) > 0L) {
       R.model <- cbind(R.model, matrix(0, nrow(R.model), ncol = nadd))
       R.add   <- cbind(matrix(0, nrow = nadd, ncol = npar), diag(nadd))
@@ -431,7 +491,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       r.idx <- seq_len(nadd)
     }
 
-    PT <- FIT@funList[[ which(useImps)[1] ]]$parTable
+    PT <- FIT@funList[[ useImps[1] ]]$parTable
     if (is.null(PT$group)) PT$group <- PT$block
     # lhs/rhs
     lhs <- lavaan::lav_partable_labels(PT)[ PT$user == 10L ]
@@ -447,6 +507,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
               'denominator degrees of freedom from being calculated for the F ',
               'test, so the "asymptotic" argument was switched to TRUE.' )
       asymptotic <- TRUE
+      scale.W <- FALSE
     }
     if (is.character(release)) stop("not implemented yet") #FIXME: moved up to save time
     R <- object@Model@con.jac[,,drop = FALSE]
@@ -476,8 +537,11 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       inv.W <- MASS::ginv(W)
     }
     ## relative increase in variance due to missing data
-    ariv <- (1 + 1/m)/nrow(B) * sum(diag(B %*% inv.W))
+    k <- length(release)
+    if (k == 0) k <- nrow(R)
+    ariv <- (1 + 1/m)/k * sum(diag(B %*% inv.W)) #FIXME: Invalid extrapolation!
     if (scale.W) {
+      #TODO: This option is disabled, kept only to update with future research
       information <- (1 + ariv) * W  # Enders (2010, p. 235) eqs. 8.20-21
     } else {
       ## less reliable, but constraints prevent inversion of W
@@ -541,7 +605,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
                        p.value = pchisq(stat, df = DF, lower.tail = FALSE))
   } else {
     ## calculate denominator DF for F statistic
-    myDims <- 1:nadd + npar
+    myDims <- 1:nadd + npar #TODO: not available in release mode, unless calculating Jacobian of constraints, like Wald test?
     ARIV <- (1 + 1/m)/nadd * sum(diag(B[myDims, myDims, drop = FALSE] %*% inv.W[myDims, myDims, drop = FALSE]))
     a <- DF*(m - 1)
     if (a > 4) {
@@ -550,7 +614,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       df2 <- a*(1 + 1/DF) * (1 + 1/ARIV)^2 / 2 # Enders (eq. 8.25)
     }
     TEST <- data.frame(test = "score", "F" = stat / DF, df1 = DF, df2 = df2,
-                       p.value = pf(stat / DF, df1 = DF, df2 = df2, lower.tail = FALSE))
+                       p.value = pf(stat / DF, df1 = DF, df2 = df2, lower.tail = FALSE),
+                       ariv = ARIV, fmi = ARIV / (1 + ARIV))
   }
   class(TEST) <- c("lavaan.data.frame", "data.frame")
   attr(TEST, "header") <- "total score test:"
@@ -568,7 +633,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       TS[r] <- as.numeric(N * t(score) %*%  Z1.plus1 %*% score)
 
       ## FIXME: experimentally add univariate EPCs for added parameters, as would accompany modification indices
-      if (epc && !is.null(add)) EPC.uni[r] <- -1 * utils::tail(as.numeric(score %*%  Z1.plus1), n = nrow(R))[r]
+      if (epc && !is.null(add)) EPC.uni[r] <- 1 * utils::tail(as.numeric(score %*%  Z1.plus1), n = nrow(R))[r]
     }
 
     Table2 <- Table
@@ -593,10 +658,12 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
         DF2
       })
       Table2$p.value <- pf(Table2$F, df1 = DF, df2 = Table2$df2, lower.tail = FALSE)
+      Table2$riv <- RIVs
+      Table2$fmi <- RIVs / (1 + RIVs)
     }
 
-    ## FIXME: experimentally add univariate EPCs for added parameters, as would accompany modification indices
-    if (epc && !is.null(add)) Table2$epc <- EPC.uni
+    ## add univariate EPCs, equivalent to modindices() output
+    if (epc && !is.null(add)) Table2$epc <- EPC.uni[r.idx]
 
     attr(Table2, "header") <- "univariate score tests:"
     OUT$uni <- Table2
@@ -621,7 +688,7 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
       }
     }
 
-    Table3 <- Table
+    Table3 <- Table[TS.order,]
     DF <- seq_len( length(TS) )
     if (asymptotic) {
       Table3$X2 <- TS
@@ -639,6 +706,8 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
         DF2
       }, DF1 = DF, ariv = ARIVs)
       Table3$p.value = pf(Table3$F, df1 = DF, df2 = Table3$df2, lower.tail = FALSE)
+      Table3$riv <- ARIVs
+      Table3$fmi <- ARIVs / (1 + ARIVs)
     }
     attr(Table3, "header") <- "cumulative score tests:"
     OUT$cumulative <- Table3
@@ -669,14 +738,14 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
                  rbind(t(R1), matrix(0, nrow(R1), nrow(R1))) )
     Z1.plus <- MASS::ginv(Z1)
     Z1.plus1 <- Z1.plus[ 1:nrow(information), 1:nrow(information) ]
-    EPC.all <- -1 * as.numeric(score %*%  Z1.plus1)
+    EPC.all <- 1 * as.numeric(score %*%  Z1.plus1)
 
     # create epc table for the 'free' parameters
-    myCoefs <- getMethod("coef","lavaan.mi")(object)
-    myCols <- c("lhs","op","rhs","group")
+    myCoefs <- getMethod("coef","lavaan.mi")(object, omit.imps = omit.imps)
+    myCols <- c("lhs","op","rhs","user")
     if (ngroups > 1L) myCols <- c(myCols, "block","group")
     if (nlevels > 1L) myCols <- c(myCols, "block","level")
-    myCols <- c(unique(myCols), "user","free","label","plabel")
+    myCols <- c(unique(myCols), "free","exo","label","plabel")
     LIST <- if (!is.null(add) && nchar(add) > 0L) {
       PT[ , myCols]
     } else parTable(object)[ , myCols]
@@ -689,8 +758,67 @@ lavTestScore.mi <- function(object, add = NULL, release = NULL,
     LIST$epc <- rep(as.numeric(NA), length(LIST$lhs))
     LIST$epc[ LIST$free > 0 ] <- EPC.all
     LIST$epv <- LIST$est + LIST$epc
+    #TODO: add SEPCs
+    if (standardized) {
+
+      EPC <- LIST$epc
+
+      if (cov.std) {
+        # replace epc values for variances by est values
+        var.idx <- which(LIST$op == "~~" & LIST$lhs == LIST$rhs & LIST$exo == 0L)
+        EPC[ var.idx ] <- LIST$est[ var.idx ]
+      }
+
+      # two problems:
+      #   - EPC of variances can be negative, and that is perfectly legal
+      #   - EPC (of variances) can be tiny (near-zero), and we should
+      #     not divide by tiny variables
+      small.idx <- which(LIST$op == "~~" &
+                         LIST$lhs == LIST$rhs &
+                         abs(EPC) < sqrt( .Machine$double.eps ) )
+      if (length(small.idx) > 0L) EPC[ small.idx ] <- as.numeric(NA)
+
+      # get the sign
+      EPC.sign <- sign(LIST$epc)
+
+      ## pooled estimates for standardizedSolution()
+      pooledest <- getMethod("coef", "lavaan.mi")(object, omit.imps = omit.imps)
+      ## update @Model@GLIST for standardizedSolution(..., GLIST=)
+      object@Model <- lavaan::lav_model_set_parameters(object@Model, x = pooledest)
+
+      LIST$sepc.lv <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
+                                                              type = "std.lv",
+                                                              cov.std = cov.std,
+                                                              partable = LIST,
+                                                              GLIST = object@Model@GLIST,
+                                                              est = abs(EPC))$est.std
+      LIST$sepc.all <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
+                                                               type = "std.all",
+                                                               cov.std = cov.std,
+                                                               partable = LIST,
+                                                               GLIST = object@Model@GLIST,
+                                                               est = abs(EPC))$est.std
+      fixed.x <- lavListInspect(object, "options")$fixed.x && length(lavNames(object, "ov.x"))
+      if (fixed.x) {
+        LIST$sepc.nox <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
+                                                                 type = "std.nox",
+                                                                 cov.std = cov.std,
+                                                                 partable = LIST,
+                                                                 GLIST = object@Model@GLIST,
+                                                                 est = abs(EPC))$est.std
+      }
+
+      if (length(small.idx) > 0L) {
+        LIST$sepc.lv[small.idx] <- 0
+        LIST$sepc.all[small.idx] <- 0
+        if (fixed.x) LIST$sepc.nox[small.idx] <- 0
+      }
+
+    }
+
     LIST$free[ LIST$user == 10L ] <- 0
     LIST$user <- NULL
+    LIST$exo <- NULL
 
     DF <- if (asymptotic) OUT$test$df else OUT$test$df1
     attr(LIST, "header") <- paste0("expected parameter changes (epc) and ",

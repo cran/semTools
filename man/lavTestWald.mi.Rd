@@ -5,8 +5,8 @@
 \title{Wald Test for Multiple Imputations}
 \usage{
 lavTestWald.mi(object, constraints = NULL, test = c("D1", "D2"),
-  asymptotic = FALSE, scale.W = FALSE, verbose = FALSE,
-  warn = TRUE)
+  asymptotic = FALSE, scale.W = !asymptotic, omit.imps = c("no.conv",
+  "no.se"), verbose = FALSE, warn = TRUE)
 }
 \arguments{
 \item{object}{An object of class \code{\linkS4class{lavaan.mi}}.}
@@ -33,13 +33,24 @@ If \code{TRUE}, the pooled \emph{F} statistic will be multiplied by its
 enough that the statistic will be asymptotically \eqn{\chi^2} distributed
 with \code{df1}.}
 
-\item{scale.W}{\code{logical}. If \code{FALSE} (default), the pooled
+\item{scale.W}{\code{logical}. If \code{FALSE}, the pooled
 asymptotic covariance matrix of model parameters is calculated as the
 weighted sum of the within-imputation and between-imputation components.
 Otherwise, the pooled asymptotic covariance matrix of model parameters is
 calculated by scaling the within-imputation component by the
-average relative increase in variance (ARIV; see Enders, 2010, p. 235).
-Not recommended, and ignored (irrelevant) if \code{test = "D2"}.}
+average relative increase in variance (ARIV; see Enders, 2010, p. 235),
+which is \emph{only} consistent when requesting the \emph{F} test (i.e.,
+\code{asymptotic = FALSE}.  Ignored (irrelevant) if \code{test = "D2"}.}
+
+\item{omit.imps}{\code{character} vector specifying criteria for omitting
+imputations from pooled results.  Can include any of
+\code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+default setting, which excludes any imputations that did not
+converge or for which standard errors could not be computed.  The
+last option (\code{"no.npd"}) would exclude any imputations which
+yielded a nonpositive definite covariance matrix for observed or
+latent variables, which would include any "improper solutions" such
+as Heywood cases.}
 
 \item{verbose}{\code{logical}. If \code{TRUE}, print the restriction
 matrix and the estimated restricted values.}
@@ -50,7 +61,11 @@ matrix and the estimated restricted values.}
 A vector containing the Wald test statistic (either an \code{F} or
   \eqn{\chi^2} statistic, depending on the \code{asymptotic} argument),
   the degrees of freedom (numerator and denominator, if
-  \code{asymptotic = FALSE}), and a \emph{p} value.
+  \code{asymptotic = FALSE}), and a \emph{p} value. If
+  \code{asymptotic = FALSE}, the relative invrease in variance (RIV, or
+  average for multiparameter tests: ARIV) used to calculate the denominator
+  \emph{df} is also returned as a missing-data diagnostic, along with the
+  fraction missing information (FMI = ARIV / (1 + ARIV)).
 }
 \description{
 Wald test for testing a linear hypothesis about the parameters of lavaan
@@ -119,7 +134,7 @@ Enders, C. K. (2010). \emph{Applied missing data analysis}.
   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
   Significance levels from repeated \emph{p}-values with multiply-imputed
   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-  \url{https://www.jstor.org/stable/24303994}
+  https://www.jstor.org/stable/24303994
 
   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
   New York, NY: Wiley.

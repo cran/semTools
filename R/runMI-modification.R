@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Yves rosseel
-### Last updated: 15 September 2018
+### Last updated: 29 August 2019
 ### adaptation of lavaan::modindices() for lavaan.mi-class objects
 
 
@@ -9,24 +9,33 @@
 ##' latent variable model fitted to multiple imputed data sets. Statistics
 ##' for releasing one or more fixed or constrained parameters in model can
 ##' be calculated by pooling the gradient and information matrices
-##' across imputed data sets using Rubin's (1987) rules, or by pooling the
-##' test statistics across imputed data sets (Li, Meng, Raghunathan, &
-##' Rubin, 1991).
+##' across imputed data sets in a method analogous to the Wald test proposed by
+##' Li, Meng, Raghunathan, & Rubin (1991), or by pooling the complete-data
+##' score-test statistics across imputed data sets (Li et al., 1991).
 ##'
 ##' @name modindices.mi
 ##' @aliases modificationIndices.mi modificationindices.mi modindices.mi
-##' @importFrom lavaan lavInspect lavListInspect
+##' @importFrom lavaan lavInspect lavListInspect lavNames
 ##' @importFrom methods getMethod
 ##' @importFrom stats cov pchisq qchisq
 ##'
 ##' @param object An object of class \code{\linkS4class{lavaan.mi}}
-##' @param type \code{character} indicating which pooling method to use.
-##'   \code{type = "D2"} (default) indicates that modification indices that were
+##' @param test \code{character} indicating which pooling method to use.
+##'   \code{test = "D2"} (default) indicates that modification indices that were
 ##'   calculated within each imputed data set will be pooled across imputations,
 ##'   as described in Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010).
-##'   \code{"Rubin"} indicates Rubin's (1987) rules will be applied to the
-##'   gradient and information, and those pooled values will be used to
-##'   calculate modification indices in the usual manner.
+##'   \code{"D1"} indicates Li et al.'s (1991) proposed Wald test will be
+##'   applied to the gradient and information, and those pooled values will be
+##'   used to calculate modification indices in the usual manner.
+##' @param omit.imps \code{character} vector specifying criteria for omitting
+##'    imputations from pooled results.  Can include any of
+##'    \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'    default setting, which excludes any imputations that did not
+##'    converge or for which standard errors could not be computed.  The
+##'    last option (\code{"no.npd"}) would exclude any imputations which
+##'    yielded a nonpositive definite covariance matrix for observed or
+##'    latent variables, which would include any "improper solutions" such
+##'    as Heywood cases.
 ##' @param standardized \code{logical}. If \code{TRUE}, two extra columns
 ##'   (\code{$sepc.lv} and \code{$sepc.all}) will contain standardized values
 ##'   for the EPCs. In the first column (\code{$sepc.lv}), standardizization is
@@ -34,7 +43,7 @@
 ##'   column (\code{$sepc.all}), standardization is based on both the variances
 ##'   of both (continuous) observed and latent variables. (Residual) covariances
 ##'   are standardized using (residual) variances.
-##' @param cov.std \code{logical}. \code{TRUE} if \code{type == "D2"}.
+##' @param cov.std \code{logical}. \code{TRUE} if \code{test == "D2"}.
 ##'   If \code{TRUE} (default), the (residual)
 ##'   observed covariances are scaled by the square-root of the diagonal elements
 ##'   of the \eqn{\Theta} matrix, and the (residual) latent covariances are
@@ -70,8 +79,8 @@
 ##' @param op \code{character} string. Filter the output by selecting only those
 ##'   rows with operator \code{op}.
 ##'
-##' @note When \code{type = "D2"}, each (S)EPC will be pooled by taking its
-##'   average across imputations. When \code{type = "Rubin"}, EPCs will be
+##' @note When \code{test = "D2"}, each (S)EPC will be pooled by taking its
+##'   average across imputations. When \code{test = "D1"}, EPCs will be
 ##'   calculated in the standard way using the pooled gradient and information,
 ##'   and SEPCs will be calculated by standardizing the EPCs using model-implied
 ##'   (residual) variances.
@@ -84,9 +93,10 @@
 ##'   Adapted from \pkg{lavaan} source code, written by
 ##'   Yves Rosseel (Ghent University; \email{Yves.Rosseel@@UGent.be})
 ##'
-##' \code{type = "Rubin"} method proposed by
+##' \code{test = "D1"} method proposed by
 ##'   Maxwell Mansolf (University of California, Los Angeles;
 ##'   \email{mamansolf@@gmail.com})
+#FIXME: replace note with reference once accepted paper has a DOI
 ##'
 ##' @references
 ##'   Enders, C. K. (2010). \emph{Applied missing data analysis}.
@@ -95,10 +105,7 @@
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
 ##'   Significance levels from repeated \emph{p}-values with multiply-imputed
 ##'    data.\emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   \url{https://www.jstor.org/stable/24303994}
-##'
-##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
-##'   New York, NY: Wiley.
+##'   https://www.jstor.org/stable/24303994
 ##'
 ##' @examples
 ##'  \dontrun{
@@ -126,13 +133,14 @@
 ##' out <- cfa.mi(HS.model, data = imps)
 ##'
 ##' modindices.mi(out) # default: Li et al.'s (1991) "D2" method
-##' modindices.mi(out, type = "Rubin") # Rubin's rules
+##' modindices.mi(out, test = "D1") # Li et al.'s (1991) "D1" method
 ##'
 ##' }
 ##'
 ##' @export
 modindices.mi <- function(object,
-                          type = c("D2","Rubin"),
+                          test = c("D2","D1"),
+                          omit.imps = c("no.conv","no.se"),
 
                           standardized = TRUE,
                           cov.std = TRUE,
@@ -151,16 +159,22 @@ modindices.mi <- function(object,
                           na.remove = TRUE,
                           op = NULL) {
   stopifnot(inherits(object, "lavaan.mi"))
-  useSE <- sapply(object@convergence, "[[", i = "SE")
-  useSE[is.na(useSE)] <- FALSE
-  useImps <- useSE & sapply(object@convergence, "[[", i = "converged")
+
+  useImps <- rep(TRUE, length(object@DataList))
+  if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
+  if ("no.se" %in% omit.imps) useImps <- useImps & sapply(object@convergence, "[[", i = "SE")
+  if ("no.npd" %in% omit.imps) {
+    Heywood.lv <- sapply(object@convergence, "[[", i = "Heywood.lv")
+    Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
+    useImps <- useImps & !(Heywood.lv | Heywood.ov)
+  }
   m <- sum(useImps)
-  type <- tolower(type[1])
+  if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
+  useImps <- which(useImps)
+
+  test <- tolower(test[1])
   N <- lavListInspect(object, "ntotal")
   #FIXME: if (lavoptions$mimic == "EQS") N <- N - 1 # not in lavaan, why?
-
-  ## check if model has converged
-  if (m == 0L) stop("No models converged. Modification indices unavailable.")
 
   # not ready for estimator = "PML"
   if (object@Options$estimator == "PML") {
@@ -171,18 +185,18 @@ modindices.mi <- function(object,
   if (power) standardized <- TRUE
 
   ## use first available modification indices as template to store pooled results
-  ngroups <- lavaan::lavInspect(object, "ngroups")
+  ngroups <- lavListInspect(object, "ngroups")
   nlevels <- object@Data@nlevels #FIXME: lavListInspect(object, "nlevels")
   myCols <- c("lhs","op","rhs")
   if (ngroups > 1L) myCols <- c(myCols,"block","group")
   if (nlevels > 1L) myCols <- c(myCols,"block","level")
   myCols <- unique(myCols)
 
-  for (i in which(useImps)) {
-    LIST <- object@miList[[ which(useImps)[i] ]][myCols]
+  for (i in useImps) {
+    LIST <- object@miList[[i]][myCols]
     nR <- try(nrow(LIST), silent = TRUE)
     if (class(nR) == "try-error" || is.null(nR)) {
-      if (i == max(which(useImps))) {
+      if (i == max(useImps)) {
         stop("No modification indices could be computed for any imputations.")
       } else next
     } else break
@@ -191,12 +205,16 @@ modindices.mi <- function(object,
 
 
   ## D2 pooling method
-  if (type == "d2") {
+  if (test == "d2") {
     chiList <- lapply(object@miList[useImps], "[[", i = "mi")
     ## imputations in columns, parameters in rows
-    LIST$mi <- apply(do.call(cbind, chiList), 1, function(x) {
-      calculate.D2(x, DF = 1, asymptotic = TRUE)[1]
+    pooledList <- apply(do.call(cbind, chiList), 1, function(x) {
+      calculate.D2(x, DF = 1, asymptotic = TRUE)
     })
+    LIST$mi <- pooledList[1, ] # could be "F" or "chisq"
+    ## diagnostics
+    LIST$riv <- pooledList["ariv", ]
+    LIST$fmi <- pooledList["fmi", ]
     ## also take average of epc & sepc.all
     epcList <- lapply(object@miList[useImps], "[[", i = "epc")
     LIST$epc <- rowMeans(do.call(cbind, epcList))
@@ -205,29 +223,44 @@ modindices.mi <- function(object,
       LIST$sepc.lv <- rowMeans(do.call(cbind, sepcList))
       sepcList <- lapply(object@miList[useImps], "[[", i = "sepc.all")
       LIST$sepc.all <- rowMeans(do.call(cbind, sepcList))
+      fixed.x <- lavListInspect(object, "options")$fixed.x && length(lavNames(object, "ov.x"))
+      if (fixed.x && "sepc.nox" %in% colnames(object@miList[useImps][[1]])) {
+        sepcList <- lapply(object@miList[useImps], "[[", i = "sepc.nox")
+        LIST$sepc.nox <- rowMeans(do.call(cbind, sepcList))
+      }
     }
+
   } else {
 
     scoreOut <- lavTestScore.mi(object, add = cbind(LIST, user = 10L,
                                                     free = 1, start = 0),
-                                test = "Rubin", scale.W = FALSE,
-                                epc = TRUE, asymptotic = TRUE,
+                                test = "d1", omit.imps = omit.imps,
+                                epc = TRUE, scale.W = FALSE, asymptotic = TRUE,
                                 information = information)$uni
     LIST$mi <- scoreOut$X2
-    LIST$epc <- scoreOut$epc
+    LIST$riv <- scoreOut$riv
+    LIST$fmi <- scoreOut$fmi
+    LIST$epc <- scoreOut$epc #FIXME: use average across imputations?
 
     # standardize?
     if (standardized) {
       ## Need full parameter table for lavaan::standardizedSolution()
       ## Merge parameterEstimates() with modindices()
       oldPE <- getMethod("summary","lavaan.mi")(object, se = FALSE,
-                                                add.attributes = FALSE)
+                                                output = "data.frame",
+                                                omit.imps = omit.imps)
       PE <- lavaan::lav_partable_merge(oldPE, cbind(LIST, est = 0),
                                        remove.duplicated = TRUE, warn = FALSE)
       ## merge EPCs, using parameter labels (unavailable for estimates)
       rownames(LIST) <- paste0(LIST$lhs, LIST$op, LIST$rhs, ".g", LIST$group) #FIXME: multilevel?
       rownames(PE) <- paste0(PE$lhs, PE$op, PE$rhs, ".g", PE$group)
       PE[rownames(LIST), "epc"] <- LIST$epc
+      ## need "exo" column?
+      PT <- parTable(object)
+      if ("exo" %in% names(PT)) {
+        rownames(PT) <- paste0(PT$lhs, PT$op, PT$rhs, ".g", PT$group)
+        PE[rownames(PT), "exo"] <- PT$exo
+      } else PE$exo <- 0L
       rownames(LIST) <- NULL
       rownames(PE) <- NULL
 
@@ -251,27 +284,44 @@ modindices.mi <- function(object,
       # get the sign
       EPC.sign <- sign(PE$epc)
 
+      ## pooled estimates for standardizedSolution()
+      pooledest <- getMethod("coef", "lavaan.mi")(object, omit.imps = omit.imps)
+      ## update @Model@GLIST for standardizedSolution(..., GLIST=)
+      object@Model <- lavaan::lav_model_set_parameters(object@Model, x = pooledest)
+
       PE$sepc.lv <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
                                                             type = "std.lv",
                                                             cov.std = cov.std,
                                                             partable = PE,
-                                                            GLIST = object@GLIST,
+                                                            GLIST = object@Model@GLIST,
                                                             est = abs(EPC))$est.std
       PE$sepc.all <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
                                                              type = "std.all",
                                                              cov.std = cov.std,
                                                              partable = PE,
-                                                             GLIST = object@GLIST,
+                                                             GLIST = object@Model@GLIST,
                                                              est = abs(EPC))$est.std
+      fixed.x <- lavListInspect(object, "options")$fixed.x && length(lavNames(object, "ov.x"))
+      if (fixed.x) {
+        PE$sepc.nox <- EPC.sign * lavaan::standardizedSolution(object, se = FALSE,
+                                                               type = "std.nox",
+                                                               cov.std = cov.std,
+                                                               partable = PE,
+                                                               GLIST = object@Model@GLIST,
+                                                               est = abs(EPC))$est.std
+      }
+
       if (length(small.idx) > 0L) {
         PE$sepc.lv[small.idx] <- 0
         PE$sepc.all[small.idx] <- 0
+        if (fixed.x) PE$sepc.nox[small.idx] <- 0
       }
       ## remove unnecessary columns, then merge
       if (is.null(LIST$block)) PE$block <- NULL
       PE$est <- NULL
       PE$mi <- NULL
       PE$epc <- NULL
+      PE$exo <- NULL
       LIST <- merge(LIST, PE, sort = FALSE)
       class(LIST) <- c("lavaan.data.frame","data.frame")
     }

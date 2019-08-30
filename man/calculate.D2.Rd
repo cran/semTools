@@ -25,7 +25,9 @@ with \code{df1}.}
 }
 \value{
 A \code{numeric} vector containing the test statistic, \emph{df},
-  and a \emph{p} value.
+  its \emph{p} value, and 2 missing-data diagnostics: the relative invrease
+  in variance (RIV, or average for multiparameter tests: ARIV) and the
+  fraction missing information (FMI = ARIV / (1 + ARIV)).
 }
 \description{
 This is a utility function used to calculate the "D2" statistic for pooling
@@ -62,7 +64,7 @@ Enders, C. K. (2010). \emph{Applied missing data analysis}. New
   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
   Significance levels from repeated \emph{p}-values with multiply-imputed
   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-  \url{https://www.jstor.org/stable/24303994}
+  https://www.jstor.org/stable/24303994
 }
 \seealso{
 \code{\link{lavTestLRT.mi}}, \code{\link{lavTestWald.mi}},

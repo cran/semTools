@@ -104,8 +104,8 @@ out2 <- cfa.mi(HS.model, data = imps)
 ## same results (using the same seed results in the same imputations)
 cbind(impute.within = coef(out1), impute.first = coef(out2))
 
-summary(out1)
-summary(out1, ci = FALSE, fmi = TRUE, add.attributes = FALSE)
+summary(out1, fit.measures = TRUE)
+summary(out1, ci = FALSE, fmi = TRUE, output = "data.frame")
 summary(out1, ci = FALSE, stand = TRUE, rsq = TRUE)
 
 ## model fit. D3 includes information criteria
@@ -122,9 +122,9 @@ fitMeasures(out1)
 mgfit.config <- cfa.mi(HS.model, data = imps, estimator = "mlm",
                        group = "school")
 ## add invariance constraints, and use previous fit as "data"
-mgfit.metric <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm"
+mgfit.metric <- cfa.mi(HS.model, data = mgfit.config, estimator = "mlm",
                        group = "school", group.equal = "loadings")
-mgfit.scalar <- cfa.mi(HS.model, data = mgfit1, estimator = "mlm"
+mgfit.scalar <- cfa.mi(HS.model, data = mgfit.config, estimator = "mlm",
                        group = "school",
                        group.equal = c("loadings","intercepts"))
 
@@ -161,7 +161,7 @@ lapply(datCat, class)
 set.seed(123)
 for (i in 1:8) datCat[sample(1:nrow(datCat), size = .1*nrow(datCat)), i] <- NA
 
-catout <- cfa.mi(' f =~ u1 + u2 + u3 + u4 ', data = datCat,
+catout <- cfa.mi(' f =~ 1*u1 + 1*u2 + 1*u3 + 1*u4 ', data = datCat,
                  m = 3, seed = 456,
                  miArgs = list(ords = paste0("u", 1:8), noms = "g"),
                  FUN = function(fit) {
@@ -169,7 +169,9 @@ catout <- cfa.mi(' f =~ u1 + u2 + u3 + u4 ', data = datCat,
                         zeroCells = lavaan::lavInspect(fit, "zero.cell.tables"))
                  })
 summary(catout)
-fitMeasures(catout, indices = "all") # scaled versions of indices, too
+lavTestLRT.mi(catout, test = "D2", pool.robust = TRUE)
+fitMeasures(catout, fit.measures = c("rmsea","srmr","cfi"),
+            test = "D2", pool.robust = TRUE)
 
 ## extract custom output
 sapply(catout@funList, function(x) x$wrmr) # WRMR for each imputation
@@ -187,6 +189,5 @@ Enders, C. K. (2010). \emph{Applied missing data analysis}. New
   New York, NY: Wiley.
 }
 \author{
-Terrence D. Jorgensen (University of Amsterdam;
-  \email{TJorgensen314@gmail.com})
+Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }

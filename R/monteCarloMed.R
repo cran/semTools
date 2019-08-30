@@ -1,11 +1,11 @@
 ### Corbin Quick, Alex Schoemann, James Selig, Terrence D. Jorgnensen
-### Last updated: 25 August 2018
+### Last updated: 3 June 2019
 
 ## FIXME: work out a path-analysis example like slide 25:
 ## http://www.da.ugent.be/cvs/pages/en/Presentations/Presentation%20Yves%20Rosseel.pdf
 ## add example to help page, to illustrate a complex function of parameters
-#
-#
+
+
 ##' Monte Carlo Confidence Intervals to Test Complex Indirect Effects
 ##'
 ##' This function takes an expression for an indirect effect, the parameters and
@@ -133,6 +133,37 @@
 ##' ## Compute CI do not include a plot
 ##' monteCarloMed(med, coef1 = aparam, coef2 = b1param,
 ##'               coef3 = b2param, ACM = AC)
+##'
+##'
+##' ## WORKING WITH lavaan MODELS. From the mediation tutorial:
+##' ## http://lavaan.ugent.be/tutorial/mediation.html
+##'
+##' set.seed(1234)
+##' X <- rnorm(100)
+##' M <- 0.5*X + rnorm(100)
+##' Y <- 0.7*M + rnorm(100)
+##' Data <- data.frame(X = X, Y = Y, M = M)
+##' model <- ' # direct effect
+##' Y ~ c*X
+##' # mediator
+##' M ~ a*X
+##' Y ~ b*M
+##' # indirect effect (a*b)
+##' ab := a*b
+##' # total effect
+##' total := c + (a*b)
+##' '
+##' fit <- sem(model, data = Data)
+##'
+##' med <- 'a*b'
+##' ## Automatically extract information from lavaan object
+##' monteCarloMed(med, object = fit)
+##'
+##' ## or (unnecessary) manually extract the information first
+##' myParams <- c("a","b")
+##' myCoefs <- coef(fit)[myParams]
+##' myACM <- vcov(fit)[myParams, myParams]
+##' monteCarloMed(med, myCoefs, ACM = myACM)
 ##'
 ##' @export
 monteCarloMed <- function(expression, ..., ACM = NULL, object = NULL,

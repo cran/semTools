@@ -48,7 +48,7 @@ available, which go by different names in the literature:
         \code{"effects.coding"}, \code{"effects-coding"},
         \code{"effects.code"}, \code{"effects-code"}
 }
-See Little et al. (2006) for details on all three methods.}
+See Kloessner & Klopp (2019) for details about all three methods.}
 
 \item{ID.cat}{\code{character}. The method for identifying (residual)
 variances and intercepts of latent item-responses underlying any
@@ -297,14 +297,85 @@ fit.thresh <- measEq.syntax(configural.model = mod.cat, data = datCat,
                             group = "g", group.equal = "thresholds",
                             longFacNames = longFacNames,
                             long.equal = "thresholds", return.fit = TRUE)
-
 ## compare their fit to test threshold invariance
 anova(fit.config, fit.thresh)
 
 
+## --------------------------------------------------------
+## RECOMMENDED PRACTICE: fit one invariance model at a time
+## --------------------------------------------------------
+
+## - A downside of setting return.fit=TRUE is that if the model has trouble
+##   converging, you don't have the opportunity to investigate the syntax,
+##   or even to know whether an error resulted from the syntax-generator or
+##   from lavaan itself.
+## - A downside of automatically fitting an entire set of invariance models
+##   (like the old measurementInvariance() function did) is that you might
+##   end up testing models that shouldn't even be fitted because less
+##   restrictive models already fail (e.g., don't test full scalar
+##   invariance if metric invariance fails! Establish partial metric
+##   invariance first, then test equivalent of intercepts ONLY among the
+##   indicators that have invariate loadings.)
+
+## The recommended sequence is to (1) generate and save each syntax object,
+## (2) print it to the screen to verify you are fitting the model you expect
+## to (and potentially learn which identification constraints should be
+## released when equality constraints are imposed), and (3) fit that model
+## to the data as you would if you wrote the syntax yourself.
+
+## Continuing from the examples above, after establishing invariance of
+## thresholds, we proceed to test equivalence of loadings and intercepts
+##   (metric and scalar invariance, respectively)
+## simultaneously across groups and repeated measures.
+
 \dontrun{
 
-## compare several invariance models
+## metric invariance
+syntax.metric <- measEq.syntax(configural.model = mod.cat, data = datCat,
+                               ordered = paste0("u", 1:8),
+                               parameterization = "theta",
+                               ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+                               group = "g", longFacNames = longFacNames,
+                               group.equal = c("thresholds","loadings"),
+                               long.equal  = c("thresholds","loadings"))
+summary(syntax.metric)                    # summarize model features
+mod.metric <- as.character(syntax.metric) # save as text
+cat(mod.metric)                           # print/view lavaan syntax
+## fit model to data
+fit.metric <- cfa(mod.metric, data = datCat, group = "g",
+                  ordered = paste0("u", 1:8), parameterization = "theta")
+## test equivalence of loadings, given equivalence of thresholds
+anova(fit.thresh, fit.metric)
+
+## scalar invariance
+syntax.scalar <- measEq.syntax(configural.model = mod.cat, data = datCat,
+                               ordered = paste0("u", 1:8),
+                               parameterization = "theta",
+                               ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+                               group = "g", longFacNames = longFacNames,
+                               group.equal = c("thresholds","loadings",
+                                               "intercepts"),
+                               long.equal  = c("thresholds","loadings",
+                                               "intercepts"))
+summary(syntax.scalar)                    # summarize model features
+mod.scalar <- as.character(syntax.scalar) # save as text
+cat(mod.scalar)                           # print/view lavaan syntax
+## fit model to data
+fit.scalar <- cfa(mod.scalar, data = datCat, group = "g",
+                  ordered = paste0("u", 1:8), parameterization = "theta")
+## test equivalence of intercepts, given equal thresholds & loadings
+anova(fit.metric, fit.scalar)
+
+
+## For a single table with all results, you can pass the models to
+## summarize to the compareFit() function
+compareFit(fit.config, fit.thresh, fit.metric, fit.scalar)
+
+
+
+## ------------------------------------------------------
+## NOT RECOMMENDED: fit several invariance models at once
+## ------------------------------------------------------
 test.seq <- c("thresholds","loadings","intercepts","means","residuals")
 meq.list <- list()
 for (i in 0:length(test.seq)) {
@@ -332,13 +403,56 @@ for (i in 0:length(test.seq)) {
 
 compareFit(meq.list)
 
+
+## -----------------
+## Binary indicators
+## -----------------
+
+## borrow example data from Mplus user guide
+myData <- read.table("http://www.statmodel.com/usersguide/chap5/ex5.16.dat")
+names(myData) <- c("u1","u2","u3","u4","u5","u6","x1","x2","x3","g")
+bin.mod <- '
+  FU1 =~ u1 + u2 + u3
+  FU2 =~ u4 + u5 + u6
+'
+## Must SIMULTANEOUSLY constrain thresholds, loadings, and intercepts
+test.seq <- list(strong = c("thresholds","loadings","intercepts"),
+                 means = "means",
+                 strict = "residuals")
+meq.list <- list()
+for (i in 0:length(test.seq)) {
+  if (i == 0L) {
+    meq.label <- "configural"
+    group.equal <- ""
+    long.equal <- ""
+  } else {
+    meq.label <- names(test.seq)[i]
+    group.equal <- unlist(test.seq[1:i])
+    # long.equal <- unlist(test.seq[1:i])
+  }
+  meq.list[[meq.label]] <- measEq.syntax(configural.model = bin.mod,
+                                         data = myData,
+                                         ordered = paste0("u", 1:6),
+                                         parameterization = "theta",
+                                         ID.fac = "std.lv",
+                                         ID.cat = "Wu.Estabrook.2016",
+                                         group = "g",
+                                         group.equal = group.equal,
+                                         #longFacNames = longFacNames,
+                                         #long.equal = long.equal,
+                                         return.fit = TRUE)
+}
+
+compareFit(meq.list)
+
+
 }
 }
 \references{
-Little, T. D., Slegers, D. W., & Card, N. A. (2006). A non-arbitrary
-  method of identifying and scaling latent variables in SEM and MACS models.
-  \emph{Structural Equation Modeling, 13}(1), 59--72.
-  doi:10.1207/s15328007sem1301_3
+Kloessner, S., & Klopp, E. (2019). Explaining constraint interaction: How
+  to interpret estimated model parameters under alternative scaling methods.
+  \emph{Structural Equation Modeling, 26}(1), 143--155.
+  doi:10.1080/10705511.2018.1517356
 
   Liu, Y., Millsap, R. E., West, S. G., Tein, J.-Y., Tanaka, R., & Grimm,
   K. J. (2017). Testing measurement invariance in longitudinal data with

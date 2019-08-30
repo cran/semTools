@@ -5,7 +5,8 @@
 \title{Likelihood Ratio Test for Multiple Imputations}
 \usage{
 lavTestLRT.mi(object, h1 = NULL, test = c("D3", "D2"),
-  asymptotic = FALSE, pool.robust = FALSE, ...)
+  omit.imps = c("no.conv", "no.se"), asymptotic = FALSE,
+  pool.robust = FALSE, ...)
 }
 \arguments{
 \item{object, h1}{An object of class \code{\linkS4class{lavaan.mi}}.
@@ -18,6 +19,16 @@ or \code{"Li.et.al"} requests the complete-data LRT statistic should be
 calculated using each imputed data set, which will then be pooled across
 imputations, as described in Li, Meng, Raghunathan, & Rubin (1991).
 Find additional details in Enders (2010, chapter 8).}
+
+\item{omit.imps}{\code{character} vector specifying criteria for omitting
+imputations from pooled results.  Can include any of
+\code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+default setting, which excludes any imputations that did not
+converge or for which standard errors could not be computed.  The
+last option (\code{"no.npd"}) would exclude any imputations which
+yielded a nonpositive definite covariance matrix for observed or
+latent variables, which would include any "improper solutions" such
+as Heywood cases.}
 
 \item{asymptotic}{\code{logical}. If \code{FALSE} (default), the pooled test
 will be returned as an \emph{F}-distributed statistic with numerator
@@ -39,11 +50,13 @@ only if \code{test = "D2"} and \code{pool.robust = TRUE}}
 }
 \value{
 A vector containing the LRT statistic (either an \code{F} or \eqn{\chi^2}
-  statistic, depending on the \code{asymptotic} argument), the degrees of
-  freedom (numerator and denominator, if \code{asymptotic = FALSE}), and a
-  \emph{p} value. Robust statistics will also include the average (across)
-  imputations) scaling factor and (if relevant) shift parameter(s), unless
-  \code{pool.robust = TRUE}.
+  statistic, depending on the \code{asymptotic} argument), its degrees of
+  freedom (numerator and denominator, if \code{asymptotic = FALSE}), its
+  \emph{p} value, and 2 missing-data diagnostics: the relative invrease
+  in variance (RIV, or average for multiparameter tests: ARIV) and the
+  fraction missing information (FMI = ARIV / (1 + ARIV)). Robust statistics
+  will also include the average (across imputations) scaling factor and
+  (if relevant) shift parameter(s), unless \code{pool.robust = TRUE}.
 }
 \description{
 Likelihood ratio test (LRT) for lavaan models fitted to multiple imputed
@@ -111,11 +124,11 @@ Enders, C. K. (2010). \emph{Applied missing data analysis}.
   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
   Significance levels from repeated \emph{p}-values with multiply-imputed
   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-  \url{https://www.jstor.org/stable/24303994}
+  https://www.jstor.org/stable/24303994
 
   Meng, X.-L., & Rubin, D. B. (1992). Performing likelihood ratio tests with
-  multiply-imputed data sets. \emph{Biometrika, 79}(1), 103--111. Retrieved
-  from \url{https://www.jstor.org/stable/2337151}
+  multiply-imputed data sets. \emph{Biometrika, 79}(1), 103--111.
+  doi:10.2307/2337151
 
   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
   New York, NY: Wiley.

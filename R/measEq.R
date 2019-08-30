@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 12 September 2018
+### Last updated: 30 August 2019
 ### lavaan model syntax-writing engine for new measEq() to replace
 ### measurementInvariance(), measurementInvarianceCat(), and longInvariance()
 
@@ -31,7 +31,7 @@ measEq <- function(configural.model,
 
   #TODO: add argument to accept measEq.partial output, to continue sequence (or make and update() method?)
   if (is.character(group.partial)) {
-    if (group.partial == "") {
+    if (group.partial == "" && length(group.partial) == 1L) {
       group.partial <- data.frame(lhs = character(0), op = character(0), rhs = character(0))
     } else {
       group.partial <- lavaan::lavParseModelString(group.partial,
@@ -40,7 +40,7 @@ measEq <- function(configural.model,
     }
   } #TODO: else {extract information from a measEq.partial object}
   if (is.character(long.partial)) {
-    if (long.partial == "") {
+    if (long.partial == "" && length(long.partial) == 1L) {
       long.partial <- data.frame(lhs = character(0), op = character(0), rhs = character(0))
     } else {
       long.partial <- lavaan::lavParseModelString(long.partial,
@@ -109,6 +109,11 @@ measEq <- function(configural.model,
 ##' @param x,object an object of class \code{measEq.syntax}
 ##' @param package \code{character} indicating the package for which the
 ##'   syntax should be generated.  Currently, only \code{"lavaan"}.
+##' @param single \code{logical} indicating whether to concatenate lavaan
+##'   \code{\link[lavaan]{model.syntax}} into a single \code{character} string.
+##'   Setting \code{FALSE} will return a vector of strings, which may be
+##'   convenient (or even necessary to prevent an error) in
+##'   models with long variable names, many variables, or many groups.
 ##' @param verbose \code{logical} indicating whether to print a summary to the
 ##'   screen (default). If \code{FALSE}, only a pattern matrix is returned.
 ##' @param ... Additional arguments to the \code{call}, or arguments with
@@ -155,7 +160,8 @@ setClass("measEq.syntax", slots = c(package = "character", # lavaan, OpenMx in t
 ##' @rdname measEq.syntax-class
 ##' @aliases as.character,measEq.syntax-method
 ##' @export
-setMethod("as.character", "measEq.syntax", function(x, package = "lavaan") {
+setMethod("as.character", "measEq.syntax", function(x, package = "lavaan",
+                                                    single = TRUE) {
 
   pmatList <- c("lambda","tau","nu","delta","theta","alpha","psi")
     #TODO: if (package = "OpenMx") concatenate matrices for RAM specification
@@ -192,7 +198,8 @@ setMethod("as.character", "measEq.syntax", function(x, package = "lavaan") {
                                          x@constraints, "")
 
   ## convert GLIST objects to a character string
-  paste(script, collapse = "\n")
+  if (single) return(paste(script, collapse = "\n"))
+  script
 })
 
 ##' @rdname measEq.syntax-class
@@ -312,8 +319,9 @@ setMethod("summary", "measEq.syntax", function(object, verbose = TRUE) {
   cat('\n')
 
   ## without any constraints, call it the configural model
-  if (length(object@call$group.equal) == 1L && object@call$group.equal == "" &&
-      length(object@call$long.equal) == 1L && object@call$long.equal == "") {
+  no.group.equal <- length(object@call$group.equal) == 1L && object@call$group.equal == ""
+  no.long.equal <- length(object@call$long.equal) == 1L && object@call$long.equal == ""
+  if (no.group.equal && no.long.equal) {
     cat('\nThis model hypothesizes only configural invariance.\n\n')
     ## return pattern matrix
     return(invisible(lambda))
@@ -322,7 +330,7 @@ setMethod("summary", "measEq.syntax", function(object, verbose = TRUE) {
 
   ## constrained parameters across groups (+ partial exceptions)
   if (nG > 1L) {
-    if (length(object@call$group.equal) == 1L && object@call$group.equal == "") {
+    if (no.group.equal) {
       cat('No parameters were constrained to equality across groups.\n')
     } else {
       cat('The following types of parameter were constrained to',
@@ -389,7 +397,7 @@ setMethod("summary", "measEq.syntax", function(object, verbose = TRUE) {
   }
   ## constrained parameters across repeated measures (+ partial exceptions)
   if (length(object@call$longFacNames)) {
-    if (length(object@call$long.equal) == 1L && object@call$long.equal == "") {
+    if (no.long.equal) {
       cat('No parameters were constrained to equality across repeated measures:\n')
     } else {
       cat('The following types of parameter were constrained to equality',
@@ -604,6 +612,7 @@ setMethod("update", "measEq.syntax", function(object, ..., evaluate = TRUE) {
 ##'           either raw \code{data} or summary statistics via \code{sample.cov}
 ##'           and (optionally) \code{sample.mean}. In order to include
 ##'           thresholds in the syntax, raw \code{data} must be provided.
+#FIXME: lavaan has a new sample.th= argument
 ##'           See \code{\link[lavaan]{lavaan}}.
 ##'     \item a fitted \code{\linkS4class{lavaan}} model (e.g., as returned by
 ##'           \code{\link[lavaan]{cfa}}) estimating the configural model
@@ -631,7 +640,7 @@ setMethod("update", "measEq.syntax", function(object, ..., evaluate = TRUE) {
 ##'           \code{"effects.coding"}, \code{"effects-coding"},
 ##'           \code{"effects.code"}, \code{"effects-code"}
 ##'   }
-##'   See Little et al. (2006) for details on all three methods.
+##'   See Kloessner & Klopp (2019) for details about all three methods.
 ##'
 ##' @param ID.cat \code{character}. The method for identifying (residual)
 ##'   variances and intercepts of latent item-responses underlying any
@@ -725,10 +734,10 @@ setMethod("update", "measEq.syntax", function(object, ..., evaluate = TRUE) {
 ##' @seealso  \code{\link{compareFit}}
 ##'
 ##' @references
-##'   Little, T. D., Slegers, D. W., & Card, N. A. (2006). A non-arbitrary
-##'   method of identifying and scaling latent variables in SEM and MACS models.
-##'   \emph{Structural Equation Modeling, 13}(1), 59--72.
-##'   doi:10.1207/s15328007sem1301_3
+##'   Kloessner, S., & Klopp, E. (2019). Explaining constraint interaction: How
+##'   to interpret estimated model parameters under alternative scaling methods.
+##'   \emph{Structural Equation Modeling, 26}(1), 143--155.
+##'   doi:10.1080/10705511.2018.1517356
 ##'
 ##'   Liu, Y., Millsap, R. E., West, S. G., Tein, J.-Y., Tanaka, R., & Grimm,
 ##'   K. J. (2017). Testing measurement invariance in longitudinal data with
@@ -788,14 +797,85 @@ setMethod("update", "measEq.syntax", function(object, ..., evaluate = TRUE) {
 ##'                             group = "g", group.equal = "thresholds",
 ##'                             longFacNames = longFacNames,
 ##'                             long.equal = "thresholds", return.fit = TRUE)
-##'
 ##' ## compare their fit to test threshold invariance
 ##' anova(fit.config, fit.thresh)
 ##'
 ##'
+##' ## --------------------------------------------------------
+##' ## RECOMMENDED PRACTICE: fit one invariance model at a time
+##' ## --------------------------------------------------------
+##'
+##' ## - A downside of setting return.fit=TRUE is that if the model has trouble
+##' ##   converging, you don't have the opportunity to investigate the syntax,
+##' ##   or even to know whether an error resulted from the syntax-generator or
+##' ##   from lavaan itself.
+##' ## - A downside of automatically fitting an entire set of invariance models
+##' ##   (like the old measurementInvariance() function did) is that you might
+##' ##   end up testing models that shouldn't even be fitted because less
+##' ##   restrictive models already fail (e.g., don't test full scalar
+##' ##   invariance if metric invariance fails! Establish partial metric
+##' ##   invariance first, then test equivalent of intercepts ONLY among the
+##' ##   indicators that have invariate loadings.)
+##'
+##' ## The recommended sequence is to (1) generate and save each syntax object,
+##' ## (2) print it to the screen to verify you are fitting the model you expect
+##' ## to (and potentially learn which identification constraints should be
+##' ## released when equality constraints are imposed), and (3) fit that model
+##' ## to the data as you would if you wrote the syntax yourself.
+##'
+##' ## Continuing from the examples above, after establishing invariance of
+##' ## thresholds, we proceed to test equivalence of loadings and intercepts
+##' ##   (metric and scalar invariance, respectively)
+##' ## simultaneously across groups and repeated measures.
+##'
 ##' \dontrun{
 ##'
-##' ## compare several invariance models
+##' ## metric invariance
+##' syntax.metric <- measEq.syntax(configural.model = mod.cat, data = datCat,
+##'                                ordered = paste0("u", 1:8),
+##'                                parameterization = "theta",
+##'                                ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+##'                                group = "g", longFacNames = longFacNames,
+##'                                group.equal = c("thresholds","loadings"),
+##'                                long.equal  = c("thresholds","loadings"))
+##' summary(syntax.metric)                    # summarize model features
+##' mod.metric <- as.character(syntax.metric) # save as text
+##' cat(mod.metric)                           # print/view lavaan syntax
+##' ## fit model to data
+##' fit.metric <- cfa(mod.metric, data = datCat, group = "g",
+##'                   ordered = paste0("u", 1:8), parameterization = "theta")
+##' ## test equivalence of loadings, given equivalence of thresholds
+##' anova(fit.thresh, fit.metric)
+##'
+##' ## scalar invariance
+##' syntax.scalar <- measEq.syntax(configural.model = mod.cat, data = datCat,
+##'                                ordered = paste0("u", 1:8),
+##'                                parameterization = "theta",
+##'                                ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+##'                                group = "g", longFacNames = longFacNames,
+##'                                group.equal = c("thresholds","loadings",
+##'                                                "intercepts"),
+##'                                long.equal  = c("thresholds","loadings",
+##'                                                "intercepts"))
+##' summary(syntax.scalar)                    # summarize model features
+##' mod.scalar <- as.character(syntax.scalar) # save as text
+##' cat(mod.scalar)                           # print/view lavaan syntax
+##' ## fit model to data
+##' fit.scalar <- cfa(mod.scalar, data = datCat, group = "g",
+##'                   ordered = paste0("u", 1:8), parameterization = "theta")
+##' ## test equivalence of intercepts, given equal thresholds & loadings
+##' anova(fit.metric, fit.scalar)
+##'
+##'
+##' ## For a single table with all results, you can pass the models to
+##' ## summarize to the compareFit() function
+##' compareFit(fit.config, fit.thresh, fit.metric, fit.scalar)
+##'
+##'
+##'
+##' ## ------------------------------------------------------
+##' ## NOT RECOMMENDED: fit several invariance models at once
+##' ## ------------------------------------------------------
 ##' test.seq <- c("thresholds","loadings","intercepts","means","residuals")
 ##' meq.list <- list()
 ##' for (i in 0:length(test.seq)) {
@@ -823,6 +903,50 @@ setMethod("update", "measEq.syntax", function(object, ..., evaluate = TRUE) {
 ##'
 ##' compareFit(meq.list)
 ##'
+##'
+##' ## -----------------
+##' ## Binary indicators
+##' ## -----------------
+##'
+##' ## borrow example data from Mplus user guide
+##' myData <- read.table("http://www.statmodel.com/usersguide/chap5/ex5.16.dat")
+##' names(myData) <- c("u1","u2","u3","u4","u5","u6","x1","x2","x3","g")
+##' bin.mod <- '
+##'   FU1 =~ u1 + u2 + u3
+##'   FU2 =~ u4 + u5 + u6
+##' '
+##' ## Must SIMULTANEOUSLY constrain thresholds, loadings, and intercepts
+##' test.seq <- list(strong = c("thresholds","loadings","intercepts"),
+##'                  means = "means",
+##'                  strict = "residuals")
+##' meq.list <- list()
+##' for (i in 0:length(test.seq)) {
+##'   if (i == 0L) {
+##'     meq.label <- "configural"
+##'     group.equal <- ""
+##'     long.equal <- ""
+##'   } else {
+##'     meq.label <- names(test.seq)[i]
+##'     group.equal <- unlist(test.seq[1:i])
+##'     # long.equal <- unlist(test.seq[1:i])
+##'   }
+##'   meq.list[[meq.label]] <- measEq.syntax(configural.model = bin.mod,
+##'                                          data = myData,
+##'                                          ordered = paste0("u", 1:6),
+##'                                          parameterization = "theta",
+##'                                          ID.fac = "std.lv",
+##'                                          ID.cat = "Wu.Estabrook.2016",
+##'                                          group = "g",
+##'                                          group.equal = group.equal,
+##'                                          #longFacNames = longFacNames,
+##'                                          #long.equal = long.equal,
+##'                                          return.fit = TRUE)
+##' }
+##'
+##' compareFit(meq.list)
+##'
+#TODO: add ternary example? or note to start with EQ thresholds?
+##'
 ##' }
 ##' @export
 measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
@@ -833,6 +957,19 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
                           warn = TRUE, debug = FALSE, return.fit = FALSE) {
 
   mc <- match.call(expand.dots = TRUE)
+  ## evaluate promises that might change before being evaluated
+  ## (e.g., for-loops or Monte Carlo studies)
+  mc$ID.fac        <- eval(ID.fac)
+  mc$ID.cat        <- eval(ID.cat)
+  mc$ID.thr        <- eval(ID.thr)
+  mc$group         <- eval(group)
+  mc$group.equal   <- eval(group.equal)
+  mc$group.partial <- eval(group.partial)
+  mc$longFacNames  <- eval(longFacNames)
+  mc$longIndNames  <- eval(longIndNames)
+  mc$long.equal    <- eval(long.equal)
+  mc$long.partial  <- eval(long.partial)
+  mc$auto          <- eval(auto)
 
   ## -------------------------------
   ## Preliminary checks on arguments
@@ -878,12 +1015,15 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
   ## check lavaan arguments
   if (!is.null(dots$model)) stop('A model should be specified only with the ',
                                  '"configural.model=" argument, not "model=".')
-  if (is.null(dots$sample.mean) && is.null(dots$data)) {
-    dots$meanstructure <- FALSE
-    mc$meanstructure <- FALSE
-  } else {
-    dots$meanstructure <- TRUE
-    mc$meanstructure <- TRUE
+  if (is.null(dots$meanstructure)) {
+    constrMeanStr <- c("intercepts","means") %in% c(group.equal, long.equal)
+    if (is.null(dots$sample.mean) && is.null(dots$data) && !any(constrMeanStr)) {
+      dots$meanstructure <- FALSE
+      mc$meanstructure <- FALSE
+    } else {
+      dots$meanstructure <- TRUE
+      mc$meanstructure <- TRUE
+    }
   }
 
   ## lavaan template from configural model
@@ -909,7 +1049,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
 
   ## convert *.partial strings to parTables
   if (is.character(group.partial)) {
-    if (group.partial == "") {
+    if (group.partial == "" && length(group.partial) == 1L) {
       group.partial <- data.frame(lhs = character(0), op = character(0), rhs = character(0))
     } else {
       group.partial <- lavaan::lavParseModelString(group.partial,
@@ -918,7 +1058,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
     }
   } #TODO: else {extract information from a measEq.partial object}
   if (is.character(long.partial)) {
-    if (long.partial == "") {
+    if (long.partial == "" && length(long.partial) == 1L) {
       long.partial <- data.frame(lhs = character(0), op = character(0), rhs = character(0))
     } else {
       long.partial <- lavaan::lavParseModelString(long.partial,
@@ -1179,13 +1319,26 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
       ## end loops
     }
   }
+  ## check for any cross-loadings
+  #TODO: special check for bifactor models possible? Find factors whose indicators all cross-load...
+  anyXload <- FALSE
+  for (g in 1:nG) {
+    if (any(apply(GLIST.specify[[g]]$lambda, 1, sum) > 1)) anyXload <- TRUE
+  }
   ## can the effects-coding identification method be used?
-  if (ID.fac == "fx") {
-    for (g in 1:nG) {
-      if (any(apply(GLIST.specify[[g]]$lambda, 1, sum) > 1))
-        stop("Effects-coding method of factor identification (\"ID.fac\") ",
-             "unavailable in models with cross-loadings.")
-    }
+  if (ID.fac == "fx" && anyXload) {
+    stop('Effects-coding method of factor identification ',
+         '("ID.fac") unavailable in models with cross-loadings.')
+  }
+  ## Warn about constraining intercepts but not means
+  freeMeans <- ("intercepts" %in% group.equal && !("means" %in% group.equal)) ||
+               ("intercepts" %in% long.equal  && !("means" %in% long.equal) )
+  if (ID.fac == "uv" && anyXload && freeMeans) {
+    warning('A factor\'s mean cannot be freed unless it has at least one ',
+            'indicator without a cross-loading whose intercept is constrained ',
+            'to equality. Use cat(as.character()) to check whether the syntax ',
+            'returned by measEq.syntax() must be manually adapted to free the ',
+            'necessary latent means.')
   }
 
 
@@ -1490,7 +1643,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
       equate.resid <- "residuals" %in% long.equal &&
         !any(long.partial$lhs == longIndKey[i] &
                long.partial$rhs == longIndKey[i] &
-               long.partial$op == "~~")
+               long.partial$op == "~~") #FIXME: leave resid==0 for reference indicators
 
       if (i == longInds[1]) {
 
@@ -1635,6 +1788,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
       if (g > 1L && ID.cat == "wu") {
 
         ## priority to freeing intercepts
+        #FIXME: binary indicators, latent mean arbitrarily freed, nesting problems
         if (nEqThr >= 1L && !equate.int) GLIST.values[[g]]$nu[i, 1] <- NA
 
         if ((nEqThr >= 2L || (nEqThr >= 1L && equate.int)) && !equate.resid) {
@@ -1673,7 +1827,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
   ## longitudinal constraints (one group at a time, but same across groups)
   if (meanstructure) for (g in 1:nG) {
 
-    ## fix or free factor variances?
+    ## fix or free factor means?
     if (ID.fac == "uv") {
       GLIST.values[[g]]$alpha[ , 1] <- 0 # free below, if any loading is constrained
       ## freed when any loading is constrained to equality
@@ -1687,7 +1841,15 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
 
       ## which other variables are this same factor?
       longFacs <- names(longFacKey)[ which(longFacKey == longFacKey[f]) ]
-      if (length(longFacs) == 0L) next
+      if (length(longFacs) == 0L) {
+        ## not a longitudinal factor, set first group's mean to 0 for Millsap
+        if (ID.cat == "millsap" && g == 1L) GLIST.values[[g]]$alpha[f, 1] <- 0
+        next
+      }
+      ## first time a factor is measured, set first group's mean to 0 for Millsap
+      if (ID.cat == "millsap" && g == 1L && longFacs[1] == f) {
+        GLIST.values[[g]]$alpha[f, 1] <- 0
+      }
 
       ## assign labels
       equate.means <- "means" %in% long.equal &&
@@ -1878,7 +2040,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
         ## cross-loading has an equality-constrained intercept
         if (ID.fac == "uv") {
           ## factors this indicator measures
-          fs <- names(which(GLIST.specify[[g]]$lambda[i, ]))
+          fs <- colnames(GLIST.specify[[g]]$lambda)[ GLIST.specify[[g]]$lambda[i,] ]
           only.measures.1 <- length(fs) == 1L
           ## name(s) of longitudinal factor(s)
           LFN <- longFacKey[fs]
@@ -1903,7 +2065,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
         GLIST.labels[[g]]$nu[i, 1] <- paste0(GLIST.labels[[g]]$nu[i, 1], ".g", g)
       } else if (ID.fac == "uv") {
         ## factors this indicator measures
-        fs <- names(which(GLIST.specify[[g]]$lambda[i, ]))
+        fs <- colnames(GLIST.specify[[g]]$lambda)[ GLIST.specify[[g]]$lambda[i,] ]
         only.measures.1 <- length(fs) == 1L
 
         ## free factor mean(s) other than group 1 only if an indicator without a
@@ -2392,6 +2554,8 @@ write.lavaan.syntax <- function(pmat, specify, value, label) {
         #                 paste(sapply(label, "[", i = x, j = 1),
         #                       collapse = ", "),
         #                 ")*1")
+        #FIXME: Did Yves fix this lavaanify() bug?
+
         param <- paste0(x, " ~ c(",
                         paste(sapply(label, "[", i = x, j = 1),
                               collapse = ", "),
