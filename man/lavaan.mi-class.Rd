@@ -27,11 +27,10 @@
 
 \S4method{nobs}{lavaan.mi}(object, total = TRUE)
 
-\S4method{coef}{lavaan.mi}(object, type = "free", labels = TRUE,
-  omit.imps = c("no.conv", "no.se"))
+\S4method{coef}{lavaan.mi}(object, type = "free", labels = TRUE, omit.imps = c("no.conv", "no.se"))
 
-\S4method{vcov}{lavaan.mi}(object, type = c("pooled", "between",
-  "within", "ariv"), scale.W = TRUE, omit.imps = c("no.conv", "no.se"))
+\S4method{vcov}{lavaan.mi}(object, type = c("pooled", "between", "within",
+  "ariv"), scale.W = TRUE, omit.imps = c("no.conv", "no.se"))
 
 \S4method{anova}{lavaan.mi}(object, ...)
 
@@ -45,14 +44,11 @@
 
 \S4method{fitted}{lavaan.mi}(object, omit.imps = c("no.conv", "no.se"))
 
-\S4method{fitted.values}{lavaan.mi}(object, omit.imps = c("no.conv",
-  "no.se"))
+\S4method{fitted.values}{lavaan.mi}(object, omit.imps = c("no.conv", "no.se"))
 
-\S4method{residuals}{lavaan.mi}(object, type = c("raw", "cor"),
-  omit.imps = c("no.conv", "no.se"))
+\S4method{residuals}{lavaan.mi}(object, type = c("raw", "cor"), omit.imps = c("no.conv", "no.se"))
 
-\S4method{resid}{lavaan.mi}(object, type = c("raw", "cor"),
-  omit.imps = c("no.conv", "no.se"))
+\S4method{resid}{lavaan.mi}(object, type = c("raw", "cor"), omit.imps = c("no.conv", "no.se"))
 }
 \arguments{
 \item{object}{An object of class \code{lavaan.mi}}
@@ -88,7 +84,11 @@ they are likely to occur due to sampling error, especially in small
 samples.  However, gross model misspecification could also cause
 NPD solutions, users can compare pooled results with and without
 this setting as a sensitivity analysis to see whether some
-imputations warrant further investigation.}
+imputations warrant further investigation. Specific imputation
+numbers can also be included in this argument, in case users want to
+apply their own custom omission criteria (or simulations can use
+different numbers of imputations without redundantly refitting the
+model).}
 
 \item{asymptotic}{\code{logical}. If \code{FALSE} (typically a default, but
 see \bold{Value} section for details using various methods), pooled

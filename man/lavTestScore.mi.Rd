@@ -4,8 +4,8 @@
 \alias{lavTestScore.mi}
 \title{Score Test for Multiple Imputations}
 \usage{
-lavTestScore.mi(object, add = NULL, release = NULL, test = c("D2",
-  "D1"), scale.W = !asymptotic, omit.imps = c("no.conv", "no.se"),
+lavTestScore.mi(object, add = NULL, release = NULL, test = c("D2", "D1"),
+  scale.W = !asymptotic, omit.imps = c("no.conv", "no.se"),
   asymptotic = is.null(add), univariate = TRUE, cumulative = FALSE,
   epc = FALSE, standardized = epc, cov.std = epc, verbose = FALSE,
   warn = TRUE, information = "expected")
@@ -14,26 +14,26 @@ lavTestScore.mi(object, add = NULL, release = NULL, test = c("D2",
 \item{object}{An object of class \code{\linkS4class{lavaan.mi}}.}
 
 \item{add}{Either a \code{character} string (typically between single
-quotes) or a parameter table containing additional (currently fixed-to-zero)
-parameters for which the score test must be computed.}
+quotes) or a parameter table containing additional (currently
+fixed-to-zero) parameters for which the score test must be computed.}
 
 \item{release}{Vector of \code{integer}s. The indices of the \emph{equality}
 constraints that should be released. The indices correspond to the order of
 the equality constraints as they appear in the parameter table.}
 
 \item{test}{\code{character} indicating which pooling method to use.
-\code{"D1"} indicates Li, Meng, Raghunathan, & Rubin's (1991) proposed Wald
-test will be applied to the gradient and information, and those pooled
-values will be used to calculate score-test statistics in the usual manner.
-\code{"D2"} (default) indicates that complete-data score-test statistics
-calculated from each imputed data set will be pooled across imputations,
-as described in Li et al. (1991) and Enders (2010).}
+\code{"D1"} requests Mansolf, Jorgensen, & Enders' (in press) proposed
+Wald-like test for pooling the gradient and information, which are then
+used to calculate score-test statistics in the usual manner. \code{"D2"}
+(default because it is less computationall intensive) requests to pool the
+complete-data score-test statistics from each imputed data set, then pool
+them across imputations, described by Li et al. (1991) and Enders (2010).}
 
 \item{scale.W}{\code{logical}. If \code{FALSE}, the pooled
 information matrix is calculated as the weighted sum of the
 within-imputation and between-imputation components. Otherwise, the pooled
-information is calculated by scaling the within-imputation component by the
-average relative increase in variance (ARIV; see Enders, 2010, p. 235),
+information is calculated by scaling the within-imputation component by
+the average relative increase in variance (ARIV; Enders, 2010, p. 235),
 which is \emph{only} consistent when requesting the \emph{F} test (i.e.,
 \code{asymptotic = FALSE}.  Ignored (irrelevant) if \code{test = "D2"}.}
 
@@ -45,7 +45,10 @@ converge or for which standard errors could not be computed.  The
 last option (\code{"no.npd"}) would exclude any imputations which
 yielded a nonpositive definite covariance matrix for observed or
 latent variables, which would include any "improper solutions" such
-as Heywood cases.}
+as Heywood cases. Specific imputation numbers can also be included in this
+argument, in case users want to  apply their own custom omission criteria
+(or simulations can use different numbers of imputations without
+redundantly refitting the model).}
 
 \item{asymptotic}{\code{logical}. If \code{FALSE} (default when using
 \code{add} to test adding fixed parameters to the model), the pooled test
@@ -66,8 +69,8 @@ statistics from large to small, and compute a series of multivariate
 score statistics, each time including an additional constraint in the test.}
 
 \item{epc}{\code{logical}. If \code{TRUE}, and we are releasing existing
-constraints, compute the expected parameter changes for the existing (free)
-parameters (and any specified with \code{add}), if all constraints
+constraints, compute the expected parameter changes for the existing
+(free) parameters (and any specified with \code{add}), if all constraints
 were released. For EPCs associated with a particular (1-\emph{df})
 constraint, only specify one parameter in \code{add} or one constraint in
 \code{release}.}
@@ -113,10 +116,11 @@ See \code{\link[lavaan]{lavTestScore}} for details.
 Score test (or "Lagrange multiplier" test) for lavaan models fitted to
 multiple imputed data sets. Statistics for releasing one or more
 fixed or constrained parameters in model can be calculated by pooling
-the gradient and information matrices pooled across imputed data sets,
-analogous to Li, Meng, Raghunathan, & Rubin's (1991) proposed Wald test, or
+the gradient and information matrices pooled across imputed data sets in a
+method proposed by Mansolf, Jorgensen, & Enders (in press)---analogous to
+the "D1" Wald test proposed by Li, Meng, Raghunathan, & Rubin's (1991)---or
 by pooling the complete-data score-test statistics across imputed data sets
-(Li et al., 1991).
+(i.e., "D2"; Li et al., 1991).
 }
 \examples{
  \dontrun{
@@ -166,6 +170,10 @@ Bentler, P. M., & Chou, C.-P. (1992). Some new covariance structure model
   Significance levels from repeated \emph{p}-values with multiply-imputed
   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
   https://www.jstor.org/stable/24303994
+
+  Mansolf, M., Jorgensen, T. D., & Enders, C. K. (in press). A multiple
+  imputation score test for model modification in structural equation
+  models. \emph{Psychological Methods}. doi:10.1037/met0000243
 }
 \seealso{
 \code{\link[lavaan]{lavTestScore}}

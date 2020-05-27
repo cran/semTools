@@ -1,5 +1,5 @@
 ### Sunthud Pornprasertmanit & Terrence D. Jorgensen
-### Last updated: 21 July 2018
+### Last updated: 27 May 2020
 ### fit and rotate EFA models in lavaan
 
 
@@ -7,66 +7,106 @@
 ## Exploratory Factor Analysis in lavaan
 ## -------------------------------------
 
-#' Analyze Unrotated Exploratory Factor Analysis Model
-#'
-#' This function will analyze unrotated exploratory factor analysis model. The
-#' unrotated solution can be rotated by the \code{\link{orthRotate}} and
-#' \code{\link{oblqRotate}} functions.
-#'
-#' This function will generate a lavaan script for unrotated exploratory factor
-#' analysis model such that (1) all factor loadings are estimated, (2) factor
-#' variances are fixed to 1, (3) factor covariances are fixed to 0, and (4) the
-#' dot products of any pairs of columns in the factor loading matrix are fixed
-#' to zero (Johnson & Wichern, 2002). The reason for creating this function
-#' in addition to the \code{\link{factanal}} function is that users can enjoy
-#' some advanced features from the \code{lavaan} package such as scaled
-#' \eqn{\chi^2}, diagonal weighted least squares for ordinal indicators, or
-#' full-information maximum likelihood (FIML).
-#'
-#' @importFrom lavaan lavInspect parTable
-#' @importFrom stats factanal
-#'
-#' @param data A target \code{data.frame}
-#' @param nf The desired number of factors
-#' @param varList Target observed variables. If not specified, all variables in
-#'   \code{data} will be used.
-#' @param start Use starting values in the analysis from the
-#'   \code{\link{factanal}} \code{function}. If \code{FALSE}, the starting values
-#'   from the \code{lavaan} package will be used. \code{TRUE} is ignored with a
-#'   warning if the \code{aux} argument is used.
-#' @param aux The list of auxiliary variables. These variables will be included
-#'   in the model by the saturated-correlates approach to account for missing
-#'   information.
-#' @param \dots Other arguments in the \code{\link[lavaan]{cfa}} function in
-#'   the \code{lavaan} package, such as \code{ordered}, \code{se}, or
-#'   \code{estimator}
-#'
-#' @return A \code{lavaan} output of unrotated exploratory factor analysis
-#' solution.
-#'
-#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
-#'
-#' @examples
-#'
-#' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
-#'                          varList=paste0("x", 1:9), estimator = "mlr")
-#' summary(unrotated, std = TRUE)
-#' inspect(unrotated, "std")
-#'
-#' dat <- data.frame(HolzingerSwineford1939,
-#'                   z = rnorm(nrow(HolzingerSwineford1939), 0, 1))
-#' unrotated2 <- efaUnrotate(dat, nf = 2, varList = paste0("x", 1:9), aux = "z")
-#'
-#' @export
-efaUnrotate <- function(data, nf, varList = NULL,
+##' Analyze Unrotated Exploratory Factor Analysis Model
+##'
+##' This function will analyze unrotated exploratory factor analysis model. The
+##' unrotated solution can be rotated by the \code{\link{orthRotate}} and
+##' \code{\link{oblqRotate}} functions.
+##'
+##' This function will generate a lavaan script for unrotated exploratory factor
+##' analysis model such that (1) all factor loadings are estimated, (2) factor
+##' variances are fixed to 1, (3) factor covariances are fixed to 0, and (4) the
+##' dot products of any pairs of columns in the factor loading matrix are fixed
+##' to zero (Johnson & Wichern, 2002). The reason for creating this function
+##' to supplement the \code{\link{factanal}} function is that users can enjoy
+##' some advanced features from the \code{lavaan} package, such as scaled
+##' \eqn{\chi^2}, diagonally weighted least squares estimation for ordinal
+##' indicators, or full-information maximum likelihood (FIML) to handle
+##' incomplete data.
+##'
+##' @importFrom lavaan lavInspect parTable
+##' @importFrom stats factanal
+##'
+##' @param data A target \code{data.frame}
+##' @param nf The desired number of factors
+##' @param varList Target observed variables. If not specified, all variables in
+##'   \code{data} will be used (or \code{sample.cov} if \code{is.null(data)};
+##'   see \code{\link[lavaan]{cfa}} for argument descriptions).
+##' @param start Use starting values in the analysis from the
+##'   \code{\link{factanal}} \code{function}. If \code{FALSE}, the starting values
+##'   from the \code{lavaan} package will be used. \code{TRUE} is ignored with a
+##'   warning if the \code{aux} argument is used.
+##' @param aux The list of auxiliary variables. These variables will be included
+##'   in the model by the saturated-correlates approach to account for missing
+##'   information.
+##' @param \dots Other arguments in the \code{\link[lavaan]{cfa}} function in
+##'   the \code{lavaan} package, such as \code{ordered}, \code{se},
+##'   \code{estimator}, or \code{sample.cov} and \code{sample.nobs}.
+##'
+##' @return A \code{lavaan} output of unrotated exploratory factor analysis
+##' solution.
+##'
+##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+##'
+##' Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
+##'
+##' @examples
+##'
+##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
+##'                          varList = paste0("x", 1:9), estimator = "mlr")
+##' summary(unrotated, std = TRUE)
+##' inspect(unrotated, "std")
+##'
+##' dat <- data.frame(HolzingerSwineford1939,
+##'                   z = rnorm(nrow(HolzingerSwineford1939), 0, 1))
+##' unrotated2 <- efaUnrotate(dat, nf = 2, varList = paste0("x", 1:9), aux = "z")
+##'
+##' @export
+efaUnrotate <- function(data = NULL, nf, varList = NULL,
                         start = TRUE, aux = NULL, ...) {
-  if (is.null(varList)) varList <- colnames(data)
-  isOrdered <- checkOrdered(data, varList, ...)
   efaArgs <- list(...)
-  if (!is.null(efaArgs$group)) stop("Multi-group EFA is not currently supported.")
-  efaArgs$data <- data
+  if (is.null(data)) {
+    ## check for summary statistics
+    sample.cov  <- efaArgs$sample.cov
+    sample.mean <- efaArgs$sample.mean
+    sample.nobs <- efaArgs$sample.nobs
+    sample.th   <- efaArgs$sample.th
+    WLS.V       <- efaArgs$WLS.V
+    NACOV       <- efaArgs$NACOV
+
+    if (is.null(sample.cov)) stop('User must supply either raw data or ',
+                                  'summary statistics to pass to lavaan().')
+    if (is.null(varList)) varList <- colnames(sample.cov)
+
+    anyOrdered <- !is.null(sample.th)
+    ordNames <- efaArgs$ordered
+    if (anyOrdered & (is.logical(ordNames) | is.null(ordNames))) {
+      if (is.null(ordNames)) {
+        message('Thresholds supplied, but not an ordered= argument. Must ',
+                'assume all model variables are ordered.')
+      }
+      ordNames <- varList
+    }
+
+  } else {
+    sample.cov  <- NULL
+    sample.mean <- NULL
+    sample.nobs <- NULL
+    sample.th   <- NULL
+    WLS.V       <- NULL
+    NACOV       <- NULL
+
+    efaArgs$data <- data
+    if (is.null(varList)) varList <- colnames(data)
+
+    anyOrdered <- checkOrdered(data, varList, ...)
+    ordNames <- checkOrdered(data, varList, ..., return.names = TRUE)
+
+    if (!is.null(efaArgs$group)) stop("Multi-group EFA is not currently supported.")
+  }
+
   if (!is.null(aux)) {
-    if (isOrdered) {
+    if (anyOrdered) {
       stop("The analysis model or the analysis data have ordered categorical",
            " variables. The auxiliary variable feature is not available for",
            " the models for categorical variables with the weighted least",
@@ -89,8 +129,13 @@ efaUnrotate <- function(data, nf, varList = NULL,
   syntax <- paste(syntax, paste(paste0(facnames, " ~~ 1*", facnames),
                                 collapse = "\n"), "\n")
 
-  if (!isOrdered) {
-    syntax <- paste(syntax, paste(paste0(varList, " ~ 1"), collapse = "\n"), "\n")
+  dataSupportsMeans <- length(setdiff(varList, ordNames)) && !(is.null(data) && is.null(sample.mean))
+  meanstructure <- efaArgs$meanstructure
+  if (is.null(meanstructure)) meanstructure <- anyOrdered #FIXME: wise default for EFA?
+  stopifnot(is.logical(meanstructure))
+  if (meanstructure && dataSupportsMeans) {
+    syntax <- paste(syntax, paste(paste0(setdiff(varList, ordNames),
+                                         " ~ 1"), collapse = "\n"), "\n")
   }
 
   if (nf > 1) {
@@ -129,7 +174,7 @@ efaUnrotate <- function(data, nf, varList = NULL,
     ##        https://groups.google.com/d/msg/lavaan/ujkHmCVirEY/-LGut4ewAwAJ
     parameterization <- efaArgs$parameterization
     if (is.null(parameterization)) parameterization <- lavaan::lavOptions("parameterization")
-    if (isOrdered && parameterization != "theta")
+    if (anyOrdered && parameterization != "theta")
       warning('If the default parameterization = "delta" returns results with ',
               'all factor loadings equal to zero, try either setting start ',
               '= TRUE or setting parameterization = "theta" instead.')
@@ -144,39 +189,39 @@ efaUnrotate <- function(data, nf, varList = NULL,
 ## Class and Methods
 ## -----------------
 
-#' Class For Rotated Results from EFA
-#'
-#' This class contains the results of rotated exploratory factor analysis
-#'
-#'
-#' @name EFA-class
-#' @aliases EFA-class show,EFA-method summary,EFA-method
-#' @docType class
-#' @slot loading Rotated standardized factor loading matrix
-#' @slot rotate Rotation matrix
-#' @slot gradRotate gradient of the objective function at the rotated loadings
-#' @slot convergence Convergence status
-#' @slot phi: Factor correlation matrix. Will be an identity matrix if
-#'  orthogonal rotation is used.
-#' @slot se Standard errors of the rotated standardized factor loading matrix
-#' @slot method Method of rotation
-#' @slot call The command used to generate this object
-#' @section Objects from the Class: Objects can be created via the
-#' \code{\link{orthRotate}} or \code{\link{oblqRotate}} function.
-#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
-#' @seealso \code{\link{efaUnrotate}}; \code{\link{orthRotate}};
-#' \code{\link{oblqRotate}}
-#' @examples
-#'
-#' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
-#'                          varList = paste0("x", 1:9), estimator = "mlr")
-#' summary(unrotated, std = TRUE)
-#' lavInspect(unrotated, "std")
-#'
-#' # Rotated by Quartimin
-#' rotated <- oblqRotate(unrotated, method = "quartimin")
-#' summary(rotated)
-#'
+##' Class For Rotated Results from EFA
+##'
+##' This class contains the results of rotated exploratory factor analysis
+##'
+##'
+##' @name EFA-class
+##' @aliases EFA-class show,EFA-method summary,EFA-method
+##' @docType class
+##' @slot loading Rotated standardized factor loading matrix
+##' @slot rotate Rotation matrix
+##' @slot gradRotate gradient of the objective function at the rotated loadings
+##' @slot convergence Convergence status
+##' @slot phi: Factor correlation matrix. Will be an identity matrix if
+##'  orthogonal rotation is used.
+##' @slot se Standard errors of the rotated standardized factor loading matrix
+##' @slot method Method of rotation
+##' @slot call The command used to generate this object
+##' @section Objects from the Class: Objects can be created via the
+##' \code{\link{orthRotate}} or \code{\link{oblqRotate}} function.
+##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+##' @seealso \code{\link{efaUnrotate}}; \code{\link{orthRotate}};
+##' \code{\link{oblqRotate}}
+##' @examples
+##'
+##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
+##'                          varList = paste0("x", 1:9), estimator = "mlr")
+##' summary(unrotated, std = TRUE)
+##' lavInspect(unrotated, "std")
+##'
+##' # Rotated by Quartimin
+##' rotated <- oblqRotate(unrotated, method = "quartimin")
+##' summary(rotated)
+##'
 setClass("EFA", representation(loading = "matrix",
                                rotate = "matrix",
                                gradRotate = "matrix",
@@ -186,9 +231,9 @@ setClass("EFA", representation(loading = "matrix",
                                method = "character",
                                call = "call"))
 
-#' @rdname EFA-class
-#' @aliases show,EFA-method
-#' @export
+##' @rdname EFA-class
+##' @aliases show,EFA-method
+##' @export
 setMethod("show", signature(object = "EFA"), function(object) {
 	cat("Standardized Rotated Factor Loadings\n")
 	print(printLoadings(object))
@@ -200,14 +245,14 @@ setMethod("show", signature(object = "EFA"), function(object) {
 	        " Be mindful when using it.")
 })
 
-#' @rdname EFA-class
-#' @aliases summary,EFA-method
-#' @param object object of class \code{EFA}
-#' @param suppress any standardized loadings less than the specified value
-#'  will not be printed to the screen
-#' @param sort \code{logical}. If \code{TRUE} (default), factor loadings will
-#'  be sorted by their size in the console output
-#' @export
+##' @rdname EFA-class
+##' @aliases summary,EFA-method
+##' @param object object of class \code{EFA}
+##' @param suppress any standardized loadings less than the specified value
+##'  will not be printed to the screen
+##' @param sort \code{logical}. If \code{TRUE} (default), factor loadings will
+##'  be sorted by their size in the console output
+##' @export
 setMethod("summary", signature(object = "EFA"),
           function(object, suppress = 0.1, sort = TRUE) {
 	cat("Standardized Rotated Factor Loadings\n")
@@ -226,68 +271,68 @@ setMethod("summary", signature(object = "EFA"),
 ## Rotation Constructor Functions
 ## ------------------------------
 
-#' Implement orthogonal or oblique rotation
-#'
-#' These functions will implement orthogonal or oblique rotation on
-#' standardized factor loadings from a lavaan output.
-#'
-#' These functions will rotate the unrotated standardized factor loadings by
-#' orthogonal rotation using the \code{\link[GPArotation]{GPForth}} function or
-#' oblique rotation using the \code{\link[GPArotation]{GPFoblq}} function the
-#' \code{GPArotation} package. The resulting rotation matrix will be used to
-#' calculate standard errors of the rotated standardized factor loading by
-#' delta method by numerically computing the Jacobian matrix by the
-#' \code{\link[lavaan]{lav_func_jacobian_simple}} function.
-#'
-#' @aliases orthRotate oblqRotate funRotate
-#' @rdname rotate
-#' @param object A lavaan output
-#' @param method The method of rotations, such as \code{"varimax"},
-#' \code{"quartimax"}, \code{"geomin"}, \code{"oblimin"}, or any gradient
-#' projection algorithms listed in the \code{\link[GPArotation]{GPA}} function
-#' in the \code{GPArotation} package.
-#' @param fun The name of the function that users wish to rotate the
-#' standardized solution. The functions must take the first argument as the
-#' standardized loading matrix and return the \code{GPArotation} object. Check
-#' this page for available functions: \code{\link[GPArotation]{rotations}}.
-#' @param \dots Additional arguments for the \code{\link[GPArotation]{GPForth}}
-#' function (for \code{orthRotate}), the \code{\link[GPArotation]{GPFoblq}}
-#' function (for \code{oblqRotate}), or the function that users provide in the
-#' \code{fun} argument.
-#' @return An \code{linkS4class{EFA}} object that saves the rotated EFA solution
-#' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
-#' @examples
-#'
-#' \dontrun{
-#'
-#' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
-#'                          varList = paste0("x", 1:9), estimator = "mlr")
-#'
-#' # Orthogonal varimax
-#' out.varimax <- orthRotate(unrotated, method = "varimax")
-#' summary(out.varimax, sort = FALSE, suppress = 0.3)
-#'
-#' # Orthogonal Quartimin
-#' orthRotate(unrotated, method = "quartimin")
-#'
-#' # Oblique Quartimin
-#' oblqRotate(unrotated, method = "quartimin")
-#'
-#' # Geomin
-#' oblqRotate(unrotated, method = "geomin")
-#'
-#' # Target rotation
-#' library(GPArotation)
-#' target <- matrix(0, 9, 3)
-#' target[1:3, 1] <- NA
-#' target[4:6, 2] <- NA
-#' target[7:9, 3] <- NA
-#' colnames(target) <- c("factor1", "factor2", "factor3")
-#' ## This function works with GPArotation version 2012.3-1
-#' funRotate(unrotated, fun = "targetQ", Target = target)
-#' }
-#'
-#' @export
+##' Implement orthogonal or oblique rotation
+##'
+##' These functions will implement orthogonal or oblique rotation on
+##' standardized factor loadings from a lavaan output.
+##'
+##' These functions will rotate the unrotated standardized factor loadings by
+##' orthogonal rotation using the \code{\link[GPArotation]{GPForth}} function or
+##' oblique rotation using the \code{\link[GPArotation]{GPFoblq}} function the
+##' \code{GPArotation} package. The resulting rotation matrix will be used to
+##' calculate standard errors of the rotated standardized factor loading by
+##' delta method by numerically computing the Jacobian matrix by the
+##' \code{\link[lavaan]{lav_func_jacobian_simple}} function.
+##'
+##' @aliases orthRotate oblqRotate funRotate
+##' @rdname rotate
+##' @param object A lavaan output
+##' @param method The method of rotations, such as \code{"varimax"},
+##' \code{"quartimax"}, \code{"geomin"}, \code{"oblimin"}, or any gradient
+##' projection algorithms listed in the \code{\link[GPArotation]{GPA}} function
+##' in the \code{GPArotation} package.
+##' @param fun The name of the function that users wish to rotate the
+##' standardized solution. The functions must take the first argument as the
+##' standardized loading matrix and return the \code{GPArotation} object. Check
+##' this page for available functions: \code{\link[GPArotation]{rotations}}.
+##' @param \dots Additional arguments for the \code{\link[GPArotation]{GPForth}}
+##' function (for \code{orthRotate}), the \code{\link[GPArotation]{GPFoblq}}
+##' function (for \code{oblqRotate}), or the function that users provide in the
+##' \code{fun} argument.
+##' @return An \code{linkS4class{EFA}} object that saves the rotated EFA solution
+##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
+##' @examples
+##'
+##' \dontrun{
+##'
+##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
+##'                          varList = paste0("x", 1:9), estimator = "mlr")
+##'
+##' # Orthogonal varimax
+##' out.varimax <- orthRotate(unrotated, method = "varimax")
+##' summary(out.varimax, sort = FALSE, suppress = 0.3)
+##'
+##' # Orthogonal Quartimin
+##' orthRotate(unrotated, method = "quartimin")
+##'
+##' # Oblique Quartimin
+##' oblqRotate(unrotated, method = "quartimin")
+##'
+##' # Geomin
+##' oblqRotate(unrotated, method = "geomin")
+##'
+##' # Target rotation
+##' library(GPArotation)
+##' target <- matrix(0, 9, 3)
+##' target[1:3, 1] <- NA
+##' target[4:6, 2] <- NA
+##' target[7:9, 3] <- NA
+##' colnames(target) <- c("factor1", "factor2", "factor3")
+##' ## This function works with GPArotation version 2012.3-1
+##' funRotate(unrotated, fun = "targetQ", Target = target)
+##' }
+##'
+##' @export
 orthRotate <- function(object, method = "varimax", ...) {
 	requireNamespace("GPArotation")
 	if (!("package:GPArotation" %in% search())) attachNamespace("GPArotation")
@@ -312,8 +357,8 @@ orthRotate <- function(object, method = "varimax", ...) {
 
 
 
-#' @rdname rotate
-#' @export
+##' @rdname rotate
+##' @export
 oblqRotate <- function(object, method = "quartimin", ...) {
 	requireNamespace("GPArotation")
 	if (!("package:GPArotation" %in% search())) attachNamespace("GPArotation")
@@ -338,8 +383,8 @@ oblqRotate <- function(object, method = "quartimin", ...) {
 
 
 
-#' @rdname rotate
-#' @export
+##' @rdname rotate
+##' @export
 funRotate <- function(object, fun, ...) {
 	stopifnot(is.character(fun))
 	requireNamespace("GPArotation")
@@ -388,7 +433,7 @@ printLoadings <- function(object, suppress = 0.1, sort = TRUE) {
   as.data.frame(loadingText)
 }
 
-#' @importFrom stats pnorm qnorm
+##' @importFrom stats pnorm qnorm
 testLoadings <- function(object, level = 0.95) {
   se <- object@se
   loading <- object@loading
@@ -409,7 +454,7 @@ testLoadings <- function(object, level = 0.95) {
   out
 }
 
-#' @importFrom lavaan lavInspect
+##' @importFrom lavaan lavInspect
 getLoad <- function(object, std = TRUE) {
 	out <- lavInspect(object, "est")$lambda #FIXME: check for multiple groups
 	if (std) {
@@ -434,6 +479,7 @@ fillMult <- function(X, Y, fillrowx = 0, fillrowy = 0, fillcolx = 0, fillcoly = 
 	result[1:nrow(X), 1:ncol(Y)]
 }
 
+##' @importFrom lavaan lavInspect
 stdRotatedLoadings <- function(est, object, fun, aux = NULL, rotate = NULL, MoreArgs = NULL) {
 	ov.names <- lavaan::lavNames(object@ParTable, "ov", group = 1)
   lv.names <- lavaan::lavNames(object@ParTable, "lv", group = 1)
@@ -446,9 +492,10 @@ stdRotatedLoadings <- function(est, object, fun, aux = NULL, rotate = NULL, More
 	loading <- matrix(est[load.idx], ncol = length(lv.names))
 	loading <- rbind(loading, matrix(0, length(aux), ncol(loading)))
 	# Nu
-	int.idx <- which(partable$op == "~1" & (partable$rhs == "") & (partable$lhs %in% ov.names))
-	intcept <- matrix(est[int.idx], ncol = 1)
-
+	if (lavInspect(object, "options")$meanstructure) {
+	  int.idx <- which(partable$op == "~1" & (partable$rhs == "") & (partable$lhs %in% ov.names))
+	  intcept <- matrix(est[int.idx], ncol = 1)
+	}
 	# Theta
 	th.idx <- which(partable$op == "~~" & (partable$rhs %in% ov.names) & (partable$lhs %in% ov.names))
 	theta <- matrix(0, nrow = length(ov.names), ncol = length(ov.names),
@@ -472,8 +519,9 @@ stdRotatedLoadings <- function(est, object, fun, aux = NULL, rotate = NULL, More
 
 	# %*% rotate
 	est[load.idx] <- as.vector(loading[seq_along(ind.names),])
-	intcept <- invsd %*% intcept
-	est[int.idx] <- as.vector(intcept)
+	if (lavInspect(object, "options")$meanstructure) {
+	  est[int.idx] <- as.vector(invsd %*% intcept)
+	}
 	theta <- invsd %*% theta %*% invsd
 	rownames(theta) <- colnames(theta) <- ov.names
 	for(i in th.idx)  est[i] <- theta[partable$lhs[i], partable$rhs[i]]
@@ -493,7 +541,7 @@ stdRotatedLoadings <- function(est, object, fun, aux = NULL, rotate = NULL, More
 	est
 }
 
-#' @importFrom lavaan lavInspect parTable
+##' @importFrom lavaan lavInspect parTable
 seStdLoadings <- function(rotate, object, fun, MoreArgs) {
 	# object <- efaUnrotate(HolzingerSwineford1939, nf=3, varList=paste0("x", 1:9), estimator="mlr")
 	# initL <- getLoad(object)
@@ -594,17 +642,22 @@ seStdLoadings <- function(rotate, object, fun, MoreArgs) {
 	matrix(LIST$se[idx], ncol = length(lv.names))
 }
 
-checkOrdered <- function(dat, varnames, ...) {
+checkOrdered <- function(dat, varnames, ..., return.names = FALSE) {
   ord <- list(...)$ordered
-  if(is.null(ord)) {
+  if (is.null(ord)) {
     ord <- FALSE
   } else {
     ord <- TRUE
   }
-  if(is.null(dat)) {
+  if (is.null(dat)) {
     orderedVar <- FALSE
   } else {
     orderedVar <- sapply(dat[,varnames], function(x) "ordered" %in% is(x))
+  }
+
+  if (return.names) {
+    ## added by TDJ 4-Feb-2020
+    return(unique(c(list(...)$ordered, names(orderedVar[orderedVar]))))
   }
   any(c(ord, orderedVar))
 }

@@ -19,12 +19,20 @@ identification. \code{configural.model} can be either:
         (as returned by \code{\link[lavaan]{parTable}}) specifying the
         configural model. Using this option, the user can also provide
         either raw \code{data} or summary statistics via \code{sample.cov}
-        and (optionally) \code{sample.mean}. In order to include
-        thresholds in the syntax, raw \code{data} must be provided.
-        See \code{\link[lavaan]{lavaan}}.
+        and (optionally) \code{sample.mean}. See argument descriptions in
+        \code{\link[lavaan]{lavaan}}. In order to include thresholds in
+        the generated syntax, either users must provide raw \code{data},
+        or the \code{configural.model} syntax must specify all thresholds
+        (see first example). If raw \code{data} are not provided, the
+        number of blocks (groups, levels, or combination) must be
+        indicated using an arbitrary \code{sample.nobs} argument (e.g.,
+        3 groups could be specified using \code{sample.nobs=rep(1, 3)}).
   \item a fitted \code{\linkS4class{lavaan}} model (e.g., as returned by
         \code{\link[lavaan]{cfa}}) estimating the configural model
-}}
+}
+Note that the specified or fitted model must not contain any latent
+structural parameters (i.e., it must be a CFA model), unless they are
+higher-order constructs with latent indicators (i.e., a second-order CFA).}
 
 \item{...}{Additional arguments (e.g., \code{data}, \code{ordered}, or
 \code{parameterization}) passed to the \code{\link[lavaan]{lavaan}}
@@ -61,7 +69,7 @@ variances and intercepts of latent item-responses underlying any
         specify any of: \code{"default"}, \code{"Mplus"}, \code{"Muthen"}.
         Details provided in Millsap & Tein (2004).
   \item To use the constraints recommended by Millsap & Tein (2004; see
-        also Liu et al., 2017)
+        also Liu et al., 2017, for the longitudinal case)
         specify any of: \code{"millsap"}, \code{"millsap.2004"},
         \code{"millsap.tein.2004"}
   \item To use the default settings of LISREL, specify \code{"LISREL"}
@@ -259,8 +267,11 @@ mod.cat <- ' FU1 =~ u1 + u2 + u3 + u4
 ## the 2 factors are actually the same factor (FU) measured twice
 longFacNames <- list(FU = c("FU1","FU2"))
 
-## configural model: no constraints across groups or repeated measures
-syntax.config <- measEq.syntax(configural.model = mod.cat, data = datCat,
+## CONFIGURAL model: no constraints across groups or repeated measures
+syntax.config <- measEq.syntax(configural.model = mod.cat,
+                               # NOTE: data provides info about numbers of
+                               #       groups and thresholds
+                               data = datCat,
                                ordered = paste0("u", 1:8),
                                parameterization = "theta",
                                ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
@@ -270,9 +281,23 @@ cat(as.character(syntax.config))
 ## print a summary of model features
 summary(syntax.config)
 
-## threshold invariance
-syntax.thresh <- measEq.syntax(configural.model = mod.cat, data = datCat,
-                               ordered = paste0("u", 1:8),
+## THRESHOLD invariance:
+## only necessary to specify thresholds if you have no data
+mod.th <- '
+  u1 | t1 + t2 + t3 + t4
+  u2 | t1 + t2 + t3 + t4
+  u3 | t1 + t2 + t3 + t4
+  u4 | t1 + t2 + t3 + t4
+  u5 | t1 + t2 + t3 + t4
+  u6 | t1 + t2 + t3 + t4
+  u7 | t1 + t2 + t3 + t4
+  u8 | t1 + t2 + t3 + t4
+'
+syntax.thresh <- measEq.syntax(configural.model = c(mod.cat, mod.th),
+                               # NOTE: data not provided, so syntax must
+                               #       include thresholds, and number of
+                               #       groups == 2 is indicated by:
+                               sample.nobs = c(1, 1),
                                parameterization = "theta",
                                ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
                                group = "g", group.equal = "thresholds",
@@ -285,11 +310,11 @@ cat(as.character(syntax.thresh))
 summary(syntax.thresh)
 
 
-## Fit a model to the data either in a subsequent step:
+## Fit a model to the data either in a subsequent step (recommended):
 mod.config <- as.character(syntax.config)
 fit.config <- cfa(mod.config, data = datCat, group = "g",
                   ordered = paste0("u", 1:8), parameterization = "theta")
-## or in a single step:
+## or in a single step (not generally recommended):
 fit.thresh <- measEq.syntax(configural.model = mod.cat, data = datCat,
                             ordered = paste0("u", 1:8),
                             parameterization = "theta",
@@ -321,7 +346,7 @@ anova(fit.config, fit.thresh)
 ## (2) print it to the screen to verify you are fitting the model you expect
 ## to (and potentially learn which identification constraints should be
 ## released when equality constraints are imposed), and (3) fit that model
-## to the data as you would if you wrote the syntax yourself.
+## to the data, as you would if you had written the syntax yourself.
 
 ## Continuing from the examples above, after establishing invariance of
 ## thresholds, we proceed to test equivalence of loadings and intercepts
@@ -446,6 +471,30 @@ for (i in 0:length(test.seq)) {
 compareFit(meq.list)
 
 
+## ---------------------
+## Multilevel Invariance
+## ---------------------
+
+## To test invariance across levels in a MLSEM, specify syntax as though
+## you are fitting to 2 groups instead of 2 levels.
+
+mlsem <- ' f1 =~ y1 + y2 + y3
+           f2 =~ y4 + y5 + y6 '
+## metric invariance
+syntax.metric <- measEq.syntax(configural.model = mlsem, meanstructure = TRUE,
+                               ID.fac = "std.lv", sample.nobs = c(1, 1),
+                               group = "cluster", group.equal = "loadings")
+## by definition, Level-1 means must be zero, so fix them
+syntax.metric <- update(syntax.metric,
+                        change.syntax = paste0("y", 1:6, " ~ c(0, NA)*1"))
+## save as a character string
+mod.metric <- as.character(syntax.metric, groups.as.blocks = TRUE)
+## convert from multigroup to multilevel
+mod.metric <- gsub(pattern = "group:", replacement = "level:",
+                   x = mod.metric, fixed = TRUE)
+## fit model to data
+fit.metric <- lavaan(mod.metric, data = Demo.twolevel, cluster = "cluster")
+summary(fit.metric)
 }
 }
 \references{

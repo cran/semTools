@@ -5,10 +5,9 @@
 \title{Parcel-Allocation Variability in Model Ranking}
 \usage{
 PAVranking(model0, model1, data, parcel.names, item.syntax, nAlloc = 100,
-  fun = "sem", alpha = 0.05, bic.crit = 10,
-  fit.measures = c("chisq", "df", "cfi", "tli", "rmsea", "srmr", "logl",
-  "aic", "bic", "bic2"), ..., show.progress = FALSE, iseed = 12345,
-  warn = FALSE)
+  fun = "sem", alpha = 0.05, bic.crit = 10, fit.measures = c("chisq",
+  "df", "cfi", "tli", "rmsea", "srmr", "logl", "aic", "bic", "bic2"), ...,
+  show.progress = FALSE, iseed = 12345, warn = FALSE)
 }
 \arguments{
 \item{model0, model1}{\code{\link[lavaan]{lavaan}} model syntax specifying
@@ -139,7 +138,7 @@ across multiple imputations of missing data (see \bold{Examples}).
 
 item.syntax <- c(paste0("f1 =~ f1item", 1:9),
                  paste0("f2 =~ f2item", 1:9))
-cat(item.syntax, sep = "\\n")
+cat(item.syntax, sep = "\n")
 ## Below, we reduce the size of this same model by
 ## applying different parceling schemes
 

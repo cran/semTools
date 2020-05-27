@@ -1,5 +1,5 @@
-### Sunthud Pornprasertmanit , Yves Rosseel
-### Last updated: 29 August 2019
+### Sunthud Pornprasertmanit, Terrence D. Jorgensen, Yves Rosseel
+### Last updated: 27 May 2020
 
 
 ## -------------
@@ -105,26 +105,38 @@
 ##'
 ##'
 ##' @importFrom lavaan lavInspect lavNames
+##' @importFrom methods getMethod
+##'
 ##' @param object A \code{\linkS4class{lavaan}} or
 ##'   \code{\linkS4class{lavaan.mi}} object, expected to contain only
 ##'   exogenous common factors (i.e., a CFA model).
+##' @param return.total \code{logical} indicating whether to return a final
+##'   column containing the reliability of a composite of all items. Ignored
+##'   in 1-factor models, and should only be set \code{TRUE} if all factors
+##'   represent scale dimensions that could nonetheless be collapsed to a
+##'   single scale composite (scale sum or scale mean).
+##' @param dropSingle \code{logical} indicating whether to exclude factors
+##'   defined by a single indicator from the returned results. If \code{TRUE}
+##'   (default), single indicators will still be included in the \code{total}
+##'   column when \code{return.total = TRUE}.
 ##' @param omit.imps \code{character} vector specifying criteria for omitting
-##'        imputations from pooled results.  Can include any of
-##'        \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
-##'        default setting, which excludes any imputations that did not
-##'        converge or for which standard errors could not be computed.  The
-##'        last option (\code{"no.npd"}) would exclude any imputations which
-##'        yielded a nonpositive definite covariance matrix for observed or
-##'        latent variables, which would include any "improper solutions" such
-##'        as Heywood cases.  NPD solutions are not excluded by default because
-##'        they are likely to occur due to sampling error, especially in small
-##'        samples.  However, gross model misspecification could also cause
-##'        NPD solutions, users can compare pooled results with and without
-##'        this setting as a sensitivity analysis to see whether some
-##'        imputations warrant further investigation.
+##'   imputations from pooled results.  Can include any of
+##'   \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'   default setting, which excludes any imputations that did not
+##'   converge or for which standard errors could not be computed.  The
+##'   last option (\code{"no.npd"}) would exclude any imputations which
+##'   yielded a nonpositive definite covariance matrix for observed or
+##'   latent variables, which would include any "improper solutions" such
+##'   as Heywood cases.  NPD solutions are not excluded by default because
+##'   they are likely to occur due to sampling error, especially in small
+##'   samples.  However, gross model misspecification could also cause
+##'   NPD solutions, users can compare pooled results with and without
+##'   this setting as a sensitivity analysis to see whether some
+##'   imputations warrant further investigation.
 ##'
 ##' @return Reliability values (coefficient alpha, coefficients omega, average
-##'   variance extracted) of each factor in each group
+##'   variance extracted) of each factor in each group. If there are multiple
+##'   factors, a \code{total} column can optionally be included.
 ##'
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
@@ -178,9 +190,11 @@
 ##'
 ##' fit <- cfa(HS.model, data = HolzingerSwineford1939)
 ##' reliability(fit)
+##' reliability(fit, return.total = TRUE)
 ##'
 ##' @export
-reliability <- function(object, omit.imps = c("no.conv","no.se")) {
+reliability <- function(object, return.total = FALSE, dropSingle = TRUE,
+                        omit.imps = c("no.conv","no.se")) {
 
   ngroups <- lavInspect(object, "ngroups") #TODO: adapt to multiple levels
   nlevels <- lavInspect(object, "nlevels")
@@ -260,21 +274,57 @@ reliability <- function(object, omit.imps = c("no.conv","no.se")) {
   ly <- lapply(param, "[[", "lambda")
   te <- lapply(param, "[[", "theta")
 
-	categorical <- lavInspect(object, "categorical")
-	threshold <- if (categorical) getThreshold(object) else NULL
+	anyCategorical <- lavInspect(object, "categorical")
+	threshold <- if (anyCategorical) getThreshold(object) else NULL
 
 	result <- list()
+	warnHigher <- FALSE
+	## loop over i blocks (groups/levels)
 	for (i in 1:nblocks) {
+	  ## extract factor and indicator names
+	  indNames <- rownames(ly[[i]])
+	  facNames <- colnames(ly[[i]])
+	  ## distinguish between categorical, continuous, and latent indicators
+	  nameArgs <- list(object = object)
+	  if (nblocks > 1L) nameArgs$block <- i
+	  ordNames <- do.call(lavNames, c(nameArgs, list(type = "ov.ord")))
+	  latInds  <- do.call(lavNames, c(nameArgs, list(type = "lv.ind")))
+	  higher   <- setdiff(facNames, latInds)
+	  ## keep track of factor indices, to drop higher-order factors,
+	  ## and optionally single-indicator factors
+	  idx.drop <- numeric(0)
+
+	  ## relevant quantities
 		common <- (apply(ly[[i]], 2, sum)^2) * diag(ve[[i]])
 		truevar <- ly[[i]] %*% ve[[i]] %*% t(ly[[i]])
+		## vectors to store results for each factor
 		error <- rep(NA, length(common))
 		alpha <- rep(NA, length(common))
 		total <- rep(NA, length(common))
 		omega1 <- omega2 <- omega3 <- rep(NA, length(common))
 		impliedTotal <- rep(NA, length(common))
 		avevar <- rep(NA, length(common))
+
+		## loop over j factors
 		for (j in 1:length(common)) {
 			index <- which(ly[[i]][,j] != 0)
+			## check for categorical (or mixed) indicators
+			categorical <-      any(indNames[index] %in% ordNames)
+			if (categorical && !all(indNames[index] %in% ordNames)) {
+			  stop('Reliability cannot be computed for factors with combinations ',
+			       'of categorical and continuous (including latent) indicators.')
+			}
+			## check for latent indicators
+			if (length(latInds) && facNames[j] %in% higher) {
+			  warnHigher <- TRUE
+			  idx.drop <- c(idx.drop, j)
+			  next
+			}
+			if (dropSingle && length(index) == 1L) {
+			  idx.drop <- c(idx.drop, j)
+			  next
+			}
+
 			error[j] <- sum(te[[i]][index, index, drop = FALSE])
 			sigma <- S[[i]][index, index, drop = FALSE]
 			alpha[j] <- computeAlpha(sigma, length(index))
@@ -308,35 +358,55 @@ reliability <- function(object, omit.imps = c("no.conv","no.se")) {
 				omega2[j] <- commonfac / impliedTotal[j]
 				omega3[j] <- commonfac / total[j]
 			}
+			## end loop over j factors
 		}
-		alpha <- c(alpha, total = computeAlpha(S[[i]], nrow(S[[i]])))
-		names(alpha) <- c(names(common), "total")
-		if (categorical) {
-			omega1 <- c(omega1, total = omegaCat(truevar = truevar,
-			                                     implied = SigmaHat[[i]],
-			                                     threshold = threshold[[i]],
-			                                     denom = truevar + te[[i]]))
-			omega2 <- c(omega2, total = omegaCat(truevar = truevar,
-			                                     implied = SigmaHat[[i]],
-			                                     threshold = threshold[[i]],
-			                                     denom = SigmaHat[[i]]))
-			omega3 <- c(omega3, total = omegaCat(truevar = truevar,
-			                                     implied = SigmaHat[[i]],
-			                                     threshold = threshold[[i]],
-			                                     denom = S[[i]]))
-		} else {
-			omega1 <- c(omega1, total = sum(truevar) / (sum(truevar) + sum(te[[i]])))
-			omega2 <- c(omega2, total = sum(truevar) / (sum(SigmaHat[[i]])))
-			omega3 <- c(omega3, total = sum(truevar) / (sum(S[[i]])))
+
+		if (return.total & length(facNames) > 1L) {
+		  alpha <- c(alpha, total = computeAlpha(S[[i]], nrow(S[[i]])))
+		  #FIXME: necessary?    names(alpha) <- c(names(common), "total")
+		  if (categorical) {
+		    omega1 <- c(omega1, total = omegaCat(truevar = truevar,
+		                                         implied = SigmaHat[[i]],
+		                                         threshold = threshold[[i]],
+		                                         denom = truevar + te[[i]]))
+		    omega2 <- c(omega2, total = omegaCat(truevar = truevar,
+		                                         implied = SigmaHat[[i]],
+		                                         threshold = threshold[[i]],
+		                                         denom = SigmaHat[[i]]))
+		    omega3 <- c(omega3, total = omegaCat(truevar = truevar,
+		                                         implied = SigmaHat[[i]],
+		                                         threshold = threshold[[i]],
+		                                         denom = S[[i]]))
+		  } else {
+		    omega1 <- c(omega1, total = sum(truevar) / (sum(truevar) + sum(te[[i]])))
+		    omega2 <- c(omega2, total = sum(truevar) / (sum(SigmaHat[[i]])))
+		    omega3 <- c(omega3, total = sum(truevar) / (sum(S[[i]])))
+		  }
+		  avevar <- c(avevar,
+		              total = sum(diag(truevar)) / sum((diag(truevar) + diag(te[[i]]))))
 		}
-		avevar <- c(avevar, total = sum(diag(truevar))/ sum((diag(truevar) + diag(te[[i]]))))
-		singleIndicator <- apply(ly[[i]], 2, function(x) sum(x != 0)) %in% 0:1
+
 		result[[i]] <- rbind(alpha = alpha, omega = omega1, omega2 = omega2,
-		                     omega3 = omega3, avevar = avevar)[ , !singleIndicator]
+		                     omega3 = omega3, avevar = avevar)
+		colnames(result[[i]])[1:length(facNames)] <- facNames
+		if (return.total & length(facNames) > 1L) {
+		  colnames(result[[i]])[ ncol(result[[i]]) ] <- "total"
+		}
+		if (length(idx.drop)) {
+		  result[[i]] <- result[[i]][ , -idx.drop]
+		  ## reset indices for next block (could have different model/variables)
+		  idx.drop <- numeric(0)
+		}
+		## end loop over blocks
 	}
-	if (categorical) message("The alpha and the average variance extracted are ",
-	                         "calculated from polychoric (polyserial) ",
-	                         "correlations, not from Pearson correlations.\n")
+
+	if (anyCategorical) message("For constructs with categorical indicators, ",
+	                            "the alpha and the average variance extracted ",
+	                            "are calculated from polychoric (polyserial) ",
+	                            "correlations, not from Pearson correlations.\n")
+	if (warnHigher) message('Higher-order factors were ignored.\n')
+
+	## drop list structure?
 	if (nblocks == 1L) {
 		result <- result[[1]]
 	} else names(result) <- block.label
@@ -358,20 +428,23 @@ reliability <- function(object, omit.imps = c("no.conv","no.se")) {
 ##' The first formula of the coefficient omega (in the
 ##' \code{\link{reliability}}) will be mainly used in the calculation. The
 ##' model-implied covariance matrix of a second-order factor model can be
-##' separated into three sources: the second-order factor, the uniqueness of the
-##' first-order factor, and the measurement error of indicators:
+##' separated into three sources: the second-order common-factor variance,
+##' the residual variance of the first-order common factors (i.e., not
+##' accounted for by the second-order factor), and the measurement error of
+##' observed indicators:
 ##'
 ##' \deqn{ \hat{\Sigma} = \Lambda \bold{B} \Phi_2 \bold{B}^{\prime}
 ##' \Lambda^{\prime} + \Lambda \Psi_{u} \Lambda^{\prime} + \Theta, }
 ##'
 ##' where \eqn{\hat{\Sigma}} is the model-implied covariance matrix,
-##' \eqn{\Lambda} is the first-order factor loading, \eqn{\bold{B}} is the
-##' second-order factor loading, \eqn{\Phi_2} is the covariance matrix of the
-##' second-order factors, \eqn{\Psi_{u}} is the covariance matrix of the unique
-##' scores from first-order factors, and \eqn{\Theta} is the covariance matrix
-##' of the measurement errors from indicators. Thus, the proportion of the
-##' second-order factor explaining the total score, or the coefficient omega at
-##' Level 1, can be calculated:
+##' \eqn{\Lambda} contains first-order factor loadings, \eqn{\bold{B}} contains
+##' second-order factor loadings, \eqn{\Phi_2} is the covariance matrix of the
+##' second-order factor(s), \eqn{\Psi_{u}} is the covariance matrix of residuals
+##' from first-order factors, and \eqn{\Theta} is the covariance matrix of the
+##' measurement errors from observed indicators. Thus, we can calculate the
+##' proportion of variance of a composite score calculated from the observed
+##' indicators (e.g., a total score or scale mean) that is attributable to the
+##' second-order factor, i.e. coefficient omega at Level 1:
 ##'
 ##' \deqn{ \omega_{L1} = \frac{\bold{1}^{\prime} \Lambda \bold{B} \Phi_2
 ##' \bold{B}^{\prime} \Lambda^{\prime} \bold{1}}{\bold{1}^{\prime} \Lambda
@@ -380,25 +453,35 @@ reliability <- function(object, omit.imps = c("no.conv","no.se")) {
 ##' \bold{1}^{\prime} \Theta \bold{1}}, }
 ##'
 ##' where \eqn{\bold{1}} is the \emph{k}-dimensional vector of 1 and \emph{k} is
-##' the number of observed variables. When model-implied covariance matrix among
-##' first-order factors (\eqn{\Phi_1}) can be calculated:
+##' the number of observed variables.
+##'
+##' The model-implied covariance matrix among first-order factors (\eqn{\Phi_1})
+##' can be calculated as:
 ##'
 ##' \deqn{ \Phi_1 = \bold{B} \Phi_2 \bold{B}^{\prime} + \Psi_{u}, }
 ##'
-##' Thus, the proportion of the second-order factor explaining the varaince at
-##' first-order factor level, or the coefficient omega at Level 2, can be
-##' calculated:
+##' Thus, the proportion of variance among first-order common factors that is
+##' attributable to the second-order factor (i.e., coefficient omega at Level 2)
+##' can be calculated as:
 ##'
 ##' \deqn{ \omega_{L2} = \frac{\bold{1_F}^{\prime} \bold{B} \Phi_2
 ##' \bold{B}^{\prime} \bold{1_F}}{\bold{1_F}^{\prime} \bold{B} \Phi_2
 ##' \bold{B}^{\prime} \bold{1_F} + \bold{1_F}^{\prime} \Psi_{u} \bold{1_F}}, }
 ##'
 ##' where \eqn{\bold{1_F}} is the \emph{F}-dimensional vector of 1 and \emph{F}
-##' is the number of first-order factors.
+##' is the number of first-order factors. This Level-2 omega can be interpreted
+##' as an estimate of the reliability of a hypothetical composite calculated
+##' from error-free observable variables representing the first-order common
+##' factors. This might only be meaningful as a thought experiment.
 ##'
-##' The partial coefficient omega at Level 1, or the proportion of observed
-##' variance explained by the second-order factor after partialling the
-##' uniqueness from the first-order factor, can be calculated:
+##' An additional thought experiment is possible: If the observed indicators
+##' contained only the second-order common-factor variance and unsystematic
+##' measurement error, then there would be no first-order common factors because
+##' their unique variances would be excluded from the observed measures. An
+##' estimate of this hypothetical composite reliability can be calculated as the
+##' partial coefficient omega at Level 1, or the proportion of observed
+##' variance explained by the second-order factor after partialling out the
+##' uniqueness from the first-order factors:
 ##'
 ##' \deqn{ \omega_{L1} = \frac{\bold{1}^{\prime} \Lambda \bold{B} \Phi_2
 ##' \bold{B}^{\prime} \Lambda^{\prime} \bold{1}}{\bold{1}^{\prime} \Lambda
@@ -407,7 +490,7 @@ reliability <- function(object, omit.imps = c("no.conv","no.se")) {
 ##'
 ##' Note that if the second-order factor has a direct factor loading on some
 ##' observed variables, the observed variables will be counted as first-order
-##' factors.
+##' factors, which might not be desirable.
 ##'
 ##'
 ##' @importFrom lavaan lavInspect
@@ -874,19 +957,23 @@ p2 <- function(t1, t2, r) {
 # 	lapply(lavInspect(newobject, "est"), "[[", "theta")
 # }
 
-#' @importFrom lavaan lavInspect lavNames
+##' @importFrom lavaan lavInspect lavNames
+##' @importFrom methods getMethod
 getThreshold <- function(object) {
-	ngroups <- lavInspect(object, "ngroups")
+	ngroups <- lavInspect(object, "ngroups") #TODO: add nlevels when capable
 	ordnames <- lavNames(object, "ov.ord")
+	FITTED <- getMethod("fitted", class(object))(object)
 
 	if (ngroups == 1L) {
-	  thresholds <- fitted(object)$th
+	  thresholds <- FITTED$th
 	  result <- lapply(ordnames,
 	                   function(nn) thresholds[grepl(nn, names(thresholds))])
 	  names(result) <- ordnames
+	  ## needs to be within a list when called above within block-loops
+	  result <- list(result)
 
 	} else {
-	  thresholds <- sapply(fitted(object), "[[", i = "th", simplify = FALSE)
+	  thresholds <- sapply(FITTED, "[[", i = "th", simplify = FALSE)
 	  result <- list()
 		group.label <- lavInspect(object, "group.label")
 

@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 29 August 2019
+### Last updated: 16 September 2019
 ### Class and Methods for lavaan.mi object, returned by runMI()
 
 
@@ -91,7 +91,11 @@
 ##'        samples.  However, gross model misspecification could also cause
 ##'        NPD solutions, users can compare pooled results with and without
 ##'        this setting as a sensitivity analysis to see whether some
-##'        imputations warrant further investigation.
+##'        imputations warrant further investigation. Specific imputation
+##'        numbers can also be included in this argument, in case users want to
+##'        apply their own custom omission criteria (or simulations can use
+##'        different numbers of imputations without redundantly refitting the
+##'        model).
 ##' @param labels \code{logical} indicating whether the \code{coef} output
 ##'        should include parameter labels. Default is \code{TRUE}.
 ##' @param total \code{logical} (default: \code{TRUE}) indicating whether the
@@ -277,6 +281,10 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -469,6 +477,10 @@ coef.lavaan.mi <- function(object, type = "free", labels = TRUE,
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -508,6 +520,10 @@ vcov.lavaan.mi <- function(object, type = c("pooled","between","within","ariv"),
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -709,6 +725,10 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -820,27 +840,44 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
 
         ## MUST fit PTb for "D3" likelihoods, but for "D2" use @baselineList
       } else if (test == "D2") {
+        ## length(baseImps) == m, not just length(useImps)
         baseImps <- object@meta$baseline.ok
         if (!all(baseImps[useImps])) warning('The default independence model ',
                                              'did not converge for data set(s): ',
-                                             which(!baseImps[useImps]))
-        w <- sapply(object@baselineList[ which(baseImps[useImps]) ],
+                                             which(!baseImps))
+        ## only use imputations that converged for both
+        baseImps <- intersect(useImps, which(baseImps))
+
+        w <- sapply(object@baselineList[baseImps],
                     function(x) x$test$standard[["stat"]])
-        DF <- mean(sapply(object@baselineList[ which(baseImps[useImps]) ],
-                          function(x) x$test$standard[["df"]]))
+        if (is.list(w)) {
+          #TODO: figure out why this happens!
+          w <- unlist(w)
+          DF <- mean(unlist(sapply(object@baselineList[baseImps],
+                                   function(x) x$test$standard[["df"]])))
+        } else {
+          DF <- mean(sapply(object@baselineList[baseImps],
+                            function(x) x$test$standard[["df"]]))
+        }
         baseOut <- calculate.D2(w, DF, asymptotic = TRUE)
         if (robust) {
           if (pool.robust) {
-            w.r <- sapply(object@baselineList[ which(baseImps[useImps]) ],
+            w.r <- sapply(object@baselineList[baseImps],
                           function(x) x$test[[ test.names[1] ]][["stat"]])
-            DF.r <- mean(sapply(object@baselineList[ which(baseImps[useImps]) ],
-                                function(x) x$test[[ test.names[1] ]][["df"]]))
+            if (is.list(w.r)) {
+              w.r <- unlist(w.r)
+              DF.r <- mean(unlist(sapply(object@baselineList[baseImps],
+                                         function(x) x$test[[ test.names[1] ]][["df"]])))
+            } else {
+              DF.r <- mean(sapply(object@baselineList[baseImps],
+                                  function(x) x$test[[ test.names[1] ]][["df"]]))
+            }
             base.robust <- calculate.D2(w.r, DF.r, asymptotic = TRUE)
             names(base.robust) <- paste0(names(base.robust), ".scaled")
             baseOut <- c(baseOut, base.robust)
           } else {
             baseOut <- robustify(ChiSq = baseOut, object = object,
-                                 baseline = TRUE, useImps = which(baseImps[useImps]))
+                                 baseline = TRUE, useImps = baseImps)
           }
         }
         baseFit <- NULL # for later checking, to avoid unnecessary calls
@@ -865,6 +902,7 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
       }
 
       if (!is.null(baseFit)) {
+        ## length(baseImps) is only as long as length(useImps), not the original m
         baseImps <- sapply(baseFit@convergence, "[[", i = "converged")
         if (!all(baseImps)) warning('baseline.model did not converge for data set(s): ',
                                     useImps[!baseImps])
@@ -1245,6 +1283,10 @@ fitted.lavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -1360,6 +1402,10 @@ resid.lavaan.mi <- function(object, type = c("raw","cor"),
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)

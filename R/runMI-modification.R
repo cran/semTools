@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Yves rosseel
-### Last updated: 29 August 2019
+### Last updated: 16 September 2019
 ### adaptation of lavaan::modindices() for lavaan.mi-class objects
 
 
@@ -9,9 +9,10 @@
 ##' latent variable model fitted to multiple imputed data sets. Statistics
 ##' for releasing one or more fixed or constrained parameters in model can
 ##' be calculated by pooling the gradient and information matrices
-##' across imputed data sets in a method analogous to the Wald test proposed by
-##' Li, Meng, Raghunathan, & Rubin (1991), or by pooling the complete-data
-##' score-test statistics across imputed data sets (Li et al., 1991).
+##' across imputed data sets in a method proposed by Mansolf, Jorgensen, &
+##' Enders (in press)---analogous to the "D1" Wald test proposed by Li, Meng,
+##' Raghunathan, & Rubin (1991)---or by pooling the complete-data score-test
+##' statistics across imputed data sets (i.e., "D2"; Li et al., 1991).
 ##'
 ##' @name modindices.mi
 ##' @aliases modificationIndices.mi modificationindices.mi modindices.mi
@@ -21,21 +22,24 @@
 ##'
 ##' @param object An object of class \code{\linkS4class{lavaan.mi}}
 ##' @param test \code{character} indicating which pooling method to use.
-##'   \code{test = "D2"} (default) indicates that modification indices that were
-##'   calculated within each imputed data set will be pooled across imputations,
-##'   as described in Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010).
-##'   \code{"D1"} indicates Li et al.'s (1991) proposed Wald test will be
-##'   applied to the gradient and information, and those pooled values will be
-##'   used to calculate modification indices in the usual manner.
+##'  \code{"D1"} requests Mansolf, Jorgensen, & Enders' (in press) proposed
+##'  Wald-like test for pooling the gradient and information, which are then
+##'  used to calculate score-test statistics in the usual manner. \code{"D2"}
+##'  (default because it is less computationall intensive) requests to pool the
+##'  complete-data score-test statistics from each imputed data set, then pool
+##'  them across imputations, described by Li et al. (1991) and Enders (2010).
 ##' @param omit.imps \code{character} vector specifying criteria for omitting
-##'    imputations from pooled results.  Can include any of
-##'    \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
-##'    default setting, which excludes any imputations that did not
-##'    converge or for which standard errors could not be computed.  The
-##'    last option (\code{"no.npd"}) would exclude any imputations which
-##'    yielded a nonpositive definite covariance matrix for observed or
-##'    latent variables, which would include any "improper solutions" such
-##'    as Heywood cases.
+##'   imputations from pooled results.  Can include any of
+##'   \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'   default setting, which excludes any imputations that did not
+##'   converge or for which standard errors could not be computed.  The
+##'   last option (\code{"no.npd"}) would exclude any imputations which
+##'   yielded a nonpositive definite covariance matrix for observed or
+##'   latent variables, which would include any "improper solutions" such
+##'   as Heywood cases. Specific imputation numbers can also be included in this
+##'   argument, in case users want to  apply their own custom omission criteria
+##'   (or simulations can use different numbers of imputations without
+##'   redundantly refitting the model).
 ##' @param standardized \code{logical}. If \code{TRUE}, two extra columns
 ##'   (\code{$sepc.lv} and \code{$sepc.all}) will contain standardized values
 ##'   for the EPCs. In the first column (\code{$sepc.lv}), standardizization is
@@ -96,7 +100,6 @@
 ##' \code{test = "D1"} method proposed by
 ##'   Maxwell Mansolf (University of California, Los Angeles;
 ##'   \email{mamansolf@@gmail.com})
-#FIXME: replace note with reference once accepted paper has a DOI
 ##'
 ##' @references
 ##'   Enders, C. K. (2010). \emph{Applied missing data analysis}.
@@ -106,6 +109,10 @@
 ##'   Significance levels from repeated \emph{p}-values with multiply-imputed
 ##'    data.\emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
 ##'   https://www.jstor.org/stable/24303994
+##'
+##'   Mansolf, M., Jorgensen, T. D., & Enders, C. K. (in press). A multiple
+##'   imputation score test for model modification in structural equation
+##'   models. \emph{Psychological Methods}. doi:10.1037/met0000243
 ##'
 ##' @examples
 ##'  \dontrun{
@@ -168,6 +175,10 @@ modindices.mi <- function(object,
     Heywood.ov <- sapply(object@convergence, "[[", i = "Heywood.ov")
     useImps <- useImps & !(Heywood.lv | Heywood.ov)
   }
+  ## custom removal by imputation number
+  rm.imps <- omit.imps[ which(omit.imps %in% 1:length(useImps)) ]
+  if (length(rm.imps)) useImps[as.numeric(rm.imps)] <- FALSE
+  ## whatever is left
   m <- sum(useImps)
   if (m == 0L) stop('No imputations meet "omit.imps" criteria.')
   useImps <- which(useImps)
@@ -186,7 +197,7 @@ modindices.mi <- function(object,
 
   ## use first available modification indices as template to store pooled results
   ngroups <- lavListInspect(object, "ngroups")
-  nlevels <- object@Data@nlevels #FIXME: lavListInspect(object, "nlevels")
+  nlevels <- lavListInspect(object, "nlevels")
   myCols <- c("lhs","op","rhs")
   if (ngroups > 1L) myCols <- c(myCols,"block","group")
   if (nlevels > 1L) myCols <- c(myCols,"block","level")
