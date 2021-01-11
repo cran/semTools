@@ -1,7 +1,11 @@
 ### Sunthud Pornprasertmanit & Terrence D. Jorgensen
-### Last updated: 9 April 2020
+### Last updated: 10 January 2021
 
 
+
+## --------
+## 2-way MC
+## --------
 
 ##' Probing two-way interaction on the no-centered or mean-centered latent
 ##' interaction
@@ -128,12 +132,12 @@
 ##' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
 ##' latent interactions: Evaluation of alternative estimation strategies and
 ##' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
-##' doi:10.1037/1082-989X.9.3.275
+##' \doi{10.1037/1082-989X.9.3.275}
 ##'
 ##' Preacher, K. J., Curran, P. J., & Bauer, D. J. (2006). Computational tools
 ##' for probing interactions in multiple linear regression, multilevel modeling,
 ##' and latent curve analysis. \emph{Journal of Educational and Behavioral
-##' Statistics, 31}(4), 437--448. doi:10.3102/10769986031004437
+##' Statistics, 31}(4), 437--448. \doi{10.3102/10769986031004437}
 ##'
 ##' @examples
 ##'
@@ -318,9 +322,9 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		usedBeta <- betaNC
 
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
-		if(modVar == 2) {
+		if(modVar == 1) {
 			usedVar <- usedVar[c(2, 1, 3), c(2, 1, 3)]
-			# usedBeta <- usedBeta[c(2, 1, 3)]
+			usedBeta <- usedBeta[c(2, 1, 3)]
 		}
 
 		# Find simple slope
@@ -336,6 +340,10 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 }
 
 
+
+## --------
+## 2-way RC
+## --------
 
 ##' Probing two-way interaction on the residual-centered latent interaction
 ##'
@@ -434,22 +442,23 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##' Lance, C. E. (1988). Residual centering, exploratory and confirmatory
 ##' moderator analysis, and decomposition of effects in path models containing
 ##' interactions. \emph{Applied Psychological Measurement, 12}(2), 163--175.
-##' doi:10.1177/014662168801200205
+##' \doi{10.1177/014662168801200205}
 ##'
 ##' Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of
 ##' orthogonalizing powered and product terms: Implications for modeling
 ##' interactions. \emph{Structural Equation Modeling, 13}(4), 497--519.
-##' doi:10.1207/s15328007sem1304_1
+##' \doi{10.1207/s15328007sem1304_1}
 ##'
 ##' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
 ##' latent interactions: Evaluation of alternative estimation strategies and
 ##' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
-##' doi:10.1037/1082-989X.9.3.275
+##' \doi{10.1037/1082-989X.9.3.275}
 ##'
 ##' Geldhof, G. J., Pornprasertmanit, S., Schoemann, A. M., & Little, T. D.
 ##' (2013). Orthogonalizing through residual centering: Extended applications
-##' and caveats \emph{Educational and Psychological Measurement, 73}(1), 27--46.
-##' doi:10.1177/0013164412445473
+##' and caveats. \emph{Educational and Psychological Measurement, 73}(1), 27--46.
+##' \doi{10.1177/0013164412445473}
+##'
 ##' @examples
 ##'
 ##' library(lavaan)
@@ -690,9 +699,9 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		usedBeta <- betaNC
 
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
-		if(modVar == 2) {
+		if (modVar == 1) {
 			usedVar <- usedVar[c(2, 1, 3), c(2, 1, 3)]
-			# usedBeta <- usedBeta[c(2, 1, 3)]
+			usedBeta <- usedBeta[c(2, 1, 3)]
 		}
 
 		# Find simple slope
@@ -708,6 +717,10 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 }
 
 
+
+## --------
+## 3-way MC
+## --------
 
 ##' Probing three-way interaction on the no-centered or mean-centered latent
 ##' interaction
@@ -851,7 +864,7 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
 ##' latent interactions: Evaluation of alternative estimation strategies and
 ##' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
-##' doi:10.1037/1082-989X.9.3.275
+##' \doi{10.1037/1082-989X.9.3.275}
 ##'
 ##' @examples
 ##'
@@ -1089,6 +1102,10 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 
 
 
+## --------
+## 3-way RC
+## --------
+
 ##' Probing three-way interaction on the residual-centered latent interaction
 ##'
 ##' Probing interaction for simple intercept and simple slope for the
@@ -1193,22 +1210,22 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##' Geldhof, G. J., Pornprasertmanit, S., Schoemann, A., & Little,
 ##' T. D. (2013). Orthogonalizing through residual centering: Extended
 ##' applications and caveats. \emph{Educational and Psychological Measurement,
-##' 73}(1), 27--46. doi:10.1177/0013164412445473
+##' 73}(1), 27--46. \doi{10.1177/0013164412445473}
 ##'
 ##' Lance, C. E. (1988). Residual centering, exploratory and confirmatory
 ##' moderator analysis, and decomposition of effects in path models containing
 ##' interactions. \emph{Applied Psychological Measurement, 12}(2), 163--175.
-##' doi:10.1177/014662168801200205
+##' \doi{10.1177/014662168801200205}
 ##'
 ##' Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of
 ##' orthogonalizing powered and product terms: Implications for modeling
 ##' interactions. \emph{Structural Equation Modeling, 13}(4), 497--519.
-##' doi:10.1207/s15328007sem1304_1
+##' \doi{10.1207/s15328007sem1304_1}
 ##'
 ##' Marsh, H. W., Wen, Z., & Hau, K. T. (2004). Structural equation models of
 ##' latent interactions: Evaluation of alternative estimation strategies and
 ##' indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
-##' doi:10.1037/1082-989X.9.3.275
+##' \doi{10.1037/1082-989X.9.3.275}
 ##'
 ##' Pornprasertmanit, S., Schoemann, A. M., Geldhof, G. J., & Little, T. D.
 ##' (submitted). \emph{Probing latent interaction estimated with a residual
@@ -1545,6 +1562,10 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 }
 
 
+
+## -----------------
+## Plotting Function
+## -----------------
 
 ##' Plot a latent interaction
 ##'

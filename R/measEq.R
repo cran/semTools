@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 27 May 2020
+### Last updated: 10 January 2021
 ### lavaan model syntax-writing engine for new measEq() to replace
 ### measurementInvariance(), measurementInvarianceCat(), and longInvariance()
 
@@ -157,8 +157,8 @@ measEq <- function(configural.model,
 ##'   \item{show}{\code{signature(object = "measEq.syntax")}: Prints a message
 ##'     about how to use the \code{object} for model fitting. Invisibly
 ##'     returns the \code{object}.}
-##'   \item{update}{\code{signature(object = "measEq.syntax"), ...,
-##'     evaluate = TRUE, change.syntax = NULL}: Creates a new
+##'   \item{update}{\code{signature(object = "measEq.syntax", ...,
+##'     evaluate = TRUE, change.syntax = NULL)}: Creates a new
 ##'     \code{object} with updated arguments in \code{...}, or updated
 ##'     parameter labels or fixed/free specifications in \code{object}.}
 ##'   \item{as.character}{\code{signature(x = "measEq.syntax", package = "lavaan")}:
@@ -831,7 +831,7 @@ setMethod("update", "measEq.syntax", updateMeasEqSyntax)
 ##' \code{configural.model} argument, and if \code{return.fit = TRUE}, the
 ##' generated model will be fitted to the multiple imputations.
 ##'
-##' @importFrom lavaan lavInspect lavNames cfa
+##' @importFrom lavaan lavInspect lavNames parTable cfa
 ##'
 ##' @param configural.model A model with no measurement-invariance constraints
 ##'   (i.e., representing only configural invariance), unless required for model
@@ -886,16 +886,19 @@ setMethod("update", "measEq.syntax", updateMeasEqSyntax)
 ##'   \itemize{
 ##'     \item To follow Wu & Estabrook's (2016) guidelines (default), specify
 ##'           any of: \code{"Wu.Estabrook.2016"}, \code{"Wu.2016"},
-##'           \code{"Wu.Estabrook"}, \code{"Wu"}, \code{"Wu2016"}.
+##'           \code{"Wu.Estabrook"}, \code{"Wu"}, \code{"Wu2016"}. For
+##'           consistency, specify \code{ID.fac = "std.lv"}.
 ##'     \item To use the default settings of M\emph{plus} and \code{lavaan},
 ##'           specify any of: \code{"default"}, \code{"Mplus"}, \code{"Muthen"}.
 ##'           Details provided in Millsap & Tein (2004).
 ##'     \item To use the constraints recommended by Millsap & Tein (2004; see
 ##'           also Liu et al., 2017, for the longitudinal case)
 ##'           specify any of: \code{"millsap"}, \code{"millsap.2004"},
-##'           \code{"millsap.tein.2004"}
+##'           \code{"millsap.tein.2004"}. For consistency, specify
+##'           \code{ID.fac = "marker"} and \code{parameterization = "theta"}.
 ##'     \item To use the default settings of LISREL, specify \code{"LISREL"}
 ##'           or \code{"Joreskog"}. Details provided in Millsap & Tein (2004).
+##'           For consistency, specify \code{parameterization = "theta"}.
 ##'   }
 ##'   See \strong{Details} and \strong{References} for more information.
 ##'
@@ -975,21 +978,21 @@ setMethod("update", "measEq.syntax", updateMeasEqSyntax)
 ##'   Kloessner, S., & Klopp, E. (2019). Explaining constraint interaction: How
 ##'   to interpret estimated model parameters under alternative scaling methods.
 ##'   \emph{Structural Equation Modeling, 26}(1), 143--155.
-##'   doi:10.1080/10705511.2018.1517356
+##'   \doi{10.1080/10705511.2018.1517356}
 ##'
 ##'   Liu, Y., Millsap, R. E., West, S. G., Tein, J.-Y., Tanaka, R., & Grimm,
 ##'   K. J. (2017). Testing measurement invariance in longitudinal data with
 ##'   ordered-categorical measures. \emph{Psychological Methods, 22}(3),
-##'   486--506. doi:10.1037/met0000075
+##'   486--506. \doi{10.1037/met0000075}
 ##'
 ##'   Millsap, R. E., & Tein, J.-Y. (2004). Assessing factorial invariance in
 ##'   ordered-categorical measures. \emph{Multivariate Behavioral Research, 39}(3),
-##'   479--515. doi:10.1207/S15327906MBR3903_4
+##'   479--515. \doi{10.1207/S15327906MBR3903_4}
 ##'
 ##'   Wu, H., & Estabrook, R. (2016). Identification of confirmatory factor
 ##'   analysis models of different levels of invariance for ordered categorical
 ##'   outcomes. \emph{Psychometrika, 81}(4), 1014--1045.
-##'   doi:10.1007/s11336-016-9506-0
+##'   \doi{10.1007/s11336-016-9506-0}
 ##'
 ##' @examples
 ##' mod.cat <- ' FU1 =~ u1 + u2 + u3 + u4
@@ -1296,7 +1299,8 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
                                  '"configural.model=" argument, not "model=".')
   if (is.null(dots$meanstructure)) {
     constrMeanStr <- c("intercepts","means") %in% c(group.equal, long.equal)
-    if (is.null(dots$sample.mean) && is.null(dots$data) && !any(constrMeanStr)) {
+    if (is.null(dots$data) && is.null(dots$sample.mean) &&
+        is.null(dots$sample.th) && !any(constrMeanStr)) {
       dots$meanstructure <- FALSE
       mc$meanstructure <- FALSE
     } else {
@@ -1331,6 +1335,13 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
     mc$meanstructure <- lavInspect(lavTemplate, "options")$meanstructure # just in case
     mc$configural.model <- lavTemplate
   }
+
+  ## warn about regression parameters
+  if (any(parTable(lavTemplate)$op == "~"))
+    warning('Regression operator (~) detected. measEq.syntax() was designed ',
+            'only for multigroup CFA models. Regression operator (~) could be ',
+            'used to define a higher-order factor (although the =~ operator ',
+            'is easier), but structural regressions should not be specified.')
 
 
   ## prevent inconsistency
@@ -1383,14 +1394,17 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
   }
 
   ## extract options and other information
-  parameterization <- mc$parameterization
-  if (is.null(parameterization)) {
+  if (is.null(mc$parameterization)) {
     parameterization <- lavInspect(lavTemplate, "options")$parameterization
+  } else {
+    parameterization <- try(eval(mc$parameterization), silent = TRUE)
+    if (inherits(parameterization, "try-error")) {
+      parameterization <- try(eval.parent(mc$parameterization, 1), silent = TRUE)
+    }
   }
-  meanstructure <- mc$meanstructure
-  if (is.null(meanstructure)) {
+  if (is.null(mc$meanstructure)) {
     meanstructure <- lavInspect(lavTemplate, "options")$meanstructure
-  }
+  } else meanstructure <- mc$meanstructure
   nG <- lavInspect(lavTemplate, "ngroups")
   ## names of ordinal indicators, number of thresholds for each
   allOrdNames <- lavNames(lavTemplate, type = "ov.ord")
@@ -1430,6 +1444,15 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
     if (any(partial.thr)) group.partial <- group.partial[!partial.thr, ]
     partial.thr <- long.partial$op == "|"
     if (any(partial.thr)) long.partial <- long.partial[!partial.thr, ]
+  }
+
+  if (length(allOrdNames) && ID.cat %in% c("millsap","mplus")) {
+    ## scalar invariance implies equal intercepts, even though they are
+    ## fixed to zero anyway. This will correctly trigger freeing latent mean(s)
+    if ("loadings" %in% group.equal && "thresholds" %in% group.equal &&
+        !"intercepts" %in% group.equal) group.equal <- c("intercepts", group.equal)
+    if ("loadings" %in% long.equal && "thresholds" %in% long.equal &&
+        !"intercepts" %in% long.equal) long.equal <- c("intercepts", long.equal)
   }
 
   if (!meanstructure) {
@@ -1580,28 +1603,33 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
       if (p == "tau") {
         GLIST.specify[[g]]$tau <- GLIST.free[[g]]$tau == 0
         GLIST.specify[[g]]$tau[ , 1] <- TRUE
+        next
       }
       ## LOADINGS
       if (p == "lambda") {
         free.loading <- GLIST.free[[g]]$lambda > 0L
         fixed.nonzero.loading <- GLIST.free[[g]]$lambda == 0L & GLIST.est[[g]]$lambda != 0
         GLIST.specify[[g]]$lambda <- free.loading | fixed.nonzero.loading
+        next
       }
       ## SECOND-ORDER LOADINGS
       if (p == "beta") {
         free.loading <- GLIST.free[[g]]$beta > 0L
         fixed.nonzero.loading <- GLIST.free[[g]]$beta == 0L & GLIST.est[[g]]$beta != 0
         GLIST.specify[[g]]$beta <- free.loading | fixed.nonzero.loading
+        next
       }
       ## INTERCEPTS
       if (p == "nu") {
         GLIST.specify[[g]]$nu <- GLIST.free[[g]]$nu == 0
         GLIST.specify[[g]]$nu[ , 1] <- TRUE
+        next
       }
       ## LATENT MEANS
       if (p == "alpha") {
         GLIST.specify[[g]]$alpha <- GLIST.free[[g]]$alpha == 0
         GLIST.specify[[g]]$alpha[ , 1] <- TRUE
+        next
       }
       ## LATENT (CO)VARIANCES
       if (p == "psi") {
@@ -1610,6 +1638,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
                                          dimnames = dimnames(GLIST.free[[g]]$psi))
         ## only specify lower triangle
         GLIST.specify[[g]]$psi[upper.tri(GLIST.specify[[g]]$psi)] <- FALSE
+        next
       }
       ## RESIDUAL (CO)VARIANCES
       if (p == "theta") {
@@ -1621,6 +1650,7 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
           diag(GLIST.specify[[g]]$theta)[allOrdNames] <- FALSE
         ## only specify lower triangle
         GLIST.specify[[g]]$theta[upper.tri(GLIST.specify[[g]]$theta)] <- FALSE
+        next
       }
       ## SCALING FACTORS (delta parameters for latent item-responses)
       if (p == "delta") {
@@ -2597,6 +2627,8 @@ measEq.syntax <- function(configural.model, ..., ID.fac = "std.lv",
         listLabels.I[[g]] <- sapply(colnames(GLIST.labels[[g]]$lambda), function(f) {
           GLIST.labels[[g]]$nu[GLIST.specify[[g]]$lambda[ , f], 1]
         }, simplify = FALSE)
+
+        #TODO: threshold labels
       }
 
     }

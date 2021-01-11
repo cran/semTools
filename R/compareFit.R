@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Sunthud Pornprasertmanit
-### Last updated: 29 August 2019
+### Last updated: 6 June 2020
 ### source code for compareFit() function and FitDiff class
 
 
@@ -312,6 +312,14 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(),
 	modClass <- unique(sapply(mods, class))
 	if (length(modClass) > 1L) stop('All models must be of the same class (e.g.,',
 	                                ' cannot compare lavaan objects to lavaan.mi)')
+	nonConv <- !sapply(mods, lavInspect, what = "converged")
+	if (all(nonConv)) {
+	  stop('No models converged')
+	} else if (any(nonConv)) {
+	  message('The following models did not converge, so they are ignored:\n',
+	          paste(names(nonConv)[nonConv], collapse = ",\t"))
+	  mods <- mods[which(!nonConv)]
+	}
 
 
 	## grab lavaan.mi options, if relevant
@@ -398,9 +406,9 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(),
 	  ## not nested
 	} else nestedout <- data.frame()
 
-	new("FitDiff",
-	    name = names(mods), model.class = modClass,
-	    nested = nestedout, fit = fit)
+	invisible(new("FitDiff",
+	              name = names(mods), model.class = modClass,
+	              nested = nestedout, fit = fit))
 }
 
 
@@ -462,7 +470,7 @@ getFitSummary <- function(object, fit.measures = "default", return.diff = FALSE)
   }
 
   ## return numeric values
-  fitTab <- object@fit[ , colnames(object@fit) %in% fit.measures]
+  fitTab <- object@fit[ , colnames(object@fit) %in% fit.measures, drop = FALSE]
   if (!return.diff) return(fitTab)
 
   ## or return differences in fit indices

@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 16 September 2019
+### Last updated: 10 January 2021
 ### Class and Methods for lavaan.mi object, returned by runMI()
 
 
@@ -163,8 +163,8 @@
 ##'
 ##' \item{summary}{\code{signature(object = "lavaan.mi", se = TRUE, ci = FALSE,
 ##'  level = .95, standardized = FALSE, rsquare = FALSE, fmi = FALSE,
-##'  scale.W = !asymptotic, omit.imps = c("no.conv","no.se"),
-##'  asymptotic = FALSE, header = TRUE, output = "text", fit.measures = FALSE)}:
+##'  scale.W = !asymptotic, omit.imps = c("no.conv","no.se"), asymptotic = FALSE,
+##'   header = TRUE, output = "text", fit.measures = FALSE, ...)}:
 ##'  see \code{\link[lavaan]{parameterEstimates}} for details.
 ##'  By default, \code{summary} returns pooled point and \emph{SE}
 ##'  estimates, along with \emph{t} test statistics and their associated
@@ -180,7 +180,9 @@
 ##'  the \code{parameterEstimates} output. The \code{scale.W} argument is
 ##'  passed to \code{vcov} (see description above).
 ##'  Setting \code{fit.measures=TRUE} will additionally print fit measures to
-##'  the console, but they will not be returned.}
+##'  the console, but they will not be returned; additional arguments may be
+##'  passed via \code{...} to \code{\link[lavaan]{fitMeasures}} and
+##'  subsequently to \code{\link{lavTestLRT.mi}}.}
 ##'
 ##' @section Objects from the Class: See the \code{\link{runMI}} function for
 ##'   details. Wrapper functions include \code{\link{lavaan.mi}},
@@ -192,7 +194,7 @@
 ##' @references
 ##'   Asparouhov, T., & Muthen, B. (2010). \emph{Chi-square statistics
 ##'   with multiple imputation}. Technical Report. Retrieved from
-##'   www.statmodel.com
+##'   \url{http://www.statmodel.com/}
 ##'
 ##'   Enders, C. K. (2010). \emph{Applied missing data analysis}. New York, NY:
 ##'   Guilford.
@@ -200,11 +202,11 @@
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
 ##'   Significance levels from repeated \emph{p}-values with multiply-imputed
 ##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   https://www.jstor.org/stable/24303994
+##'   \url{https://www.jstor.org/stable/24303994}
 ##'
 ##'   Meng, X.-L., & Rubin, D. B. (1992). Performing likelihood ratio tests with
 ##'   multiply-imputed data sets. \emph{Biometrika, 79}(1), 103--111.
-##'   doi:10.2307/2337151
+##'   \doi{10.2307/2337151}
 ##'
 ##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
 ##'   New York, NY: Wiley.
@@ -272,7 +274,7 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
                               fmi = FALSE, scale.W = !asymptotic,
                               omit.imps = c("no.conv","no.se"),
                               asymptotic = FALSE, header = TRUE,
-                              output = "text", fit.measures = FALSE) {
+                              output = "text", fit.measures = FALSE, ...) {
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
   if ("no.se" %in% omit.imps) useImps <- useImps & sapply(object@convergence, "[[", i = "SE")
@@ -394,15 +396,17 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
     PE$label <- PT$label
     #FIXME: no longer needed?  PE$exo <- 0L
     class(PE) <- c("lavaan.parameterEstimates","lavaan.data.frame","data.frame")
-    attr(PE, "information") <- lavoptions$information
+    attr(PE, "information") <- lavoptions$information[1]
+    attr(PE, "information.meat") <- lavoptions$information.meat
     attr(PE, "se") <- lavoptions$se
     attr(PE, "group.label") <- lavListInspect(object, "group.label")
     attr(PE, "level.label") <- c("within", lavListInspect(object, "cluster"))
     attr(PE, "bootstrap") <- lavoptions$bootstrap
     attr(PE, "bootstrap.successful") <- 0L #FIXME: assumes none. Implement Wei & Fan's mixing method?
     attr(PE, "missing") <- lavoptions$missing
-    attr(PE, "observed.information") <- lavoptions$observed.information
-    attr(PE, "h1.information") <- lavoptions$h1.information
+    attr(PE, "observed.information") <- lavoptions$observed.information[1]
+    attr(PE, "h1.information") <- lavoptions$h1.information[1]
+    attr(PE, "h1.information.meat") <- lavoptions$h1.information.meat
     attr(PE, "header") <- header
     # FIXME: lavaan may add more!!
     if (fmi) cat("\n", messRIV, sep = "")
@@ -440,7 +444,7 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
   if (fit.measures) {
     indices <- c("chisq","df","pvalue","cfi","tli","rmsea","srmr")
     FITS <- suppressWarnings(fitMeasures(object, fit.measures = indices,
-                                         output = "text"))
+                                         output = "text", ...))
     try(print(FITS, add.h0 = TRUE), silent = TRUE)
   }
 
@@ -804,14 +808,13 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
 
     scaleshift <- any(test.names == "scaled.shifted")
     if (scaleshift) {
-      if (test == "D3" | !pool.robust)
+      if (test == "D3") {
         message("If test = 'scaled.shifted' (estimator = 'WLSMV' or 'MLMV'), ",
-                "model comparison is only available by (re)setting test = 'D2' ",
-                "and pool.robust = TRUE.\n",
-                "Control more options by passing arguments to lavTestLRT() via ",
-                "the '...' argument.\n")
-      dots$pool.robust <- pool.robust <- TRUE
-      test <- 'D2'
+                "model evaluation is only available by (re)setting .",
+                "test = 'D2'.\nControl more options by passing arguments to ",
+                "lavTestLRT() via the '...' argument.\n")
+        test <- 'D2'
+      }
     }
 
     if (pool.robust && test == "D3") {
@@ -1077,7 +1080,7 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
     }
 
     N <- lavListInspect(object, "ntotal")
-    Ns <- lavListInspect(object, "nobs")
+    Ns <- lavListInspect(object, "nobs") # N per group
     nG <- lavListInspect(object, "ngroups")
     nVars <- length(lavNames(object))
     if (!(lavoptions$likelihood == "normal" |
@@ -1124,25 +1127,25 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
           ## naive
           out["rmsea.scaled"] <- sqrt( max(0, (X2/N)/d - 1/N) ) * sqrt(nG)
           ## lower confidence limit
-          if (DF.sc < 1 | getLambda(0, X2, DF.sc, .95) < 0.0) {
+          if (DF < 1 || d < 1 || getLambda(0, X2, d, .95) < 0.0) {
             out["rmsea.ci.lower.scaled"] <- 0
           } else {
-            lambda.l <- try(uniroot(f = getLambda, chi = X2, df = DF.sc, p = .95,
+            lambda.l <- try(uniroot(f = getLambda, chi = X2, df = d, p = .95,
                                     lower = 0, upper = X2)$root, silent = TRUE)
             if (inherits(lambda.l, "try-error")) lambda.l <- NA
             out["rmsea.ci.lower.scaled"] <- sqrt( lambda.l/(N*DF) ) * sqrt(nG)
           }
           ## upper confidence limit
-          if (DF.sc < 1 | getLambda(N.RMSEA, X2, DF.sc, .05) > 0.0) {
+          if (DF < 1|| d < 1 || getLambda(0, X2, d, .95) < 0.0 || getLambda(N.RMSEA, X2, d, .05) > 0.0) {
             out["rmsea.ci.upper.scaled"] <- 0
           } else {
-            lambda.u <- try(uniroot(f = getLambda, chi = X2, df = DF.sc, p = .05,
+            lambda.u <- try(uniroot(f = getLambda, chi = X2, df = d, p = .05,
                                     lower = 0, upper = N.RMSEA)$root, silent = TRUE)
             if (inherits(lambda.u, "try-error")) lambda.u <- NA
             out["rmsea.ci.upper.scaled"] <- sqrt( lambda.u/(N*DF) ) * sqrt(nG)
           }
           ## p value
-          out["rmsea.pvalue.scaled"] <- pchisq(X2, DF.sc, ncp = N*DF.sc*0.05^2/nG,
+          out["rmsea.pvalue.scaled"] <- pchisq(X2, d, ncp = N*d*0.05^2/nG,
                                                lower.tail = FALSE)
 
           if (!pool.robust & test.names[1] %in%
@@ -1154,7 +1157,7 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
               out["rmsea.ci.lower.robust"] <- 0
             } else {
               lambda.l <- try(uniroot(f = getLambda, chi = X2.sc, df = DF.sc, p = .95,
-                                      lower = 0, upper = X2)$root, silent = TRUE)
+                                      lower = 0, upper = X2.sc)$root, silent = TRUE)
               if (inherits(lambda.l, "try-error")) lambda.l <- NA
               out["rmsea.ci.lower.robust"] <- sqrt( (ch*lambda.l)/(N*DF.sc) ) * sqrt(nG)
             }
@@ -1174,25 +1177,25 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
           ## naive only
           out["rmsea.scaled"] <- sqrt( max(0, (X2.sc/N)/DF - 1/N) ) * sqrt(nG)
           ## lower confidence limit
-          if (DF.sc < 1 | getLambda(0, X2.sc, DF.sc, .95) < 0.0) {
+          if (DF < 1 | getLambda(0, X2.sc, DF, .95) < 0.0) {
             out["rmsea.ci.lower.scaled"] <- 0
           } else {
-            lambda.l <- try(uniroot(f = getLambda, chi = X2.sc, df = DF.sc, p = .95,
+            lambda.l <- try(uniroot(f = getLambda, chi = X2.sc, df = DF, p = .95,
                                     lower = 0, upper = X2.sc)$root, silent = TRUE)
             if (inherits(lambda.l, "try-error")) lambda.l <- NA
-            out["rmsea.ci.lower.scaled"] <- sqrt( lambda.l/(N*DF.sc) ) * sqrt(nG)
+            out["rmsea.ci.lower.scaled"] <- sqrt( lambda.l/(N*DF) ) * sqrt(nG)
           }
           ## upper confidence limit
-          if (DF.sc < 1 | getLambda(N.RMSEA, X2.sc, DF.sc, .05) > 0.0) {
+          if (DF < 1 | getLambda(N.RMSEA, X2.sc, DF, .05) > 0.0) {
             out["rmsea.ci.upper.scaled"] <- 0
           } else {
-            lambda.u <- try(uniroot(f = getLambda, chi = X2.sc, df = DF.sc, p = .05,
+            lambda.u <- try(uniroot(f = getLambda, chi = X2.sc, df = DF, p = .05,
                                     lower = 0, upper = N.RMSEA)$root, silent = TRUE)
             if (inherits(lambda.u, "try-error")) lambda.u <- NA
-            out["rmsea.ci.upper.scaled"] <- sqrt( lambda.u/(N*DF.sc) ) * sqrt(nG)
+            out["rmsea.ci.upper.scaled"] <- sqrt( lambda.u/(N*DF) ) * sqrt(nG)
           }
           ## p value
-          out["rmsea.pvalue.scaled"] <- pchisq(X2.sc, DF.sc, ncp = N*DF.sc*0.05^2/nG,
+          out["rmsea.pvalue.scaled"] <- pchisq(X2.sc, DF, ncp = N*DF*0.05^2/nG,
                                                lower.tail = FALSE)
         }
       }

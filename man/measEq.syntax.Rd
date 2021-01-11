@@ -64,16 +64,19 @@ variances and intercepts of latent item-responses underlying any
 \itemize{
   \item To follow Wu & Estabrook's (2016) guidelines (default), specify
         any of: \code{"Wu.Estabrook.2016"}, \code{"Wu.2016"},
-        \code{"Wu.Estabrook"}, \code{"Wu"}, \code{"Wu2016"}.
+        \code{"Wu.Estabrook"}, \code{"Wu"}, \code{"Wu2016"}. For
+        consistency, specify \code{ID.fac = "std.lv"}.
   \item To use the default settings of M\emph{plus} and \code{lavaan},
         specify any of: \code{"default"}, \code{"Mplus"}, \code{"Muthen"}.
         Details provided in Millsap & Tein (2004).
   \item To use the constraints recommended by Millsap & Tein (2004; see
         also Liu et al., 2017, for the longitudinal case)
         specify any of: \code{"millsap"}, \code{"millsap.2004"},
-        \code{"millsap.tein.2004"}
+        \code{"millsap.tein.2004"}. For consistency, specify
+        \code{ID.fac = "marker"} and \code{parameterization = "theta"}.
   \item To use the default settings of LISREL, specify \code{"LISREL"}
         or \code{"Joreskog"}. Details provided in Millsap & Tein (2004).
+        For consistency, specify \code{parameterization = "theta"}.
 }
 See \strong{Details} and \strong{References} for more information.}
 
@@ -501,21 +504,21 @@ summary(fit.metric)
 Kloessner, S., & Klopp, E. (2019). Explaining constraint interaction: How
   to interpret estimated model parameters under alternative scaling methods.
   \emph{Structural Equation Modeling, 26}(1), 143--155.
-  doi:10.1080/10705511.2018.1517356
+  \doi{10.1080/10705511.2018.1517356}
 
   Liu, Y., Millsap, R. E., West, S. G., Tein, J.-Y., Tanaka, R., & Grimm,
   K. J. (2017). Testing measurement invariance in longitudinal data with
   ordered-categorical measures. \emph{Psychological Methods, 22}(3),
-  486--506. doi:10.1037/met0000075
+  486--506. \doi{10.1037/met0000075}
 
   Millsap, R. E., & Tein, J.-Y. (2004). Assessing factorial invariance in
   ordered-categorical measures. \emph{Multivariate Behavioral Research, 39}(3),
-  479--515. doi:10.1207/S15327906MBR3903_4
+  479--515. \doi{10.1207/S15327906MBR3903_4}
 
   Wu, H., & Estabrook, R. (2016). Identification of confirmatory factor
   analysis models of different levels of invariance for ordered categorical
   outcomes. \emph{Psychometrika, 81}(4), 1014--1045.
-  doi:10.1007/s11336-016-9506-0
+  \doi{10.1007/s11336-016-9506-0}
 }
 \seealso{
 \code{\link{compareFit}}

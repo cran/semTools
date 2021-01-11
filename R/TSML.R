@@ -1,5 +1,5 @@
 ## Terrence D. Jorgensen
-### Last updated: 15 September 2018
+### Last updated: 10 January 2021
 ### semTools function to implement 2-stage ML
 
 
@@ -511,12 +511,12 @@ setMethod("resid", "twostage",
 ##' Savalei, V., & Bentler, P. M. (2009). A two-stage approach to missing data:
 ##' Theory and application to auxiliary variables.
 ##' \emph{Structural Equation Modeling, 16}(3), 477--497.
-##' doi:10.1080/10705510903008238
+##' \doi{10.1080/10705510903008238}
 ##'
 ##' Savalei, V., & Falk, C. F. (2014). Robust two-stage approach outperforms
 ##' robust full information maximum likelihood with incomplete nonnormal data.
 ##' \emph{Structural Equation Modeling, 21}(2), 280--302.
-##' doi:10.1080/10705511.2014.882692
+##' \doi{10.1080/10705511.2014.882692}
 ##'
 ##' @examples
 ##'
@@ -569,7 +569,7 @@ twostage <- function(..., aux, fun, baseline.model = NULL) {
   if (is.null(dots$model)) stop("lavaan model syntax argument must be named 'model'.")
   ####################### FIXME: also check intersect(names(dots), names(lavOptions()))
   lavaanifyArgs <- dots[intersect(names(dots), names(formals(lavaan::lavaanify)))]
-  funArgs <- dots[intersect(names(dots), names(formals(lavaan::lavaan)))]
+  funArgs <- dots[intersect(names(dots), names(formals(lavaan::lavaan)))] #FIXME: lavOptions too
   ## set some non-optional lavaan arguments
   funArgs$meanstructure <- TRUE
   funArgs$conditional.x <- FALSE
@@ -579,7 +579,7 @@ twostage <- function(..., aux, fun, baseline.model = NULL) {
   funArgs$test <- "standard"
   if (is.null(funArgs$information)) funArgs$information <- "observed"
 
-  if (funArgs$information == "expected") {
+  if (funArgs$information[1] == "expected") {
     message("If data are MAR, only the observed information matrix is consistent.")
     if (!is.null(aux)) {
       funArgs$information <- "observed"

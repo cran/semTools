@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 27 April 2020
+### Last updated: 10 January 2021
 ### semTools functions for Nesting and Equivalence Testing
 
 
@@ -140,11 +140,11 @@ function(object) {
 ##' @references
 ##'
 ##' Bentler, P. M., & Satorra, A. (2010). Testing model nesting and equivalence.
-##' \emph{Psychological Methods, 15}(2), 111--123. doi:10.1037/a0019625
+##' \emph{Psychological Methods, 15}(2), 111--123. \doi{10.1037/a0019625}
 ##'
 ##' Asparouhov, T., & Muthen, B. (2019). Nesting and equivalence testing for
 ##' structural equation models. \emph{Structural Equation Modeling, 26}(2),
-##' 302--309. doi:10.1080/10705511.2018.1513795
+##' 302--309. \doi{10.1080/10705511.2018.1513795}
 ##'
 ##' @examples
 ##'
@@ -175,14 +175,24 @@ function(object) {
 net <- function(..., crit = .0001) {
   ## put fitted objects in a list
   fitList <- list(...)
-  nFits <- length(fitList)
 
   ## check that they are all lavaan objects
-  notLavaan <- sapply(fitList, class) != "lavaan"
+  notLavaan <- !sapply(fitList, inherits, what = "lavaan")
   if (any(notLavaan)) {
     fitNames <- sapply(as.list(substitute(list(...)))[-1], deparse)
     stop(paste("The following arguments are not fitted lavaan objects:\n",
                paste(fitNames[notLavaan], collapse = "\t")))
+  }
+
+  ## remove any that did not converge
+  nonConv <- !sapply(fitList, lavInspect, what = "converged")
+  if (all(nonConv)) {
+    stop('No models converged')
+  } else if (any(nonConv)) {
+    fitNames <- sapply(as.list(substitute(list(...)))[-1], deparse)
+    message('The following models did not converge, so they are ignored:\n',
+            paste(fitNames[nonConv], collapse = ",\t"))
+    fitList <- fitList[which(!nonConv)]
   }
 
   ## check for meanstructure
@@ -191,16 +201,13 @@ net <- function(..., crit = .0001) {
     stop('Some (but not all) fitted lavaan objects include a mean structure. ',
          'Please re-fit all models with the argument meanstructure=TRUE.')
 
-  ## check whether any models include categorical outcomes
-  # catMod <- sapply(fitList, function(x) lavInspect(x, "options")$categorical)
-  # if (any(catMod)) stop("This method only applies to continuous outcomes.")
-
   ## get degrees of freedom for each model
   DFs <- sapply(fitList, function(x) lavInspect(x, "fit")["df"])
 
   ## name according to named objects, with DF in parentheses
   fitNames <- names(fitList)
   dotNames <- sapply(as.list(substitute(list(...)))[-1], deparse)
+  if (any(nonConv)) dotNames <- dotNames[which(!nonConv)]
   if (is.null(names(fitList))) {
     fitNames <- dotNames
   } else {
@@ -215,7 +222,8 @@ net <- function(..., crit = .0001) {
   orderedDFs <- DFs[order(DFs)]
 
   ## create structure for sequence of tests (logical matrix), FALSE by default
-  nestMat <- matrix(FALSE, nFits, nFits, dimnames = list(names(fitList), fitNames))
+  nestMat <- matrix(FALSE, length(fitList), length(fitList),
+                    dimnames = list(names(fitList), fitNames))
   diag(nestMat) <- TRUE # every model is equivalent with itself
 
   ## Loop through sorted models in sequence of most to least restricted model
@@ -247,6 +255,9 @@ net <- function(..., crit = .0001) {
 
 #' @importFrom lavaan lavInspect lavNames
 x.within.y <- function(x, y, crit = .0001) {
+  if (!lavInspect(x, "converged")) return(NA)
+  if (!lavInspect(y, "converged")) return(NA)
+
   ## not currently implemented unless all variables are considered random
   exoX <- lavInspect(x, "options")$fixed.x & length(lavNames(x, "ov.x"))
   exoY <- lavInspect(y, "options")$fixed.x & length(lavNames(y, "ov.x"))
@@ -300,7 +311,7 @@ x.within.y <- function(x, y, crit = .0001) {
   } else {
     if (all(sapply(Thr, length) == 0)) Thr <- NULL
   }
-  if (!is.null(Thr)) Thr <- attr(Thr, "th.idx") <- lavInspect(x, "th.idx")
+  if (!is.null(Thr)) attr(Thr, "th.idx") <- lavInspect(x, "th.idx")
 
   ## If DWLS, extract WLS.V and NACOV
   estimator <- lavInspect(x, "options")$estimator
@@ -324,7 +335,7 @@ x.within.y <- function(x, y, crit = .0001) {
                                                 WLS.V = WLS.V, NACOV = NACOV,
                                                 se = "none", # to save time
                                                 test = "standard")))
-  if(!lavInspect(newFit, "converged")) return(NA) else {
+  if (!lavInspect(newFit, "converged")) return(NA) else {
     result <- lavInspect(newFit, "fit")[["chisq"]] < crit
     if (lavInspect(x, "fit")["df"] ==
         lavInspect(y, "fit")["df"]) return(c(Equivalent = result))
