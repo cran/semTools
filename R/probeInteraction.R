@@ -1,5 +1,5 @@
 ### Sunthud Pornprasertmanit & Terrence D. Jorgensen
-### Last updated: 10 January 2021
+### Last updated: 29 March 2021
 
 
 
@@ -54,7 +54,7 @@
 ##' class \code{\linkS4class{lavaan.mi}}).
 ##'
 ##'
-##' @importFrom lavaan lavInspect
+##' @importFrom lavaan lavInspect parTable
 ##' @importFrom stats pnorm
 ##' @importFrom methods getMethod
 ##'
@@ -141,8 +141,6 @@
 ##'
 ##' @examples
 ##'
-##' library(lavaan)
-##'
 ##' dat2wayMC <- indProd(dat2way, 1:3, 4:6)
 ##'
 ##' model1 <- "
@@ -151,27 +149,40 @@
 ##' f12 =~ x1.x4 + x2.x5 + x3.x6
 ##' f3 =~ x7 + x8 + x9
 ##' f3 ~ f1 + f2 + f12
-##' f12 ~~0*f1
-##' f12 ~~ 0*f2
-##' x1 ~ 0*1
-##' x4 ~ 0*1
-##' x1.x4 ~ 0*1
-##' x7 ~ 0*1
-##' f1 ~ NA*1
-##' f2 ~ NA*1
-##' f12 ~ NA*1
-##' f3 ~ NA*1
+##' f12 ~~ 0*f1 + 0*f2
+##' x1 + x4 + x1.x4 + x7 ~ 0*1 # identify latent means
+##' f1 + f2 + f12 + f3 ~ NA*1
 ##' "
 ##'
-##' fitMC2way <- sem(model1, data = dat2wayMC, std.lv = FALSE,
-##'                  meanstructure = TRUE)
+##' fitMC2way <- sem(model1, data = dat2wayMC, meanstructure = TRUE)
 ##' summary(fitMC2way)
 ##'
 ##' probe2WayMC(fitMC2way, nameX = c("f1", "f2", "f12"), nameY = "f3",
-##'             modVar = "f2",  valProbe = c(-1, 0, 1))
+##'             modVar = "f2", valProbe = c(-1, 0, 1))
+##'
+##'
+##' ## can probe multigroup models, one group at a time
+##' dat2wayMC$g <- 1:2
+##'
+##' model2 <- "
+##' f1 =~ x1 + x2 + x3
+##' f2 =~ x4 + x5 + x6
+##' f12 =~ x1.x4 + x2.x5 + x3.x6
+##' f3 =~ x7 + x8 + x9
+##' f3 ~ c(b1.g1, b1.g2)*f1 + c(b2.g1, b2.g2)*f2 + c(b12.g1, b12.g2)*f12
+##' f12 ~~ 0*f1 + 0*f2
+##' x1 + x4 + x1.x4 + x7 ~ 0*1 # identify latent means
+##' f1 + f2 + f12 ~ NA*1
+##' f3 ~ NA*1 + c(b0.g1, b0.g2)*1
+##' "
+##' fit2 <- sem(model2, data = dat2wayMC, group = "g")
+##' probe2WayMC(fit2, nameX = c("f1", "f2", "f12"), nameY = "f3",
+##'             modVar = "f2", valProbe = c(-1, 0, 1)) # group = 1 by default
+##' probe2WayMC(fit2, nameX = c("f1", "f2", "f12"), nameY = "f3",
+##'             modVar = "f2", valProbe = c(-1, 0, 1), group = 2)
 ##'
 ##' @export
-probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
+probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
                         omit.imps = c("no.conv","no.se")) {
   ## TDJ: verify class
   if (inherits(fit, "lavaan")) {
@@ -202,24 +213,10 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	if (is.na(modVar) || !(modVar %in% 1:2))
 	  stop("The moderator name is not in the name of independent factors or not 1 or 2.")
 
-	# Check whether the fit object does not use mlm, mlr, or mlf estimator
-	# (because the variance-covariance matrix of parameter estimates cannot be computed
-	#FIXME TDJ: Yes it can. Isn't the real problem that product indicators don't
-	#           make sense with categorical indicators?
-	estSpec <- lavInspect(fit, "call")$estimator
-	if (!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf")))
-	  stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as ",
-	       "the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-
 	## TDJ: If multigroup, check group %in% group.label
 	nG <- lavInspect(fit, "ngroups")
 	if (nG > 1L) {
 	  group.label <- lavInspect(fit, "group.label")
-	  if (missing(group)) {
-	    warning('No argument provided for "group". Using the first group.',
-	            call. = FALSE)
-	    group <- 1L
-	  }
 	  ## assign numeric to character
 	  if (is.numeric(group)) {
 	    if (group %in% 1:nG) {
@@ -229,8 +226,9 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	  ## check that character is a group
 	  if (!as.character(group) %in% group.label)
 	    stop('"group" must be a character string naming a group of interest, or ',
-	         'an ingteger corresponding to a group in  lavInspect(fit, "group.label")')
-	}
+	         'an integer corresponding to a group in  lavInspect(fit, "group.label")')
+	  group.number <- which(group.label == group)
+	} else group.number <- 1L
 
 	# Extract all varEst
 	if (inherits(fit, "lavaan")) {
@@ -239,14 +237,21 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	  varEst <- getMethod("vcov", "lavaan.mi")(fit, omit.imps = omit.imps)
 	}
 
-	# Check whether intercept are estimated
-	targetcol <- paste0(nameY, "~1")
-	if (nG > 1L) {
-	  group.number <- which(group.label == group)
-	  if (group.number > 1L) targetcol <- paste(targetcol, group.number,
-	                                            sep = ".")
-	}
-	estimateIntcept <- targetcol %in% rownames(varEst)
+	## Check whether the outcome's intercept is estimated
+	PT <- parTable(fit)
+	if (lavInspect(fit, "options")$meanstructure) {
+	  targetcol <- PT$label[PT$lhs == nameY & PT$op == "~1" & PT$group == group.number]
+	  if (targetcol == "") {
+	    ## no custom label, use default
+	    targetcol <- paste0(nameY, "~1")
+	    if (nG > 1L && group.number > 1L) {
+	      targetcol <- paste0(targetcol, ".g", group.number)
+	    }
+	  }
+	  ## check it is actually estimated (thus, has sampling variance)
+	  estimateIntcept <- targetcol %in% rownames(varEst)
+
+	} else estimateIntcept <- FALSE
 
 
 	## Get the parameter estimates for that group
@@ -279,15 +284,23 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	}
 
 	# Compute the intercept of no-centering
-	betaNC <- as.matrix(est$beta[nameY, nameX]); colnames(betaNC) <- nameY
+	betaNC <- matrix(est$beta[nameY, nameX], ncol = 1,
+	                 dimnames = list(nameX, nameY))
 
 	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
 
 	resultIntcept <- NULL
 	resultSlope <- NULL
 	if (estimateIntcept) {
-		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
+		# Extract SE from centered result
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  newLabels <- PT$label[newRows]
+	  if (any(newLabels == "")) for (i in which(newLabels == "")) {
+	    newLabels[i] <- paste0(nameY, "~", nameX[i],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
+	  }
+		targetcol <- c(targetcol, newLabels)
 
 		# Transform it to non-centering SE
 		usedVar <-  varEst[targetcol, targetcol]
@@ -303,19 +316,28 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe
 		varIntcept <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zIntcept <- simpleIntcept/sqrt(varIntcept)
-		pIntcept <- round(pvalue(zIntcept),6) #JG: rounded values to make them more readable
-		resultIntcept <- cbind(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
-		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
+		pIntcept <- pvalue(zIntcept)
+		resultIntcept <- data.frame(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
+		colnames(resultIntcept) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultIntcept) <- c("lavaan.data.frame","data.frame")
 
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[4] * valProbe
 		varSlope <- usedVar[2, 2] + 2 * valProbe * usedVar[2, 4] + (valProbe^2) * usedVar[4, 4]
-		zSlope <- simpleSlope/sqrt(varSlope)
+		zSlope <- simpleSlope / sqrt(varSlope)
 		pSlope <- pvalue(zSlope)
-		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		resultSlope <- data.frame(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
+
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="")
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  targetcol <- PT$label[newRows]
+	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
+	    targetcol[i] <- paste(nameY, "~", nameX[i],
+	                          ifelse(nG > 1L && group.number > 1L, no = "",
+	                                 yes = paste0(".g", group.number)))
+	  }
 
 		# Transform it to non-centering SE
 		usedVar <-  varEst[targetcol, targetcol]
@@ -331,9 +353,10 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		simpleSlope <- usedBeta[1] + usedBeta[3] * valProbe
 		varSlope <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) #JG: rounded values to make them more readable
-		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
 	}
 
 	list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope)
@@ -371,7 +394,7 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##' has been computed. See the \code{\link{probe2WayMC}} for further details.
 ##'
 ##'
-##' @importFrom lavaan lavInspect
+##' @importFrom lavaan lavInspect parTable
 ##' @importFrom stats pnorm
 ##' @importFrom methods getMethod
 ##'
@@ -461,8 +484,6 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##'
 ##' @examples
 ##'
-##' library(lavaan)
-##'
 ##' dat2wayRC <- orthogonalize(dat2way, 1:3, 4:6)
 ##'
 ##' model1 <- "
@@ -471,27 +492,40 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##' f12 =~ x1.x4 + x2.x5 + x3.x6
 ##' f3 =~ x7 + x8 + x9
 ##' f3 ~ f1 + f2 + f12
-##' f12 ~~0*f1
-##' f12 ~~ 0*f2
-##' x1 ~ 0*1
-##' x4 ~ 0*1
-##' x1.x4 ~ 0*1
-##' x7 ~ 0*1
-##' f1 ~ NA*1
-##' f2 ~ NA*1
-##' f12 ~ NA*1
-##' f3 ~ NA*1
+##' f12 ~~ 0*f1 + 0*f2
+##' x1 + x4 + x1.x4 + x7 ~ 0*1 # identify latent means
+##' f1 + f2 + f12 + f3 ~ NA*1
 ##' "
 ##'
-##' fitRC2way <- sem(model1, data = dat2wayRC, std.lv = FALSE,
-##'                  meanstructure = TRUE)
+##' fitRC2way <- sem(model1, data = dat2wayRC, meanstructure = TRUE)
 ##' summary(fitRC2way)
 ##'
 ##' probe2WayRC(fitRC2way, nameX = c("f1", "f2", "f12"), nameY = "f3",
 ##'             modVar = "f2", valProbe = c(-1, 0, 1))
 ##'
+##'
+##' ## can probe multigroup models, one group at a time
+##' dat2wayRC$g <- 1:2
+##'
+##' model2 <- "
+##' f1  =~ x1 + x2 + x3
+##' f2  =~ x4 + x5 + x6
+##' f12 =~ x1.x4 + x2.x5 + x3.x6
+##' f3  =~ x7 + x8 + x9
+##' f3 ~ c(b1.g1, b1.g2)*f1 + c(b2.g1, b2.g2)*f2 + c(b12.g1, b12.g2)*f12
+##' f12 ~~ 0*f1 + 0*f2
+##' x1 + x4 + x1.x4 + x7 ~ 0*1 # identify latent means
+##' f1 + f2 + f12 ~ NA*1
+##' f3 ~ NA*1 + c(b0.g1, b0.g2)*1
+##' "
+##' fit2 <- sem(model2, data = dat2wayRC, group = "g")
+##' probe2WayRC(fit2, nameX = c("f1", "f2", "f12"), nameY = "f3",
+##'             modVar = "f2", valProbe = c(-1, 0, 1)) # group = 1 by default
+##' probe2WayRC(fit2, nameX = c("f1", "f2", "f12"), nameY = "f3",
+##'             modVar = "f2", valProbe = c(-1, 0, 1), group = 2)
+##'
 ##' @export
-probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
+probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
                         omit.imps = c("no.conv","no.se")) {
   ## TDJ: verify class
   if (inherits(fit, "lavaan")) {
@@ -517,8 +551,8 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
   } else stop('"fit" must inherit from lavaan or lavaan.mi class', call. = FALSE)
 
   if (!lavInspect(fit, "options")$meanstructure)
-    stop('The probe2WayMC() function requires the model to be fit with a ',
-         'mean structure.', call. = FALSE)
+    stop('This function requires the model to be fit with a mean structure.',
+         call. = FALSE)
 
 
   # Check whether modVar is correct
@@ -526,24 +560,10 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	if (is.na(modVar) || !(modVar %in% 1:2))
 	  stop("The moderator name is not in the name of independent factors or not 1 or 2.")
 
-	# Check whether the fit object does not use mlm, mlr, or mlf estimator
-  # (because the variance-covariance matrix of parameter estimates cannot be computed
-  #FIXME TDJ: Yes it can. Isn't the real problem that product indicators don't
-  #           make sense with categorical indicators?
-	estSpec <- lavInspect(fit, "call")$estimator
-	if (!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf")))
-	  stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as ",
-	       "the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-
 	## TDJ: If multigroup, check group %in% group.label
 	nG <- lavInspect(fit, "ngroups")
 	if (nG > 1L) {
 	  group.label <- lavInspect(fit, "group.label")
-	  if (missing(group)) {
-	    warning('No argument provided for "group". Using the first group.',
-	            call. = FALSE)
-	    group <- 1L
-	  }
 	  ## assign numeric to character
 	  if (is.numeric(group)) {
 	    if (group %in% 1:nG) {
@@ -553,8 +573,9 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	  ## check that character is a group
 	  if (!as.character(group) %in% group.label)
 	    stop('"group" must be a character string naming a group of interest, or ',
-	         'an ingteger corresponding to a group in  lavInspect(fit, "group.label")')
-	}
+	         'an integer corresponding to a group in  lavInspect(fit, "group.label")')
+	  group.number <- which(group.label == group)
+	} else group.number <- 1L
 
 	# Extract all varEst
 	if (inherits(fit, "lavaan")) {
@@ -563,14 +584,21 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	  varEst <- getMethod("vcov", "lavaan.mi")(fit, omit.imps = omit.imps)
 	}
 
-	# Check whether intercept are estimated
-	targetcol <- paste0(nameY, "~1")
-	if (nG > 1L) {
-	  group.number <- which(group.label == group)
-	  if (group.number > 1L) targetcol <- paste(targetcol, group.number,
-	                                            sep = ".")
-	}
-	estimateIntcept <- targetcol %in% rownames(varEst)
+	## Check whether the outcome's intercept is estimated
+	PT <- parTable(fit)
+	if (lavInspect(fit, "options")$meanstructure) {
+	  targetcol <- PT$label[PT$lhs == nameY & PT$op == "~1" & PT$group == group.number]
+	  if (targetcol == "") {
+	    ## no custom label, use default
+	    targetcol <- paste0(nameY, "~1")
+	    if (nG > 1L && group.number > 1L) {
+	      targetcol <- paste0(targetcol, ".g", group.number)
+	    }
+	  }
+	  ## check it is actually estimated (thus, has sampling variance)
+	  estimateIntcept <- targetcol %in% rownames(varEst)
+
+	} else estimateIntcept <- FALSE
 
 
 	## Get the parameter estimates for that group
@@ -602,15 +630,16 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 
 	# Find the mean and covariance matrix of independent factors
 	varX <- est$psi[nameX, nameX]
-	meanX <- as.matrix(est$alpha[nameX,]); colnames(meanX) <- "intcept"
+	meanX <- matrix(est$alpha[nameX,], ncol = 1, dimnames = list(NULL, "intcept"))
 
 	# Find the intercept, regression coefficients, and residual variance of residual-centered regression
 	intceptRC <- est$alpha[nameY,]
 	resVarRC <- est$psi[nameY, nameY]
-	betaRC <- as.matrix(est$beta[nameY, nameX]); colnames(betaRC) <- nameY
+	betaRC <- matrix(est$beta[nameY, nameX], ncol = 1,
+	                 dimnames = list(nameX, nameY))
 
 	# Find the number of observations
-	numobs <- lavInspect(fit, "nobs")
+	numobs <- lavInspect(fit, "nobs")[group.number]
 
 	# Compute SSRC
 	meanXwith1 <- rbind(1, meanX)
@@ -662,7 +691,14 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 	resultSlope <- NULL
 	if (estimateIntcept) {
 		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  newLabels <- PT$label[newRows]
+	  if (any(newLabels == "")) for (i in which(newLabels == "")) {
+	    newLabels[i] <- paste0(nameY, "~", nameX[i],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
+	  }
+	  targetcol <- c(targetcol, newLabels)
 		varEstSlopeRC <- varEst[targetcol, targetcol]
 
 		# Transform it to non-centering SE
@@ -679,20 +715,29 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * valProbe
 		varIntcept <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zIntcept <- simpleIntcept/sqrt(varIntcept)
-		pIntcept <- round(pvalue(zIntcept), 6) #JG: rounded values to make them more readable
-		resultIntcept <- cbind(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
-		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
+		pIntcept <- pvalue(zIntcept)
+		resultIntcept <- data.frame(valProbe, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
+		colnames(resultIntcept) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultIntcept) <- c("lavaan.data.frame","data.frame")
 
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[4] * valProbe
 		varSlope <- usedVar[2, 2] + 2 * valProbe * usedVar[2, 4] + (valProbe^2) * usedVar[4, 4]
 		zSlope <- simpleSlope/sqrt(varSlope)
 		pSlope <- pvalue(zSlope)
-		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		resultSlope <- data.frame(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
+
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="")
-		varEstSlopeRC <- varEst[targetcol, targetcol]
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  targetcol <- PT$label[newRows]
+	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
+	    targetcol[i] <- paste(nameY, "~", nameX[i],
+	                          ifelse(nG > 1L && group.number > 1L, no = "",
+	                                 yes = paste0(".g", group.number)))
+	  }
+	  varEstSlopeRC <- varEst[targetcol, targetcol]
 
 		# Transform it to non-centering SE
 		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC[2:4, 2:4] %*% solve(SSNC[2:4, 2:4]))
@@ -708,9 +753,10 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 		simpleSlope <- usedBeta[1] + usedBeta[3] * valProbe
 		varSlope <- usedVar[1, 1] + 2 * valProbe * usedVar[1, 3] + (valProbe^2) * usedVar[3, 3]
 		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) #JG: rounded values to make them more readable
-		resultSlope <- cbind(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(valProbe, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
 	}
 
 	list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope)
@@ -782,7 +828,7 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##' class \code{\linkS4class{lavaan.mi}}).
 ##'
 ##'
-##' @importFrom lavaan lavInspect
+##' @importFrom lavaan lavInspect parTable
 ##' @importFrom stats pnorm
 ##' @importFrom methods getMethod
 ##'
@@ -868,52 +914,36 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##'
 ##' @examples
 ##'
-##' library(lavaan)
-##'
 ##' dat3wayMC <- indProd(dat3way, 1:3, 4:6, 7:9)
 ##'
-##' model3 <- "
+##' model3 <- " ## define latent variables
 ##' f1 =~ x1 + x2 + x3
 ##' f2 =~ x4 + x5 + x6
 ##' f3 =~ x7 + x8 + x9
+##' ## 2-way interactions
 ##' f12 =~ x1.x4 + x2.x5 + x3.x6
 ##' f13 =~ x1.x7 + x2.x8 + x3.x9
 ##' f23 =~ x4.x7 + x5.x8 + x6.x9
+##' ## 3-way interaction
 ##' f123 =~ x1.x4.x7 + x2.x5.x8 + x3.x6.x9
+##' ## outcome variable
 ##' f4 =~ x10 + x11 + x12
-##' f4 ~ f1 + f2 + f3 + f12 + f13 + f23 + f123
-##' f1 ~~ 0*f12
-##' f1 ~~ 0*f13
-##' f1 ~~ 0*f123
-##' f2 ~~ 0*f12
-##' f2 ~~ 0*f23
-##' f2 ~~ 0*f123
-##' f3 ~~ 0*f13
-##' f3 ~~ 0*f23
-##' f3 ~~ 0*f123
-##' f12 ~~ 0*f123
-##' f13 ~~ 0*f123
-##' f23 ~~ 0*f123
-##' x1 ~ 0*1
-##' x4 ~ 0*1
-##' x7 ~ 0*1
-##' x10 ~ 0*1
-##' x1.x4 ~ 0*1
-##' x1.x7 ~ 0*1
-##' x4.x7 ~ 0*1
-##' x1.x4.x7 ~ 0*1
-##' f1 ~ NA*1
-##' f2 ~ NA*1
-##' f3 ~ NA*1
-##' f12 ~ NA*1
-##' f13 ~ NA*1
-##' f23 ~ NA*1
-##' f123 ~ NA*1
-##' f4 ~ NA*1
+##'
+##' ## latent regression model
+##' f4 ~ b1*f1 + b2*f2 + b3*f3 + b12*f12 + b13*f13 + b23*f23 + b123*f123
+##'
+##' ## orthogonal terms among predictors
+##' f1 ~~ 0*f12 + 0*f13 + 0*f123
+##' f2 ~~ 0*f12 + 0*f23 + 0*f123
+##' f3 ~~ 0*f13 + 0*f23 + 0*f123
+##' f12 + f13 + f23 ~~ 0*f123
+##'
+##' ## identify latent means
+##' x1 + x4 + x7 + x1.x4 + x1.x7 + x4.x7 + x1.x4.x7 + x10 ~ 0*1
+##' f1 + f2 + f3 + f12 + f13 + f23 + f123 + f4 ~ NA*1
 ##' "
 ##'
-##' fitMC3way <- sem(model3, data = dat3wayMC, std.lv = FALSE,
-##'                  meanstructure = TRUE)
+##' fitMC3way <- sem(model3, data = dat3wayMC, meanstructure = TRUE)
 ##' summary(fitMC3way)
 ##'
 ##' probe3WayMC(fitMC3way, nameX = c("f1" ,"f2" ,"f3",
@@ -923,8 +953,8 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group,
 ##'             valProbe1 = c(-1, 0, 1), valProbe2 = c(-1, 0, 1))
 ##'
 ##' @export
-probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
-                        omit.imps = c("no.conv","no.se")) {
+probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
+                        group = 1L, omit.imps = c("no.conv","no.se")) {
   ## TDJ: verify class
   if (inherits(fit, "lavaan")) {
     est <- lavInspect(fit, "est")[[group]]
@@ -954,23 +984,10 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	if ((NA %in% modVar) || !(do.call("&", as.list(modVar %in% 1:3))))
 	  stop("The moderator name is not in the list of independent factors and is not 1, 2 or 3.")
 
-	# Check whether the fit object does not use mlm, mlr, or mlf estimator
-	# (because the variance-covariance matrix of parameter estimates cannot be computed
-	#FIXME TDJ: Yes it can. Isn't the real problem that product indicators don't
-	#           make sense with categorical indicators?
-	estSpec <- lavInspect(fit, "call")$estimator
-	if (!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf")))
-	  stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as ",
-	       "the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-
 	## TDJ: If multigroup, check group %in% group.label
 	nG <- lavInspect(fit, "ngroups")
 	if (nG > 1L) {
 	  group.label <- lavInspect(fit, "group.label")
-	  if (missing(group)) {
-	    warning('No argument provided for "group". Using the first group.')
-	    group <- 1L
-	  }
 	  ## assign numeric to character
 	  if (is.numeric(group)) {
 	    if (group %in% 1:nG) {
@@ -980,8 +997,9 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	  ## check that character is a group
 	  if (!as.character(group) %in% group.label)
 	    stop('"group" must be a character string naming a group of interest, or ',
-	         'an ingteger corresponding to a group in  lavInspect(fit, "group.label")')
-	}
+	         'an integer corresponding to a group in  lavInspect(fit, "group.label")')
+	  group.number <- which(group.label == group)
+	} else group.number <- 1L
 
 	# Extract all varEst
 	if (inherits(fit, "lavaan")) {
@@ -990,14 +1008,21 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	  varEst <- getMethod("vcov", "lavaan.mi")(fit, omit.imps = omit.imps)
 	}
 
-	# Check whether intercept are estimated
-	targetcol <- paste0(nameY, "~1")
-	if (nG > 1L) {
-	  group.number <- which(group.label == group)
-	  if (group.number > 1L) targetcol <- paste(targetcol, group.number,
-	                                            sep = ".")
-	}
-	estimateIntcept <- targetcol %in% rownames(varEst)
+	## Check whether the outcome's intercept is estimated
+	PT <- parTable(fit)
+	if (lavInspect(fit, "options")$meanstructure) {
+	  targetcol <- PT$label[PT$lhs == nameY & PT$op == "~1" & PT$group == group.number]
+	  if (targetcol == "") {
+	    ## no custom label, use default
+	    targetcol <- paste0(nameY, "~1")
+	    if (nG > 1L && group.number > 1L) {
+	      targetcol <- paste0(targetcol, ".g", group.number)
+	    }
+	  }
+	  ## check it is actually estimated (thus, has sampling variance)
+	  estimateIntcept <- targetcol %in% rownames(varEst)
+
+	} else estimateIntcept <- FALSE
 
 
 	## Get the parameter estimates for that group
@@ -1031,7 +1056,8 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 
 
 	# Compute the intercept of no-centering
-	betaNC <- as.matrix(est$beta[nameY, nameX]); colnames(betaNC) <- nameY
+	betaNC <- matrix(est$beta[nameY, nameX], ncol = 1,
+	                 dimnames = list(nameX, nameY))
 
 	pvalue <- function(x) (1 - pnorm(abs(x))) * 2
 
@@ -1042,8 +1068,15 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	resultIntcept <- NULL
 	resultSlope <- NULL
 	if(estimateIntcept) {
-		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
+		# Extract SE from centered result
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  newLabels <- PT$label[newRows]
+	  if (any(newLabels == "")) for (i in which(newLabels == "")) {
+	    newLabels[i] <- paste0(nameY, "~", nameX[i],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
+	  }
+	  targetcol <- c(targetcol, newLabels)
 
 		# Transform it to non-centering SE
 		usedVar <-  varEst[targetcol, targetcol]
@@ -1061,25 +1094,34 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 		# Find simple intercept
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * val[,1] + usedBeta[4] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varIntcept <- usedVar[1, 1] + val[,1]^2 * usedVar[3, 3] + val[,2]^2 * usedVar[4, 4] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 3] + 2 * val[,2] * usedVar[1, 4] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[3, 4] + 2 * val[,1]^2 * val[,2] * usedVar[3, 7] + 2* val[,1] * val[,2]^2 * usedVar[4, 7]
-		zIntcept <- simpleIntcept/sqrt(varIntcept)
+		zIntcept <- simpleIntcept / sqrt(varIntcept)
 		pIntcept <- pvalue(zIntcept)
-		resultIntcept <- cbind(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
-		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
+		resultIntcept <- data.frame(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
+		colnames(resultIntcept) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultIntcept) <- c("lavaan.data.frame","data.frame")
 
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[5] * val[,1] + usedBeta[6] * val[,2] + usedBeta[8] * val[,1] * val[,2]
 		varSlope <- usedVar[2, 2] + val[,1]^2 * usedVar[5, 5] + val[,2]^2 * usedVar[6, 6] + val[,1]^2 * val[,2]^2 * usedVar[8, 8] + 2 * val[,1] * usedVar[2, 5] + 2 * val[,2] * usedVar[2, 6] + 2 * val[,1] * val[,2] * usedVar[2, 8] + 2 * val[,1] * val[,2] * usedVar[5, 6] + 2 * val[,1]^2 * val[,2] * usedVar[5, 8] + 2 * val[,1] * val[,2]^2 * usedVar[6, 8]
-		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) # JG: rounded values
-		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		zSlope <- simpleSlope / sqrt(varSlope)
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
+
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="")
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  targetcol <- PT$label[newRows]
+	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
+	    targetcol[i] <- paste(nameY, "~", nameX[i],
+	                          ifelse(nG > 1L && group.number > 1L, no = "",
+	                                 yes = paste0(".g", group.number)))
+	  }
 
 		# Transform it to non-centering SE
 		usedVar <-  varEst[targetcol, targetcol]
 		usedBeta <- betaNC
-		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
+		if (sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
 
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(ord, 7), c(ord, 7)]
@@ -1091,10 +1133,11 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[4] * val[,1] + usedBeta[5] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varSlope <- usedVar[1, 1] + val[,1]^2 * usedVar[4, 4] + val[,2]^2 * usedVar[5, 5] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 4] + 2 * val[,2] * usedVar[1, 5] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[4, 5] + 2 * val[,1]^2 * val[,2] * usedVar[4, 7] + 2 * val[,1] * val[,2]^2 * usedVar[5, 7]
-		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) # JG: rounded values
-		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		zSlope <- simpleSlope / sqrt(varSlope)
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
 	}
 
 	list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope)
@@ -1132,7 +1175,7 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##' has been computed. See the \code{\link{probe3WayMC}} for further details.
 ##'
 ##'
-##' @importFrom lavaan lavInspect
+##' @importFrom lavaan lavInspect parTable
 ##' @importFrom stats pnorm
 ##' @importFrom methods getMethod
 ##'
@@ -1233,52 +1276,36 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##'
 ##' @examples
 ##'
-##' library(lavaan)
-##'
 ##' dat3wayRC <- orthogonalize(dat3way, 1:3, 4:6, 7:9)
 ##'
-##' model3 <- "
+##' model3 <- " ## define latent variables
 ##' f1 =~ x1 + x2 + x3
 ##' f2 =~ x4 + x5 + x6
 ##' f3 =~ x7 + x8 + x9
+##' ## 2-way interactions
 ##' f12 =~ x1.x4 + x2.x5 + x3.x6
 ##' f13 =~ x1.x7 + x2.x8 + x3.x9
 ##' f23 =~ x4.x7 + x5.x8 + x6.x9
+##' ## 3-way interaction
 ##' f123 =~ x1.x4.x7 + x2.x5.x8 + x3.x6.x9
+##' ## outcome variable
 ##' f4 =~ x10 + x11 + x12
-##' f4 ~ f1 + f2 + f3 + f12 + f13 + f23 + f123
-##' f1 ~~ 0*f12
-##' f1 ~~ 0*f13
-##' f1 ~~ 0*f123
-##' f2 ~~ 0*f12
-##' f2 ~~ 0*f23
-##' f2 ~~ 0*f123
-##' f3 ~~ 0*f13
-##' f3 ~~ 0*f23
-##' f3 ~~ 0*f123
-##' f12 ~~ 0*f123
-##' f13 ~~ 0*f123
-##' f23 ~~ 0*f123
-##' x1 ~ 0*1
-##' x4 ~ 0*1
-##' x7 ~ 0*1
-##' x10 ~ 0*1
-##' x1.x4 ~ 0*1
-##' x1.x7 ~ 0*1
-##' x4.x7 ~ 0*1
-##' x1.x4.x7 ~ 0*1
-##' f1 ~ NA*1
-##' f2 ~ NA*1
-##' f3 ~ NA*1
-##' f12 ~ NA*1
-##' f13 ~ NA*1
-##' f23 ~ NA*1
-##' f123 ~ NA*1
-##' f4 ~ NA*1
+##'
+##' ## latent regression model
+##' f4 ~ b1*f1 + b2*f2 + b3*f3 + b12*f12 + b13*f13 + b23*f23 + b123*f123
+##'
+##' ## orthogonal terms among predictors
+##' f1 ~~ 0*f12 + 0*f13 + 0*f123
+##' f2 ~~ 0*f12 + 0*f23 + 0*f123
+##' f3 ~~ 0*f13 + 0*f23 + 0*f123
+##' f12 + f13 + f23 ~~ 0*f123
+##'
+##' ## identify latent means
+##' x1 + x4 + x7 + x1.x4 + x1.x7 + x4.x7 + x1.x4.x7 + x10 ~ 0*1
+##' f1 + f2 + f3 + f12 + f13 + f23 + f123 + f4 ~ NA*1
 ##' "
 ##'
-##' fitRC3way <- sem(model3, data = dat3wayRC, std.lv = FALSE,
-##'                  meanstructure = TRUE)
+##' fitRC3way <- sem(model3, data = dat3wayRC, meanstructure = TRUE)
 ##' summary(fitRC3way)
 ##'
 ##' probe3WayMC(fitRC3way, nameX = c("f1" ,"f2" ,"f3",
@@ -1288,8 +1315,8 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##'             valProbe1 = c(-1, 0, 1), valProbe2 = c(-1, 0, 1))
 ##'
 ##' @export
-probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
-                        omit.imps = c("no.conv","no.se")) {
+probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
+                        group = 1L, omit.imps = c("no.conv","no.se")) {
   ## TDJ: verify class
   if (inherits(fit, "lavaan")) {
     est <- lavInspect(fit, "est")[[group]]
@@ -1313,6 +1340,9 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 
   } else stop('"fit" must inherit from lavaan or lavaan.mi class', call. = FALSE)
 
+  if (!lavInspect(fit, "options")$meanstructure)
+    stop('This function requires the model to be fit with a mean structure.',
+         call. = FALSE)
 
   # Check whether modVar is correct
 	if (is.character(modVar)) modVar <- match(modVar, nameX)
@@ -1320,23 +1350,10 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	  stop("The moderator name is not in the list of independent factors and is ",
 	       "not 1, 2 or 3.") # JG: Changed error
 
-	# Check whether the fit object does not use mlm, mlr, or mlf estimator
-	# (because the variance-covariance matrix of parameter estimates cannot be computed
-	#FIXME TDJ: Yes it can. Isn't the real problem that product indicators don't
-	#           make sense with categorical indicators?
-	estSpec <- lavInspect(fit, "call")$estimator
-	if (!is.null(estSpec) && (estSpec %in% c("mlr", "mlm", "mlf")))
-	  stop("This function does not work when 'mlr', 'mlm', or 'mlf' is used as ",
-	       "the estimator because the covariance matrix of the parameter estimates cannot be computed.")
-
 	## TDJ: If multigroup, check group %in% group.label
 	nG <- lavInspect(fit, "ngroups")
 	if (nG > 1L) {
 	  group.label <- lavInspect(fit, "group.label")
-	  if (missing(group)) {
-	    warning('No argument provided for "group". Using the first group.')
-	    group <- 1L
-	  }
 	  ## assign numeric to character
 	  if (is.numeric(group)) {
 	    if (group %in% 1:nG) {
@@ -1346,8 +1363,9 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	  ## check that character is a group
 	  if (!as.character(group) %in% group.label)
 	    stop('"group" must be a character string naming a group of interest, or ',
-	         'an ingteger corresponding to a group in  lavInspect(fit, "group.label")')
-	}
+	         'an integer corresponding to a group in  lavInspect(fit, "group.label")')
+	  group.number <- which(group.label == group)
+	} else group.number <- 1L
 
 	# Extract all varEst
 	if (inherits(fit, "lavaan")) {
@@ -1356,14 +1374,21 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	  varEst <- getMethod("vcov", "lavaan.mi")(fit, omit.imps = omit.imps)
 	}
 
-	# Check whether intercept are estimated
-	targetcol <- paste0(nameY, "~1")
-	if (nG > 1L) {
-	  group.number <- which(group.label == group)
-	  if (group.number > 1L) targetcol <- paste(targetcol, group.number,
-	                                            sep = ".")
-	}
-	estimateIntcept <- targetcol %in% rownames(varEst)
+	## Check whether the outcome's intercept is estimated
+	PT <- parTable(fit)
+	if (lavInspect(fit, "options")$meanstructure) {
+	  targetcol <- PT$label[PT$lhs == nameY & PT$op == "~1" & PT$group == group.number]
+	  if (targetcol == "") {
+	    ## no custom label, use default
+	    targetcol <- paste0(nameY, "~1")
+	    if (nG > 1L && group.number > 1L) {
+	      targetcol <- paste0(targetcol, ".g", group.number)
+	    }
+	  }
+	  ## check it is actually estimated (thus, has sampling variance)
+	  estimateIntcept <- targetcol %in% rownames(varEst)
+
+	} else estimateIntcept <- FALSE
 
 
 	## Get the parameter estimates for that group
@@ -1396,16 +1421,16 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 
 	# Find the mean and covariance matrix of independent factors
 	varX <- est$psi[nameX, nameX]
-	meanX <- as.matrix(est$alpha[nameX,]); colnames(meanX) <- "intcept"
+	meanX <- matrix(est$alpha[nameX,], ncol = 1, dimnames = list(NULL, "intcept"))
 
 	# Find the intercept, regression coefficients, and residual variance of residual-centered regression
 	intceptRC <- est$alpha[nameY,]
 	resVarRC <- est$psi[nameY, nameY]
-	if(resVarRC < 0) stop("The residual variance is negative. The model did not converge!") # JG: Changed error
+	if (resVarRC < 0) stop("The residual variance is negative. The model did not converge!") # JG: Changed error
 	betaRC <- as.matrix(est$beta[nameY, nameX]); colnames(betaRC) <- nameY
 
 	# Find the number of observations
-	numobs <- lavInspect(fit, "nobs")
+	numobs <- lavInspect(fit, "nobs")[group.number]
 
 	# Compute SSRC
 	meanXwith1 <- rbind(1, meanX)
@@ -1503,13 +1528,20 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 	resultSlope <- NULL
 	if (estimateIntcept) {
 		# Extract SE from residual centering
-		targetcol <- c(targetcol, paste(nameY, "~", nameX, sep=""))
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  newLabels <- PT$label[newRows]
+	  if (any(newLabels == "")) for (i in which(newLabels == "")) {
+	    newLabels[i] <- paste0(nameY, "~", nameX[i],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
+	  }
+	  targetcol <- c(targetcol, newLabels)
 		varEstSlopeRC <- varEst[targetcol, targetcol]
 
 		# Transform it to non-centering SE
 		usedVar <-  as.numeric(resVarNC/resVarRC) * (varEstSlopeRC %*% SSRC %*% solve(SSNC))
 		usedBeta <- betaNCWithIntcept
-		if(sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
+		if (sum(diag(usedVar) < 0) > 0) stop("This method does not work. The resulting calculation provided negative standard errors.") # JG: edited this error
 
 		# Change the order of usedVar and usedBeta if the moderator variable is listed first
 		usedVar <- usedVar[c(1, ord+1, 8), c(1, ord+1, 8)]
@@ -1521,20 +1553,29 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 		# Find simple intercept
 		simpleIntcept <- usedBeta[1] + usedBeta[3] * val[,1] + usedBeta[4] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varIntcept <- usedVar[1, 1] + val[,1]^2 * usedVar[3, 3] + val[,2]^2 * usedVar[4, 4] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 3] + 2 * val[,2] * usedVar[1, 4] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[3, 4] + 2 * val[,1]^2 * val[,2] * usedVar[3, 7] + 2* val[,1] * val[,2]^2 * usedVar[4, 7]
-		zIntcept <- simpleIntcept/sqrt(varIntcept)
+		zIntcept <- simpleIntcept / sqrt(varIntcept)
 		pIntcept <- pvalue(zIntcept)
-		resultIntcept <- cbind(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
-		colnames(resultIntcept) <- c(nameX[modVar], "Intcept", "SE", "Wald", "p")
+		resultIntcept <- data.frame(val, simpleIntcept, sqrt(varIntcept), zIntcept, pIntcept)
+		colnames(resultIntcept) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultIntcept) <- c("lavaan.data.frame","data.frame")
 
 		# Find simple slope
 		simpleSlope <- usedBeta[2] + usedBeta[5] * val[,1] + usedBeta[6] * val[,2] + usedBeta[8] * val[,1] * val[,2]
 		varSlope <- usedVar[2, 2] + val[,1]^2 * usedVar[5, 5] + val[,2]^2 * usedVar[6, 6] + val[,1]^2 * val[,2]^2 * usedVar[8, 8] + 2 * val[,1] * usedVar[2, 5] + 2 * val[,2] * usedVar[2, 6] + 2 * val[,1] * val[,2] * usedVar[2, 8] + 2 * val[,1] * val[,2] * usedVar[5, 6] + 2 * val[,1]^2 * val[,2] * usedVar[5, 8] + 2 * val[,1] * val[,2]^2 * usedVar[6, 8]
-		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) # JG: rounded values
-		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		zSlope <- simpleSlope / sqrt(varSlope)
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
+
 	} else {
-		targetcol <- paste(nameY, "~", nameX, sep="")
+	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
+	  targetcol <- PT$label[newRows]
+	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
+	    targetcol[i] <- paste(nameY, "~", nameX[i],
+	                          ifelse(nG > 1L && group.number > 1L, no = "",
+	                                 yes = paste0(".g", group.number)))
+	  }
 		varEstSlopeRC <- varEst[targetcol, targetcol]
 
 		# Transform it to non-centering SE
@@ -1552,10 +1593,11 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 		# Find simple slope
 		simpleSlope <- usedBeta[1] + usedBeta[4] * val[,1] + usedBeta[5] * val[,2] + usedBeta[7] * val[,1] * val[,2]
 		varSlope <- usedVar[1, 1] + val[,1]^2 * usedVar[4, 4] + val[,2]^2 * usedVar[5, 5] + val[,1]^2 * val[,2]^2 * usedVar[7, 7] + 2 * val[,1] * usedVar[1, 4] + 2 * val[,2] * usedVar[1, 5] + 2 * val[,1] * val[,2] * usedVar[1, 7] + 2 * val[,1] * val[,2] * usedVar[4, 5] + 2 * val[,1]^2 * val[,2] * usedVar[4, 7] + 2 * val[,1] * val[,2]^2 * usedVar[5, 7]
-		zSlope <- simpleSlope/sqrt(varSlope)
-		pSlope <- round(pvalue(zSlope),6) # JG: rounded values
-		resultSlope <- cbind(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
-		colnames(resultSlope) <- c(nameX[modVar], "Slope", "SE", "Wald", "p")
+		zSlope <- simpleSlope / sqrt(varSlope)
+		pSlope <- pvalue(zSlope)
+		resultSlope <- data.frame(val, simpleSlope, sqrt(varSlope), zSlope, pSlope)
+		colnames(resultSlope) <- c(nameX[modVar], "est", "se", "z", "pvalue")
+		class(resultSlope) <- c("lavaan.data.frame","data.frame")
 	}
 
 	list(SimpleIntcept = resultIntcept, SimpleSlope = resultSlope)
@@ -1631,10 +1673,9 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##' f3 ~ NA*1
 ##' "
 ##'
-##' fitMC2way <- sem(model1, data = dat2wayMC, std.lv = FALSE,
-##'                  meanstructure = TRUE)
-##' result2wayMC <- probe2WayMC(fitMC2way, c("f1", "f2", "f12"),
-##'                             "f3", "f2", c(-1, 0, 1))
+##' fitMC2way <- sem(model1, data = dat2wayMC, meanstructure = TRUE)
+##' result2wayMC <- probe2WayMC(fitMC2way, nameX = c("f1", "f2", "f12"),
+##'                             nameY = "f3", modVar = "f2", valProbe = c(-1, 0, 1))
 ##' plotProbe(result2wayMC, xlim = c(-2, 2))
 ##'
 ##'
@@ -1682,9 +1723,10 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2, group,
 ##'
 ##' fitMC3way <- sem(model3, data = dat3wayMC, std.lv = FALSE,
 ##'                  meanstructure = TRUE)
-##' result3wayMC <- probe3WayMC(fitMC3way,
-##'                             c("f1", "f2", "f3", "f12", "f13", "f23", "f123"),
-##'                             "f4", c("f1", "f2"), c(-1, 0, 1), c(-1, 0, 1))
+##' result3wayMC <- probe3WayMC(fitMC3way, nameX = c("f1", "f2", "f3", "f12",
+##'                                                  "f13", "f23", "f123"),
+##'                             nameY = "f4", modVar = c("f1", "f2"),
+##'                             valProbe1 = c(-1, 0, 1), valProbe2 = c(-1, 0, 1))
 ##' plotProbe(result3wayMC, xlim = c(-2, 2))
 ##'
 ##' @export
