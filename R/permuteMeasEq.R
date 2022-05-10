@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 14 January 2021
+### Last updated: 9 May 2022
 ### permutation randomization test for measurement equivalence and DIF
 
 
@@ -704,12 +704,11 @@ setMethod("hist", "permuteMeasEq", function(x, ..., AFI, alpha = .05, nd = 3,
 ##' textual =~ x4 + x5 + x6
 ##' speed   =~ x7 + x8 + x9
 ##' '
-##' miout <- measurementInvariance(model = mod.config, data = HS, std.lv = TRUE,
-##'                                group = "ageGroup")
-##'
-##' (fit.config <- miout[["fit.configural"]])
-##' (fit.metric <- miout[["fit.loadings"]])
-##' (fit.scalar <- miout[["fit.intercepts"]])
+##' fit.config <- cfa(mod.config, data = HS, std.lv = TRUE, group = "ageGroup")
+##' fit.metric <- cfa(mod.config, data = HS, std.lv = TRUE, group = "ageGroup",
+##'                   group.equal = "loadings")
+##' fit.scalar <- cfa(mod.config, data = HS, std.lv = TRUE, group = "ageGroup",
+##'                   group.equal = c("loadings","intercepts"))
 ##'
 ##'
 ##' ####################### Permutation Method
@@ -959,7 +958,7 @@ permuteMeasEq <- function(nPermute, modelType = c("mgcfa","mimic"),
     close(mypb)
   } else if (parallelType == "multicore") {
     if (length(iseed)) set.seed(iseed)
-    argList$FUN <- paste("permuteOnce", modelType, sep = ".")
+    argList$FUN <- as.name(paste("permuteOnce", modelType, sep = "."))
     argList$X <- 1:nPermute
     argList$mc.cores <- ncpus
     argList$mc.set.seed <- TRUE
@@ -1143,13 +1142,13 @@ checkPermArgs <- function(nPermute, modelType, con, uncon, null,
       fixedCall$param <- NULL
       fixedCall <- c(fixedCall, list(param = NULL))
     }
-    if (class(con) != "lavaan") stop(notLavaan)
+    if (!inherits(con, "lavaan")) stop(notLavaan)
   } else {
-    if (class(con) != "lavaan") stop(notLavaan)
-    if (class(uncon) != "lavaan") stop(notLavaan)
+    if (!inherits(con, "lavaan")) stop(notLavaan)
+    if (!inherits(uncon, "lavaan")) stop(notLavaan)
   }
   if (!is.null(null)) {
-    if (class(null) != "lavaan") stop(notLavaan)
+    if (!inherits(uncon, "null")) stop(notLavaan)
   }
 
   ############ FIXME: check that lavInspect(con, "options")$conditional.x = FALSE (find defaults for continuous/ordered indicators)

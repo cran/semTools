@@ -5,7 +5,7 @@
 \title{Modification indices and their power approach for model fit evaluation}
 \usage{
 miPowerFit(lavaanObj, stdLoad = 0.4, cor = 0.1, stdBeta = 0.1,
-  intcept = 0.2, stdDelta = NULL, delta = NULL, cilevel = 0.9)
+  intcept = 0.2, stdDelta = NULL, delta = NULL, cilevel = 0.9, ...)
 }
 \arguments{
 \item{lavaanObj}{The lavaan model object used to evaluate model fit}
@@ -23,14 +23,14 @@ would like to be detected (rejected). The default value is 0.1, which is
 suggested by Saris and colleagues (2009, p. 571).}
 
 \item{intcept}{The amount of standardized intercept (similar to Cohen's
-\emph{d} that one would like to be detected (rejected). The default value is
-0.2, which is equivalent to a low effect size proposed by Cohen (1988,
+\emph{d} that one would like to be detected (rejected). The default value
+is 0.2, which is equivalent to a low effect size proposed by Cohen (1988,
 1992).}
 
 \item{stdDelta}{The vector of the standardized parameters that one would
 like to be detected (rejected). If this argument is specified, the value
-here will overwrite the other arguments above. The order of the vector must
-be the same as the row order from modification indices from the
+here will overwrite the other arguments above. The order of the vector
+must be the same as the row order from modification indices from the
 \code{lavaan} object. If a single value is specified, the value will be
 applied to all parameters.}
 
@@ -44,31 +44,34 @@ parameters.}
 \item{cilevel}{The confidence level of the confidence interval of expected
 parameter changes. The confidence intervals are used in the equivalence
 testing.}
+
+\item{\dots}{arguments passed to \code{\link[lavaan]{modificationIndices}},
+except for \code{delta}, which is already an argument (which can be
+substituted for \code{stdDelta} or specific sets of parameters using
+\code{stdLoad}, \code{cor}, \code{stdBeta}, and \code{intcept}).}
 }
 \value{
 A data frame with these variables:
  \enumerate{
-  \item lhs: The left-hand side variable, with respect to the operator in
+  \item \code{lhs}: The left-hand side variable, with respect to the operator in
    in the lavaan \code{\link[lavaan]{model.syntax}}
-  \item op: The lavaan syntax operator: "~~" represents covariance,
+  \item \code{op}: The lavaan syntax operator: "~~" represents covariance,
     "=~" represents factor loading, "~" represents regression, and
     "~1" represents intercept.
-  \item rhs: The right-hand side variable
-  \item group: The level of the group variable for the parameter in question
-  \item mi: The modification index of the fixed parameter
-  \item epc: The expected parameter change if the parameter is freely
-   estimated
-  \item target.epc: The target expected parameter change that represents
-   the minimum size of misspecification that one would like to be detected
+  \item \code{rhs}: The right-hand side variable
+  \item \code{group}: The level of the group variable for the parameter in question
+  \item \code{mi}: The modification index of the fixed parameter
+  \item \code{epc}: The EPC if the parameter is freely estimated
+  \item \code{target.epc}: The target EPC that represents the minimum size
+   of misspecification that one would like to be detected
    by the test with a high power
-  \item std.epc: The standardized expected parameter change if the parameter
-   is freely estimated
-  \item std.target.epc: The standardized target expected parameter change
-  \item significant.mi: Represents whether the modification index value is
+  \item \code{std.epc}: The standardized EPC if the parameter is freely estimated
+  \item \code{std.target.epc}: The standardized target expected parameter change
+  \item \code{significant.mi}: Represents whether the modification index value is
     significant
-  \item high.power: Represents whether the power is enough to detect the
+  \item \code{high.power}: Represents whether the power is enough to detect the
    target expected parameter change
-  \item decision.pow: The decision whether the parameter is misspecified
+  \item \code{decision.pow}: The decision whether the parameter is misspecified
    or not based on Saris et al's method: \code{"M"} represents the parameter
    is misspecified, \code{"NM"} represents the parameter is not misspecified,
    \code{"EPC:M"} represents the parameter is misspecified decided by
@@ -76,17 +79,15 @@ A data frame with these variables:
    the parameter is not misspecified decided by checking the expected
    parameter change value, and \code{"I"} represents the decision is
    inconclusive.
-  \item se.epc: The standard errors of the expected parameter changes.
-  \item lower.epc: The lower bound of the confidence interval of expected
+  \item \code{se.epc}: The standard errors of the expected parameter changes.
+  \item \code{lower.epc}: The lower bound of the confidence interval of expected
    parameter changes.
-  \item upper.epc: The upper bound of the confidence interval of expected
+  \item \code{upper.epc}: The upper bound of the confidence interval of expected
    parameter changes.
-  \item lower.std.epc: The lower bound of the confidence interval of
-   standardized expected parameter changes.
-  \item upper.std.epc: The upper bound of the confidence interval of
-   standardized expected parameter changes.
-  \item decision.ci: The decision whether the parameter is misspecified or
-   not based on the confidence interval method: \code{"M"} represents the
+  \item \code{lower.std.epc}: Lower confidence limit of standardized EPCs
+  \item \code{upper.std.epc}: Upper confidence limit of standardized EPCs
+  \item \code{decision.ci}: Decision whether the parameter is misspecified
+   based on the CI method: \code{"M"} represents the
    parameter is misspecified, \code{"NM"} represents the parameter is not
    misspecified, and \code{"I"} represents the decision is inconclusive.
 }
@@ -99,46 +100,53 @@ The model fit evaluation approach using modification indices and expected
 parameter changes.
 }
 \details{
-In the lavaan object, one can inspect the modification indices and expected
-parameter changes. Those values can be used to evaluate model fit by two
-methods.
+To decide whether a parameter should be freed, one can inspect its
+modification index (MI) and expected parameter change (EPC).
+Those values can be used to evaluate model fit by 2 methods.
 
-First, Saris, Satorra, and van der Veld (2009, pp. 570-573) used the power
-to detect modification indices and expected parameter changes to evaluate
-model fit. First, one should evaluate whether the modification index of each
-parameter is significant. Second, one should evaluate whether the power to
-detect a target expected parameter change is high enough. If the
-modification index is not significant and the power is high, there is no
-misspecification. If the modification index is significant and the power is
-low, the fixed parameter is misspecified. If the modification index is
-significant and the power is high, the expected parameter change is
-investigated. If the expected parameter change is large (greater than the
-the target expected parameter change), the parameter is misspecified. If the
-expected parameter change is low (lower than the target expected parameter
-change), the parameter is not misspecificied. If the modification index is
-not significant and the power is low, the decision is inconclusive.
+Method  1: Saris, Satorra, and van der Veld (2009, pp. 570--573) used
+power (probability of detecting a significant MI) and EPC to decide whether
+to free a parametr.  First, one should evaluate whether a parameter's MI
+is significant. Second, one should evaluate whether the power to detect a
+target EPC is high enough.  The combination of criteria leads to the
+so-called "JRule" first implemented with LISREL (van der Veld et al., 2008):
 
-Second, the confidence intervals of the expected parameter changes are
-formed. These confidence intervals are compared with the range of trivial
+\itemize{
+  \item If the MI is not significant and the power is low,
+        the test is inconclusive.
+  \item If the MI is not significant and the power is high,
+        there is no misspecification.
+  \item If the MI is significant and the power is low,
+        the fixed parameter is misspecified.
+  \item If the MI is significant and the power is high,
+        the EPC is investigated.  If the EPC is large (greater than the
+        the target EPC), the parameter is misspecified.  If the EPC is low
+        (lower than the target EPC), the parameter is not misspecificied.
+}
+
+Method 2:  The confidence interval (CI) of an EPC is calculated.
+These CIs are compared with the range of trivial
 misspecification, which could be (-\code{delta}, \code{delta}) or (0,
-\code{delta}) for nonnegative parameters. If the confidence intervals are
-outside of the range of trivial misspecification, the fixed parameters are
-severely misspecified. If the confidence intervals are inside the range of
-trivial misspecification, the fixed parameters are trivially misspecified.
-If confidence intervals are overlapped the range of trivial
-misspecification, the decision is inconclusive.
+\code{delta}) for nonnegative parameters.
+
+\itemize{
+  \item If a CI overlaps with the range of trivial misspecification,
+        the test is inconclusive.
+  \item If a CI completely exceeds the range of trivial misspecification,
+        the fixed parameters are severely misspecified.
+  \item If a CI is completely within the range of trivial misspecification,
+        the fixed parameters are trivially misspecified.
+}
 }
 \examples{
 
 library(lavaan)
 
-HS.model <- ' visual  =~ x1 + x2 + x3
-              textual =~ x4 + x5 + x6
-              speed   =~ x7 + x8 + x9 '
-
+HS.model <- ' visual  =~ x1 + x2 + x3 '
 fit <- cfa(HS.model, data = HolzingerSwineford1939,
-           group = "sex", meanstructure = TRUE)
-miPowerFit(fit)
+           group = "sex", group.equal = c("loadings","intercepts"))
+miPowerFit(fit, free.remove = FALSE, op = "=~") # loadings
+miPowerFit(fit, free.remove = FALSE, op = "~1") # intercepts
 
 model <- '
   # latent variable definitions
@@ -171,6 +179,9 @@ Cohen, J. (1992). A power primer. \emph{Psychological Bulletin, 112}(1),
 Saris, W. E., Satorra, A., & van der Veld, W. M. (2009). Testing structural
 equation models or detection of misspecifications? \emph{Structural Equation
 Modeling, 16}(4), 561--582. \doi{10.1080/10705510903203433}
+
+van der Veld, W. M., Saris, W. E., & Satorra, A. (2008).
+\emph{JRule 3.0 Users Guide}. \doi{10.13140/RG.2.2.13609.90729}
 }
 \seealso{
 \code{\link{moreFitIndices}} For the additional fit indices

@@ -1,5 +1,5 @@
 ### Sunthud Pornprasertmanit & Terrence D. Jorgensen
-### Last updated: 29 March 2021
+### Last updated: 7 April 2022
 
 
 
@@ -122,6 +122,15 @@
 ##' }
 ##'
 ##' @references
+##'
+##' Tutorial:
+##'
+##' Schoemann, A. M., & Jorgensen, T. D. (2021). Testing and interpreting
+##' latent variable interactions using the \code{semTools} package.
+##' \emph{Psych, 3}(3), 322--335. \doi{10.3390/psych3030024}
+##'
+##' Background literature:
+##'
 ##' Aiken, L. S., & West, S. G. (1991). \emph{Multiple regression: Testing
 ##' and interpreting interactions}. Newbury Park, CA: Sage.
 ##'
@@ -334,9 +343,9 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
 	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
 	  targetcol <- PT$label[newRows]
 	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
-	    targetcol[i] <- paste(nameY, "~", nameX[i],
-	                          ifelse(nG > 1L && group.number > 1L, no = "",
-	                                 yes = paste0(".g", group.number)))
+      targetcol[i] <- paste0(nameY, "~", PT$rhs[ newRows[i] ],
+                             ifelse(nG > 1L && group.number > 1L, no = "",
+                                    yes = paste0(".g", group.number)))
 	  }
 
 		# Transform it to non-centering SE
@@ -461,6 +470,14 @@ probe2WayMC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
 ##'   latent interaction.
 ##' }
 ##' @references
+##'
+##' Tutorial:
+##'
+##' Schoemann, A. M., & Jorgensen, T. D. (2021). Testing and interpreting
+##' latent variable interactions using the \code{semTools} package.
+##' \emph{Psych, 3}(3), 322--335. \doi{10.3390/psych3030024}
+##'
+##' Background literature:
 ##'
 ##' Lance, C. E. (1988). Residual centering, exploratory and confirmatory
 ##' moderator analysis, and decomposition of effects in path models containing
@@ -733,9 +750,9 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
 	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
 	  targetcol <- PT$label[newRows]
 	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
-	    targetcol[i] <- paste(nameY, "~", nameX[i],
-	                          ifelse(nG > 1L && group.number > 1L, no = "",
-	                                 yes = paste0(".g", group.number)))
+	    targetcol[i] <- paste0(nameY, "~", PT$rhs[ newRows[i] ],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
 	  }
 	  varEstSlopeRC <- varEst[targetcol, targetcol]
 
@@ -904,6 +921,14 @@ probe2WayRC <- function(fit, nameX, nameY, modVar, valProbe, group = 1L,
 ##' }
 ##'
 ##' @references
+##' Tutorial:
+##'
+##' Schoemann, A. M., & Jorgensen, T. D. (2021). Testing and interpreting
+##' latent variable interactions using the \code{semTools} package.
+##' \emph{Psych, 3}(3), 322--335. \doi{10.3390/psych3030024}
+##'
+##' Background literature:
+##'
 ##' Aiken, L. S., & West, S. G. (1991). \emph{Multiple regression: Testing
 ##' and interpreting interactions}. Newbury Park, CA: Sage.
 ##'
@@ -1113,9 +1138,9 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
 	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
 	  targetcol <- PT$label[newRows]
 	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
-	    targetcol[i] <- paste(nameY, "~", nameX[i],
-	                          ifelse(nG > 1L && group.number > 1L, no = "",
-	                                 yes = paste0(".g", group.number)))
+	    targetcol[i] <- paste0(nameY, "~", PT$rhs[ newRows[i] ],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
 	  }
 
 		# Transform it to non-centering SE
@@ -1250,6 +1275,14 @@ probe3WayMC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
 ##' }
 ##'
 ##' @references
+##' Tutorial:
+##'
+##' Schoemann, A. M., & Jorgensen, T. D. (2021). Testing and interpreting
+##' latent variable interactions using the \code{semTools} package.
+##' \emph{Psych, 3}(3), 322--335. \doi{10.3390/psych3030024}
+##'
+##' Background literature:
+##'
 ##' Geldhof, G. J., Pornprasertmanit, S., Schoemann, A., & Little,
 ##' T. D. (2013). Orthogonalizing through residual centering: Extended
 ##' applications and caveats. \emph{Educational and Psychological Measurement,
@@ -1572,9 +1605,9 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
 	  newRows <- which(PT$lhs == nameY & PT$op == "~" & PT$rhs %in% nameX & PT$group == group.number)
 	  targetcol <- PT$label[newRows]
 	  if (any(targetcol == "")) for (i in which(targetcol == "")) {
-	    targetcol[i] <- paste(nameY, "~", nameX[i],
-	                          ifelse(nG > 1L && group.number > 1L, no = "",
-	                                 yes = paste0(".g", group.number)))
+	    targetcol[i] <- paste0(nameY, "~", PT$rhs[ newRows[i] ],
+	                           ifelse(nG > 1L && group.number > 1L, no = "",
+	                                  yes = paste0(".g", group.number)))
 	  }
 		varEstSlopeRC <- varEst[targetcol, targetcol]
 
@@ -1648,6 +1681,12 @@ probe3WayRC <- function(fit, nameX, nameY, modVar, valProbe1, valProbe2,
 ##'  \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
 ##'   when the results are obtained from residual-centering approach.
 ##' }
+##'
+##' @references
+##'
+##' Schoemann, A. M., & Jorgensen, T. D. (2021). Testing and interpreting
+##' latent variable interactions using the \code{semTools} package.
+##' \emph{Psych, 3}(3), 322--335. \doi{10.3390/psych3030024}
 ##'
 ##' @examples
 ##'

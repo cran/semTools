@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 16 April 2021
+### Last updated: 9 May 2022
 
 ## from http://www.da.ugent.be/cvs/pages/en/Presentations/Presentation%20Yves%20Rosseel.pdf
 # dd <- read.table("http://www.statmodel.com/examples/shortform/4cat%20m.dat",
@@ -62,7 +62,8 @@
 ##'
 ##'
 ##' @importFrom stats quantile
-##' @importFrom lavaan parTable
+##' @importFrom methods getMethod
+##' @importFrom lavaan parTable lavInspect
 ##'
 ##' @param object A object of class \code{\linkS4class{lavaan}} in which
 ##'   functions of parameters have already been defined using the \code{:=}
@@ -86,6 +87,10 @@
 ##' @param nRep \code{integer}. The number of samples to draw, to obtain an
 ##'   empirical sampling distribution of model parameters. Many thousand are
 ##'   recommended to minimize Monte Carlo error of the estimated CIs.
+##' @param standardized \code{logical} indicating whether to obtain CIs for the
+##'   fully standardized (\code{"std.all"}) estimates, using their asymptotic
+##'   sampling covariance matrix.  Only valid when \code{object} is of class
+##'   \code{\linkS4class{lavaan}}, not \code{\linkS4class{lavaan.mi}}.
 ##' @param fast \code{logical} indicating whether to use a fast algorithm that
 ##'   assumes all functions of parameters (in \code{object} or \code{expr}) use
 ##'   standard operations. Set to \code{FALSE} if using (e.g.) \code{\link{c}()}
@@ -94,21 +99,24 @@
 ##'   parameters.
 ##' @param level \code{numeric} confidence level, between 0--1
 ##' @param na.rm \code{logical} passed to \code{\link[stats]{quantile}}
-##' @param return.samples \code{logical} indicating whether to return the
+##' @param append.samples \code{logical} indicating whether to return the
 ##'   simulated empirical sampling distribution of parameters (in \code{coefs})
-##'   and functions (in \code{expr})
+##'   and functions (in \code{expr}) in a \code{list} with the results. This
+##'   could be useful to calculate more precise highest-density intervals (see
+##'   examples).
 ##' @param plot \code{logical} indicating whether to plot the empirical sampling
 ##'   distribution of each function in \code{expr}
 ##' @param ask whether to prompt user before printing each plot
 ##' @param \dots arguments passed to \code{\link[graphics]{hist}} when
 ##'   \code{plot = TRUE}.
 ##'
-##' @return A \code{lavaan.data.frame} (to use lavaan's \code{print} method).
-##'   By default, a \code{data.frame} with point estimates and confidence limits
-##'   of each requested function of parameters in \code{expr} is returned.
-##'   If \code{return.samples = TRUE}, output will be a \code{data.frame} with
-##'   the samples (in rows) of each parameter (in columns), and an additional
-##'   column for each requested function of those parameters.
+##' @return A \code{lavaan.data.frame} (to use lavaan's \code{print} method)
+##'   with point estimates and confidence limits of each requested function of
+##'   parameters in \code{expr} is returned. If \code{append.samples = TRUE},
+##'   output will be a \code{list} with the same \code{$Results} along with a
+##'   second \code{data.frame} with the \code{$Samples} (in rows) of each
+##'   parameter (in columns), and an additional column for each requested
+##'   function of those parameters.
 ##'
 ##' @author Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
 ##'
@@ -131,6 +139,8 @@
 ##' assessing mediation: An interactive tool for creating confidence intervals
 ##' for indirect effects [Computer software]. Available from
 ##' \url{http://quantpsy.org/}.
+##'
+##' @aliases monteCarloCI monteCarloMed
 ##'
 ##' @examples
 ##'
@@ -159,8 +169,15 @@
 ##' set.seed(1234)
 ##' monteCarloCI(fit) # CIs more robust than delta method in smaller samples
 ##'
+##' ## save samples to calculate more precise intervals:
+##' \dontrun{
+##' set.seed(1234)
+##' foo <- monteCarloCI(fit, append.samples = TRUE)
+##' library(HDInterval)
+##' hdi(fit$Samples)
+##' }
 ##'
-##' ## Parameter can also be obtained from an external analysis
+##' ## Parameters can also be obtained from an external analysis
 ##' myParams <- c("a","b","c")
 ##' (coefs <- coef(fit)[myParams]) # names must match those in the "expression"
 ##' ## Asymptotic covariance matrix from an external analysis
@@ -174,12 +191,12 @@
 ##'              plot = TRUE, ask = TRUE) # print a plot for each
 ##'
 ##' @export
-monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e5, fast = TRUE,
-                         level = 0.95, na.rm = TRUE, return.samples = FALSE,
-                         plot = FALSE, ask = getOption("device.ask.default"),
-                         ...) {
+monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e4,
+                         standardized = FALSE, fast = TRUE, level = 0.95,
+                         na.rm = TRUE, append.samples = FALSE, plot = FALSE,
+                         ask = getOption("device.ask.default"), ...) {
 
-  if (class(object) == "lavaan") {
+  if (inherits(object, c("lavaan","lavaan.mi"))) {
     ## extract user-defined parameters from parTable (order of user-defined
     PT <- parTable(object) # parameters must be correct for model to be fitted)
     ## create expression vector
@@ -196,13 +213,29 @@ monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e5, fast = TRU
   })))
 
   ## isolate names of model parameters (not user-defined), which get sampled
-  if (class(object) == "lavaan") coefs <- lavaan::coef(object)
+  if (inherits(object, "lavaan")) {
+    if (standardized) {
+      STD <- lavaan::standardizedSolution(object)
+      coefRows <- !(STD$op %in% c(":=","==","<",">","<=",">="))
+      coefs <- STD$est.std[coefRows]
+      names(coefs) <- lavaan::lav_partable_labels(STD[coefRows, ])
+    } else coefs <- lavaan::coef(object)
+  } else if (inherits(object, "lavaan.mi")) {
+    coefs <- getMethod("coef", "lavaan.mi")(object)
+  }
   sampVars <- intersect(names(coefs), funcVars)
 
   ## If a lavaan object is provided, extract coefs and ACM
-  if (class(object) == "lavaan") {
+  if (inherits(object, "lavaan")) {
     coefs <- coefs[sampVars]
-    ACM <- lavaan::vcov(object)[sampVars, sampVars]
+    if (standardized) {
+      ACM <- lavInspect(object, "vcov.std.all")[sampVars, sampVars]
+    } else {
+      ACM <- lavaan::vcov(object)[sampVars, sampVars]
+    }
+  } else if (inherits(object, "lavaan.mi")) {
+    coefs <- coefs[sampVars]
+    ACM <- getMethod("vcov", "lavaan.mi")(object)[sampVars, sampVars]
   }
 
   ## Apply the expression(s) to POINT ESTIMATES
@@ -211,6 +244,7 @@ monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e5, fast = TRU
   })[names(expr)]
   EST <- data.frame(est = do.call("c", estList))
   rownames(EST) <- names(expr)
+  if (standardized && inherits(object, "lavaan")) colnames(EST) <- "est.std"
 
   ## Matrix of sampled values
   dat <- data.frame(MASS::mvrnorm(n = nRep, mu = coefs, Sigma = ACM))
@@ -257,8 +291,16 @@ monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e5, fast = TRU
     if (length(expr) > 1L && ask) grDevices::devAskNewPage(ask = opar)
   }
 
-  ## Return simulated values OR point and interval estimates
-  out <- if (return.samples) samples else cbind(EST, CIs)
+  ## Always return point and interval estimates
+  out <- cbind(EST, CIs)
   class(out) <- c("lavaan.data.frame","data.frame")
+  ## also simulated values? (e.g., to calculate highest-density intervals)
+  if (append.samples) return(list(Results = out, Samples = samples))
   out
+}
+
+#FIXME: Remove after a few version updates
+monteCarloMed <- function(...) {
+  .Defunct("monteCarloCI",
+           msg = "monteCarloMed() has been replaced by monteCarloCI()")
 }
