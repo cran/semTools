@@ -9,7 +9,7 @@ mardiaKurtosis(dat, use = "everything")
 \arguments{
 \item{dat}{The target matrix or data frame with multiple variables}
 
-\item{use}{Missing data handling method from the \code{\link[stats]{cov}}
+\item{use}{Missing data handling method from the \code{\link[stats:cor]{stats::cov()}}
 function.}
 }
 \value{
@@ -20,7 +20,7 @@ Finding Mardia's multivariate kurtosis of multiple variables
 }
 \details{
 The Mardia's multivariate kurtosis formula (Mardia, 1970) is
- \deqn{ b_{2, d} = \frac{1}{n}\sum^n_{i=1}\left[ \left(\bold{X}_i -
+\deqn{ b_{2, d} = \frac{1}{n}\sum^n_{i=1}\left[ \left(\bold{X}_i -
  \bold{\bar{X}} \right)^{'} \bold{S}^{-1} \left(\bold{X}_i -
  \bold{\bar{X}} \right) \right]^2, }
 where \eqn{d} is the number of variables, \eqn{X} is the target
@@ -39,16 +39,16 @@ mardiaKurtosis(HolzingerSwineford1939[ , paste0("x", 1:9)])
 }
 \references{
 Mardia, K. V. (1970). Measures of multivariate skewness and
- kurtosis with applications. \emph{Biometrika, 57}(3), 519--530.
- \doi{10.2307/2334770}
+kurtosis with applications. \emph{Biometrika, 57}(3), 519--530.
+\doi{10.2307/2334770}
 }
 \seealso{
 \itemize{
- \item \code{\link{skew}} Find the univariate skewness of a variable
- \item \code{\link{kurtosis}} Find the univariate excessive kurtosis
-  of a variable
- \item \code{\link{mardiaSkew}} Find the Mardia's multivariate skewness
-  of a set of variables
+\item \code{\link[=skew]{skew()}} Find the univariate skewness of a variable
+\item \code{\link[=kurtosis]{kurtosis()}} Find the univariate excessive kurtosis
+of a variable
+\item \code{\link[=mardiaSkew]{mardiaSkew()}} Find the Mardia's multivariate skewness
+of a set of variables
 }
 }
 \author{

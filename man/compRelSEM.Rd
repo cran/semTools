@@ -11,12 +11,11 @@ compRelSEM(object, obs.var = TRUE, tau.eq = FALSE, ord.scale = TRUE,
   return.df = TRUE)
 }
 \arguments{
-\item{object}{A \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object, expected to contain only
-exogenous common factors (i.e., a CFA model).}
+\item{object}{A \link[lavaan:lavaan-class]{lavaan::lavaan} or \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object,
+expected to contain only exogenous common factors (i.e., a CFA model).}
 
-\item{obs.var}{\code{logical} indicating whether to compute AVE using
-observed variances in the denominator. Setting \code{FALSE} triggers
+\item{obs.var}{\code{logical} indicating whether to compute reliability
+using observed variances in the denominator. Setting \code{FALSE} triggers
 using model-implied variances in the denominator.}
 
 \item{tau.eq}{\code{logical} indicating whether to assume (essential)
@@ -51,8 +50,8 @@ raters of their cluster's shared construct, an interrater reliability
 (IRR) coefficient is also returned, quantifying reliability relative to
 rater/sampling error alone.  To quantify reliability relative to
 indicator/measurement error alone (i.e., \eqn{\omega^\textrm{2L}}), the
-\code{shared=} construct name(s) can additionally be included in
-\code{config=} argument.}
+\verb{shared=} construct name(s) can additionally be included in
+\verb{config=} argument.}
 
 \item{higher}{\code{character} vector naming any higher-order constructs in
 \code{object} for which composite reliability should be calculated.
@@ -60,7 +59,7 @@ Ignored when \code{tau.eq=TRUE} because alpha is not based on a CFA model;
 instead, users must fit a CFA with tau-equivalence constraints.
 To obtain Lai's (2021) multilevel composite-reliability indices for a
 higher-order factor, do not use this argument; instead, specify the
-higher-order factor(s) using the \code{shared=} or \code{config=} argument
+higher-order factor(s) using the \verb{shared=} or \verb{config=} argument
 (\code{compRelSEM} will automatically check whether it includes latent
 indicators and apply the appropriate formula).}
 
@@ -70,10 +69,10 @@ listed in \code{omit.indicators}) of first-order factors not listed in
 \code{omit.factors}.  Ignored in 1-factor models, and should only be set
 \code{TRUE} if all factors represent scale dimensions that could be
 meaningfully collapsed to a single composite (scale sum or scale mean).
-Setting a negative value (e.g., \code{-1} returns \bold{only} the
+Setting a negative value (e.g., \code{-1} returns \strong{only} the
 total-composite reliability (excluding coefficients per factor), except
 when requesting Lai's (2021) coefficients for multilevel \code{config}ural
-or \code{shared=} constructs.}
+or \verb{shared=} constructs.}
 
 \item{dropSingle}{\code{logical} indicating whether to exclude factors
 defined by a single indicator from the returned results. If \code{TRUE}
@@ -83,13 +82,11 @@ column when \code{return.total = TRUE}.}
 \item{omit.factors}{\code{character} vector naming any common factors
 modeled in \code{object} whose composite reliability is not of
 interest. For example, higher-order or method factors. Note that
-\code{\link{reliabilityL2}()} should be used to calculate composite
+\code{\link[=reliabilityL2]{reliabilityL2()}} should be used to calculate composite
 reliability of a higher-order factor.}
 
 \item{omit.indicators}{\code{character} vector naming any observed variables
-that should be ignored when calculating composite reliability. This can
-be useful, for example, to estimate reliability when an indicator is
-removed.}
+that should be omitted from the composite whose reliability is calculated.}
 
 \item{omit.imps}{\code{character} vector specifying criteria for omitting
 imputations from pooled results.  Can include any of
@@ -113,15 +110,15 @@ those in \code{omit.factors} and applying \code{dropSingle}).}
 }
 \value{
 A \code{numeric} vector of composite reliability coefficients per
-  factor, or a \code{list} of vectors per "block" (group and/or level of
-  analysis), optionally returned as a \code{data.frame} when possible (see
-  \code{return.df=} argument description for caveat). If there are multiple
-  factors, whose multidimensional indicators combine into a single
-  composite, users can request \code{return.total=TRUE} to add a column
-  including a reliability coefficient for the total composite, or
-  \code{return.total = -1} to return \bold{only} the total-composite
-  reliability (ignored when \code{config=} or \code{shared=} is specified
-  because each factor's specification must be checked across levels).
+factor, or a \code{list} of vectors per "block" (group and/or level of
+analysis), optionally returned as a \code{data.frame} when possible (see
+\verb{return.df=} argument description for caveat). If there are multiple
+factors, whose multidimensional indicators combine into a single
+composite, users can request \code{return.total=TRUE} to add a column
+including a reliability coefficient for the total composite, or
+\code{return.total = -1} to return \strong{only} the total-composite
+reliability (ignored when \verb{config=} or \verb{shared=} is specified
+because each factor's specification must be checked across levels).
 }
 \description{
 Calculate composite reliability from estimated factor-model parameters
@@ -130,8 +127,13 @@ Calculate composite reliability from estimated factor-model parameters
 Several coefficients for factor-analysis reliability have been termed
 "omega", which Cho (2021) argues is a misleading misnomer and argues for
 using \eqn{\rho} to represent them all, differentiated by descriptive
-subscripts.  In our package, we number \eqn{\omega} based on commonly
-applied calculations.
+subscripts.  In our package, we strive to provide unlabeled coefficients,
+leaving it to the user to decide on a label in their report.  But we do
+use the symbols \eqn{\alpha} and \eqn{\omega} in the formulas below in order
+to distinguish coefficients that do (not) assume essential tau-equivalence.
+For higher-order constructs with latent indicators, only \eqn{\omega} is
+available. Lai's (2021) multilevel coefficients are labeled in accordance
+with the symbols used in that article (more details below).
 
 Bentler (1968) first introduced factor-analysis reliability for a
 unidimensional factor model with congeneric indicators, labeling the
@@ -152,8 +154,7 @@ default) or from the hypothesized CFA model, controlled by the
 \code{obs.var} argument. A \eqn{k}-dimensional vector \eqn{\bold{1}} is used
 to sum elements in the matrix. Note that if the model includes any directed
 effects (latent regression slopes), all coefficients are calculated
-from \bold{total} factor variances:
-\code{\link[lavaan]{lavInspect}(object, "cov.lv")}.
+from \strong{total} factor variances: \code{lavInspect(object, "cov.lv")}.
 
 Assuming (essential) tau-equivalence (\code{tau.eq=TRUE}) makes \eqn{\omega}
 equivalent to coefficient \eqn{\alpha} from classical test theory
@@ -172,9 +173,9 @@ the observed or model-implied covariance matrix.
 By setting \code{return.total=TRUE}, one can estimate reliability for a
 single composite calculated using all indicators in a multidimensional
 CFA (Bentler, 1972, 2009). Setting \code{return.total = -1} will return
-\bold{only} the total-composite reliability (not per factor).
+\strong{only} the total-composite reliability (not per factor).
 
-\bold{Higher-Order Factors}:
+\strong{Higher-Order Factors}:
 The reliability of a composite that represents a higher-order construct
 requires partitioning the model-implied factor covariance matrix \eqn{\Phi}
 in order to isolate the common-factor variance associated only with the
@@ -182,12 +183,12 @@ higher-order factor. Using a second-order factor model, the model-implied
 covariance matrix of observed indicators \eqn{\hat{\Sigma}} can be
 partitioned into 3 sources:
 \enumerate{
-  \item the second-order common-factor (co)variance:
-        \eqn{\Lambda \bold{B} \Phi_2 \bold{B}^{\prime} \Lambda^{\prime}}
-  \item the residual variance of the first-order common factors (i.e., not
-        accounted for by the second-order factor):
-        \eqn{\Lambda \Psi_{u} \Lambda^{\prime}}
-  \item the measurement error of observed indicators: \eqn{\Theta}
+\item the second-order common-factor (co)variance:
+\eqn{\Lambda \bold{B} \Phi_2 \bold{B}^{\prime} \Lambda^{\prime}}
+\item the residual variance of the first-order common factors (i.e., not
+accounted for by the second-order factor):
+\eqn{\Lambda \Psi_{u} \Lambda^{\prime}}
+\item the measurement error of observed indicators: \eqn{\Theta}
 }
 
 where \eqn{\Lambda} contains first-order factor loadings, \eqn{\bold{B}}
@@ -201,83 +202,88 @@ the proportion of variance of a composite score calculated from the observed
 indicators (e.g., a total score or scale mean) that is attributable to the
 second-order factor (i.e., coefficient \eqn{\omega}):
 
-\deqn{\omega_{L1}=\frac{\bold{1}^{\prime} \Lambda \bold{B} \Phi \bold{B}^{\prime}
+\deqn{\omega=\frac{\bold{1}^{\prime} \Lambda \bold{B} \Phi \bold{B}^{\prime}
   \Lambda^{\prime} \bold{1} }{ \bold{1}^{\prime} \hat{\Sigma} \bold{1}}, }
 
 where \eqn{\bold{1}} is the \emph{k}-dimensional vector of 1s and \emph{k}
-is the number of observed indicators in the composite. Note that a
-higher-order factor can also have observed indicators.
+is the number of observed indicators in the composite. Note that if a
+higher-order factor also has observed indicators, it is necessary to model
+the observed indicators as single-indicator constructs, so that all of the
+higher-order factor indicators are latent (with loadings in the Beta matrix,
+not Lambda).
 
-\bold{Categorical Indicators}:
+\strong{Categorical Indicators}:
 When all indicators (per composite) are ordinal, the \code{ord.scale}
 argument controls whether the coefficient is calculated on the
 latent-response scale (\code{FALSE}) or on the observed ordinal scale
 (\code{TRUE}, the default).  For \eqn{\omega}-type coefficients
 (\code{tau.eq=FALSE}), Green and Yang's (2009, formula 21) approach is used
-to transform factor-model results back to the ordinal response scale.
-When \code{ord.scale=TRUE}, coefficient \eqn{\alpha} is calculated using the
-covariance matrix calculated from the integer-valued numeric weights for
-ordinal categories, consistent with its definition (Chalmers, 2018) and the
-\code{alpha} function in the \code{psych} package; this implies
-\code{obs.var=TRUE}, so \code{obs.var=FALSE} will be ignored.  When
-\code{ord.scale=FALSE}, the standard \eqn{\alpha} formula is applied to the
-polychoric correlation matrix ("ordinal \eqn{\alpha}"; Zumbo et al., 2007),
+to transform factor-model results back to the ordinal response scale. When
+\code{ord.scale=TRUE} and \code{tau.eq=TRUE}, coefficient \eqn{\alpha} is
+calculated using the covariance matrix calculated from the integer-valued
+numeric weights for ordinal categories, consistent with its definition
+(Chalmers, 2018) and the \code{alpha} function in the \code{psych} package;
+this implies \code{obs.var=TRUE}, so \code{obs.var=FALSE} will be ignored
+When \code{ord.scale=FALSE}, the standard \eqn{\alpha} formula is applied to
+the polychoric correlation matrix ("ordinal \eqn{\alpha}"; Zumbo et al., 2007),
 estimated from the saturated or hypothesized model (see \code{obs.var}),
 and \eqn{\omega} is calculated from CFA results without applying Green and
-Yang's (2009) correction (see Zumbo & Kroc's, 2019, for a rationalization).
-No method has been proposed for calculating reliability with a mixture of
-categorical and continuous indicators, so an error is returned if
-\code{object} includes factors with a mixture of indicator types (unless
-omitted using \code{omit.factors}). If categorical indicators load on a
-different factor(s) than continuous indicators, then reliability will still
-be calculated separately for those factors, but \code{return.total} must be
-\code{FALSE} (unless \code{omit.factors} is used to isolate factors with
-indicators of the same type).
+Yang's (2009) correction (see Zumbo & Kroc, 2019, for a rationalization).
+No method analogous to Green and Yang (2009) has been proposed for
+calculating reliability with a mixture of categorical and continuous
+indicators, so an error is returned if \code{object} includes factors with a
+mixture of indicator types (unless omitted using \code{omit.factors}). If
+categorical indicators load on a different factor(s) than continuous
+indicators, then reliability will still be calculated separately for those
+factors, but \code{return.total} must be \code{FALSE} (unless
+\code{omit.factors} is used to isolate factors with indicators of the same
+type).
 
-\bold{Multilevel Measurement Models}:
+\strong{Multilevel Measurement Models}:
 Under the default settings, \code{compRelSEM()} will apply the same formula
 in each "block" (group and/or level of analysis). In the case of multilevel
-SEMs, this yields "reliability" for latent within- and between-level
-components, as proposed by Geldhof et al. (2014).  This is not recommended
+(ML-)SEMs, this yields "reliability" for latent within- and between-level
+components, as proposed by Geldhof et al. (2014).  Although this works fine
+to calculate reliability per group, this is not recommended for ML-SEMs
 because the coefficients do not correspond to actual composites that would
 be calculated from the observed data.  Lai (2021) proposed coefficients for
 reliability of actual composites, depending on the type of construct, which
 requires specifying the names of constructs for which reliability is desired
 (or multiple constructs whose indicators would compose a multidimensional
-composite). Configural (\code{config=}) and/or \code{shared=} constructs
+composite). Configural (\verb{config=}) and/or \verb{shared=} constructs
 can be specified; the same construct can be specified in both arguments, so
 that overall scale-reliability can be estimated for a shared construct by
 including it in \code{config}.  Instead of organizing the output by block
-(the default), specifying \code{config=} and/or \code{shared=} will prompt
-organizing the output by \code{$config} and/or \code{$shared}.
+(the default), specifying \verb{config=} and/or \verb{shared=} will prompt
+organizing the list of output by \verb{$config} and/or \verb{$shared}.
 
 \itemize{
-  \item The overall (\code{_2L}) scale reliability for \code{config}ural
-  constructs is returned, along with the reliability of a purely
-  individual-level composite (\code{_W}, calculated by cluster-mean
-  centering).
-  \item The reliability for a \code{shared} construct quantifies
-  generalizability across both indicators and raters (i.e., subjects rating
-  their cluster's construct).  Lüdtke et al. (2011) refer to these as
-  measurement error and sampling error, respectively.  An interrater
-  reliability (IRR) coefficient is also returned, quantifying
-  generalizability across rater/sampling-error only. To obtain a
-  scale-reliability coefficient (quantifying a shared construct's
-  generalizability across indicator/measurement-error only), include the
-  same factor name in \code{config=}.  Jak et al. (2021) recommended
-  modeling components of the same construct at both levels, but users may
-  also saturate the within-level model (Lai, 2021).
+\item The overall (\verb{_2L}) scale reliability for \code{config}ural
+constructs is returned, along with the reliability of a purely
+individual-level composite (\verb{_W}, calculated by cluster-mean
+centering).
+\item The reliability for a \code{shared} construct quantifies
+generalizability across both indicators and raters (i.e., subjects rating
+their cluster's construct).  Lüdtke et al. (2011) refer to these as
+measurement error and sampling error, respectively.  An interrater
+reliability (IRR) coefficient is also returned, quantifying
+generalizability across rater/sampling-error only. To obtain a
+scale-reliability coefficient (quantifying a shared construct's
+generalizability across indicator/measurement-error only), include the
+same factor name in \verb{config=}.  Jak et al. (2021) recommended
+modeling components of the same construct at both levels, but users may
+also saturate the within-level model (Lai, 2021).
 }
 
 Be careful about including Level-2 variables in the model, especially
 whether it makes sense to include them in a total composite for a Level-2
 construct.  \code{dropSingle=TRUE} only prevents estimating reliability for
 a single-indicator construct, not from including such an indicator in a
-total composite.  It is permissible for \code{shared=} constructs to have
-indicators at Level-2 only.  If it is necessary to model other Level-2
-variables (e.g., to justify the missing-at-random assumption when using
-\code{missing = "FIML" estimation}), they should be placed in the
-\code{omit.indicators=} argument to exclude them from total composites.
+total composite.  It is permissible for \verb{shared=} constructs to have
+additional indicators at Level-2 only.  If it is necessary to model other
+Level-2 variables (e.g., to justify the missing-at-random assumption when
+using \verb{missing="FIML" estimation}), they should be placed in the
+\verb{omit.indicators=} argument to exclude them from total composites.
 }
 \examples{
 
@@ -307,7 +313,10 @@ for (i in paste0("x", 1:3)) {
   print(compRelSEM(fit, omit.factors = c("textual","speed"),
                    omit.indicators = i, tau.eq = TRUE))
 }
-
+## item-total correlations obtainable by adding a composite to the data
+HS$Visual <- HS$x1 + HS$x2 + HS$x3
+cor(HS$Visual, y = HS[paste0("x", 1:3)])
+## comparable to psych::alpha(HS[paste0("x", 1:3)])
 
 ## Reliability of a composite that represents a higher-order factor
 mod.hi <- ' visual  =~ x1 + x2 + x3
@@ -441,11 +450,11 @@ scales of measurement do not help make it: A response to Chalmers.
 \doi{10.1177/0013164419844305}
 }
 \seealso{
-\code{\link{maximalRelia}} for the maximal reliability of weighted composite
+\code{\link[=maximalRelia]{maximalRelia()}} for the maximal reliability of weighted composite
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 
-  Uses hidden functions written by Sunthud Pornprasertmanit
-  (\email{psunthud@gmail.com}) for the old \code{reliability()} function.
+Uses hidden functions written by Sunthud Pornprasertmanit
+(\email{psunthud@gmail.com}) for the old \code{reliability()} function.
 }

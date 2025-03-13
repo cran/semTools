@@ -27,9 +27,9 @@
 ##' Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
 ##' @seealso \itemize{
-##'  \item \code{\link{plotRMSEApowernested}} to plot the statistical power for
+##'  \item [plotRMSEApowernested()] to plot the statistical power for
 ##'   nested model comparison based on population RMSEA given the sample size
-##'  \item \code{\link{findRMSEAsamplesizenested}} to find the minium sample
+##'  \item [findRMSEAsamplesizenested()] to find the minium sample
 ##'   size for a given statistical power in nested model comparison based on
 ##'   population RMSEA
 ##' }
@@ -37,7 +37,7 @@
 ##' @references
 ##' MacCallum, R. C., Browne, M. W., & Cai, L. (2006). Testing
 ##' differences between nested covariance structure models: Power analysis and
-##' null hypotheses. \emph{Psychological Methods, 11}(1), 19--35.
+##' null hypotheses. *Psychological Methods, 11*(1), 19--35.
 ##' \doi{10.1037/1082-989X.11.1.19}
 ##'
 ##' @examples
@@ -91,16 +91,16 @@ findRMSEApowernested <- function(rmsea0A = NULL, rmsea0B = NULL, rmsea1A, rmsea1
 ##' Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
 ##' @seealso \itemize{
-##'  \item \code{\link{plotRMSEApowernested}} to plot the statistical power for
+##'  \item [plotRMSEApowernested()] to plot the statistical power for
 ##'   nested model comparison based on population RMSEA given the sample size
-##'  \item \code{\link{findRMSEApowernested}} to find the power for a given
+##'  \item [findRMSEApowernested()] to find the power for a given
 ##'   sample size in nested model comparison based on population RMSEA
 ##' }
 ##'
 ##' @references
 ##' MacCallum, R. C., Browne, M. W., & Cai, L. (2006). Testing
 ##' differences between nested covariance structure models: Power analysis and
-##' null hypotheses. \emph{Psychological Methods, 11}(1), 19--35.
+##' null hypotheses. *Psychological Methods, 11*(1), 19--35.
 ##' \doi{10.1037/1082-989X.11.1.19}
 ##'
 ##' @examples
@@ -165,9 +165,9 @@ findRMSEAsamplesizenested <- function(rmsea0A = NULL, rmsea0B = NULL, rmsea1A,
 ##' Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
 ##' @seealso \itemize{
-##'  \item \code{\link{findRMSEApowernested}} to find the power for a given
+##'  \item [findRMSEApowernested()] to find the power for a given
 ##'   sample size in nested model comparison based on population RMSEA
-##'  \item \code{\link{findRMSEAsamplesizenested}} to find the minium sample
+##'  \item [findRMSEAsamplesizenested()] to find the minium sample
 ##'   size for a given statistical power in nested model comparison based on
 ##'   population RMSEA
 ##' }
@@ -175,7 +175,7 @@ findRMSEAsamplesizenested <- function(rmsea0A = NULL, rmsea0B = NULL, rmsea1A,
 ##' @references
 ##' MacCallum, R. C., Browne, M. W., & Cai, L. (2006). Testing
 ##' differences between nested covariance structure models: Power analysis and
-##' null hypotheses. \emph{Psychological Methods, 11}(1), 19--35.
+##' null hypotheses. *Psychological Methods, 11*(1), 19--35.
 ##' \doi{10.1037/1082-989X.11.1.19}
 ##'
 ##' @examples

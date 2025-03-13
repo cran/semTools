@@ -1,89 +1,91 @@
 ### Terrence D. Jorgensen
-### Last updated: 10 January 2021
-### Class and Methods for lavaan.mi object, returned by runMI()
+### Last updated: 12 February 2025
+### Class and Methods for OLDlavaan.mi object, returned by runMI()
+
+### DEPRECATED: 16 June 2024
+### supplanted by lavaan.mi package
 
 
 ##' Class for a lavaan Model Fitted to Multiple Imputations
 ##'
-##' This class extends the \code{\linkS4class{lavaanList}} class, created by
+##' This class extends the [lavaan::lavaanList-class] class, created by
 ##' fitting a lavaan model to a list of data sets. In this case, the list of
 ##' data sets are multiple imputations of missing data.
 ##'
 ##'
-##' @name lavaan.mi-class
+##' @name OLDlavaan.mi-class
 ##' @importClassesFrom lavaan lavaanList
-##' @aliases lavaan.mi-class show,lavaan.mi-method summary,lavaan.mi-method
-##'   fitMeasures,lavaan.mi-method fitmeasures,lavaan.mi-method
-##'   anova,lavaan.mi-method nobs,lavaan.mi-method coef,lavaan.mi-method
-##'   vcov,lavaan.mi-method fitted,lavaan.mi-method fitted.values,lavaan.mi-method
-##'   residuals,lavaan.mi-method resid,lavaan.mi-method
+##' @aliases OLDlavaan.mi-class show,OLDlavaan.mi-method summary,OLDlavaan.mi-method
+##'   fitMeasures,OLDlavaan.mi-method fitmeasures,OLDlavaan.mi-method
+##'   anova,OLDlavaan.mi-method nobs,OLDlavaan.mi-method coef,OLDlavaan.mi-method
+##'   vcov,OLDlavaan.mi-method fitted,OLDlavaan.mi-method fitted.values,OLDlavaan.mi-method
+##'   residuals,OLDlavaan.mi-method resid,OLDlavaan.mi-method
 ##' @docType class
 ##'
-##' @slot coefList \code{list} of estimated coefficients in matrix format (one
-##'   per imputation) as output by \code{\link[lavaan]{lavInspect}(fit, "est")}
-##' @slot phiList \code{list} of model-implied latent-variable covariance
+##' @slot coefList `list` of estimated coefficients in matrix format (one
+##'   per imputation) as output by `lavInspect(fit, "est")`
+##' @slot phiList `list` of model-implied latent-variable covariance
 ##'   matrices (one per imputation) as output by
-##'   \code{\link[lavaan]{lavInspect}(fit, "cov.lv")}
-##' @slot miList \code{list} of modification indices output by
-##'   \code{\link[lavaan]{modindices}}
-##' @slot seed \code{integer} seed set before running imputations
-##' @slot lavListCall call to \code{\link[lavaan]{lavaanList}} used to fit the
-##'   model to the list of imputed data sets in \code{@@DataList}, stored as a
-##'   \code{list} of arguments
+##'   `lavInspect(fit, "cov.lv")`
+##' @slot miList `list` of modification indices output by
+##'   [lavaan::modindices()]
+##' @slot seed `integer` seed set before running imputations
+##' @slot lavListCall call to [lavaan::lavaanList()] used to fit the
+##'   model to the list of imputed data sets in `@@DataList`, stored as a
+##'   `list` of arguments
 ##' @slot imputeCall call to imputation function (if used), stored as a
-##'   \code{list} of arguments
-##' @slot convergence \code{list} of \code{logical} vectors indicating whether,
+##'   `list` of arguments
+##' @slot convergence `list` of `logical` vectors indicating whether,
 ##'   for each imputed data set, (1) the model converged on a solution, (2)
-##'   \emph{SE}s could be calculated, (3) the (residual) covariance matrix of
+##'   *SE*s could be calculated, (3) the (residual) covariance matrix of
 ##'   latent variables (\eqn{\Psi}) is non-positive-definite, and (4) the
 ##'   residual covariance matrix of observed variables (\eqn{\Theta}) is
 ##'   non-positive-definite.
 ##' @slot lavaanList_slots All remaining slots are from
-##'   \code{\linkS4class{lavaanList}}, but \code{\link{runMI}} only populates a
-##'   subset of the \code{list} slots, two of them with custom information:
-##' @slot DataList The \code{list} of imputed data sets
+##'   [lavaan::lavaanList-class], but [runMI()] only populates a
+##'   subset of the `list` slots, two of them with custom information:
+##' @slot DataList The `list` of imputed data sets
 ##' @slot SampleStatsList List of output from
-##'   \code{\link[lavaan]{lavInspect}(fit, "sampstat")} applied to each fitted
+##'   `lavInspect(fit, "sampstat")` applied to each fitted
 ##'   model
-##' @slot ParTableList See \code{\linkS4class{lavaanList}}
-##' @slot vcovList See \code{\linkS4class{lavaanList}}
-##' @slot testList See \code{\linkS4class{lavaanList}}
-##' @slot h1List See \code{\linkS4class{lavaanList}}. An additional element is
-##'   added to the \code{list}: \code{$PT} is the "saturated" model's parameter
-##'   table, returned by \code{\link[lavaan]{lav_partable_unrestricted}}.
-##' @slot baselineList See \code{\linkS4class{lavaanList}}
+##' @slot ParTableList See [lavaan::lavaanList-class]
+##' @slot vcovList See [lavaan::lavaanList-class]
+##' @slot testList See [lavaan::lavaanList-class]
+##' @slot h1List See [lavaan::lavaanList-class]. An additional element is
+##'   added to the `list`: `$PT` is the "saturated" model's parameter
+##'   table, returned by [lavaan::lav_partable_unrestricted()].
+##' @slot baselineList See [lavaan::lavaanList-class]
 ##'
-##' @param object An object of class \code{lavaan.mi}
+##' @param object An object of class `OLDlavaan.mi`
 ##' @param se,ci,level,standardized,rsquare,header,output See
-##'        \code{\link[lavaan]{parameterEstimates}}. \code{output}
-##'        can also be passed to \code{\link[lavaan]{fitMeasures}}.
-##' @param fmi \code{logical} indicating whether to include the Fraction Missing
-##'        Information (FMI) for parameter estimates in the \code{summary}
-##'        output (see \bold{Value} section).
-##' @param asymptotic \code{logical}. If \code{FALSE} (typically a default, but
-##'        see \bold{Value} section for details using various methods), pooled
-##'        tests (of fit or pooled estimates) will be \emph{F} or \emph{t}
-##'        statistics with associated degrees of freedom (\emph{df}). If
-##'        \code{TRUE}, the (denominator) \emph{df} are assumed to be
-##'        sufficiently large for a \emph{t} statistic to follow a normal
-##'        distribution, so it is printed as a \emph{z} statisic; likewise,
-##'        \emph{F} times its numerator \emph{df} is printed, assumed to follow
+##'        [lavaan::parameterEstimates()]. The `output=` argument
+##'        can also be passed to [lavaan::fitMeasures()].
+##' @param fmi `logical` indicating whether to include the Fraction Missing
+##'        Information (FMI) for parameter estimates in the `summary`
+##'        output (see **Value** section).
+##' @param asymptotic `logical`. If `FALSE` (typically a default, but
+##'        see **Value** section for details using various methods), pooled
+##'        tests (of fit or pooled estimates) will be *F* or *t*
+##'        statistics with associated degrees of freedom (*df*). If
+##'        `TRUE`, the (denominator) *df* are assumed to be
+##'        sufficiently large for a *t* statistic to follow a normal
+##'        distribution, so it is printed as a *z* statisic; likewise,
+##'        *F* times its numerator *df* is printed, assumed to follow
 ##'        a \eqn{\chi^2} distribution.
-##' @param scale.W \code{logical}. If \code{TRUE} (default), the \code{vcov}
+##' @param scale.W `logical`. If `TRUE` (default), the `vcov`
 ##'        method will calculate the pooled covariance matrix by scaling the
 ##'        within-imputation component by the ARIV (see Enders, 2010, p. 235,
 ##'        for definition and formula). Otherwise, the pooled matrix is
 ##'        calculated as the weighted sum of the within-imputation and
 ##'        between-imputation components (see Enders, 2010, ch. 8, for details).
-##'        This in turn affects how the \code{summary} method calcualtes its
-##'        pooled standard errors, as well as the Wald test
-##'        (\code{\link{lavTestWald.mi}}).
-##' @param omit.imps \code{character} vector specifying criteria for omitting
+##'        This in turn affects how the `summary()` method calculates its
+##'        pooled standard errors, as well as [lavTestWald.mi()].
+##' @param omit.imps `character` vector specifying criteria for omitting
 ##'        imputations from pooled results.  Can include any of
-##'        \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'        `c("no.conv", "no.se", "no.npd")`, the first 2 of which are the
 ##'        default setting, which excludes any imputations that did not
 ##'        converge or for which standard errors could not be computed.  The
-##'        last option (\code{"no.npd"}) would exclude any imputations which
+##'        last option (`"no.npd"`) would exclude any imputations which
 ##'        yielded a nonpositive definite covariance matrix for observed or
 ##'        latent variables, which would include any "improper solutions" such
 ##'        as Heywood cases.  NPD solutions are not excluded by default because
@@ -96,126 +98,124 @@
 ##'        apply their own custom omission criteria (or simulations can use
 ##'        different numbers of imputations without redundantly refitting the
 ##'        model).
-##' @param labels \code{logical} indicating whether the \code{coef} output
-##'        should include parameter labels. Default is \code{TRUE}.
-##' @param total \code{logical} (default: \code{TRUE}) indicating whether the
-##'        \code{nobs} method should return the total sample size or (if
-##'        \code{FALSE}) a vector of group sample sizes.
+##' @param labels `logical` indicating whether the `coef` output
+##'        should include parameter labels. Default is `TRUE`.
+##' @param total `logical` (default: `TRUE`) indicating whether the
+##'        `nobs` method should return the total sample size or (if
+##'        `FALSE`) a vector of group sample sizes.
 ##' @param type The meaning of this argument varies depending on which method it
-##'        it used for. Find detailed descriptions in the \bold{Value} section
-##'        under \code{coef}, \code{vcov}, and \code{residuals}.
-##' @param fit.measures,baseline.model See \code{\link[lavaan]{fitMeasures}}.
-##'        \code{summary(object, fit.measures = TRUE)} will print (but not
+##'        it used for. Find detailed descriptions in the **Value** section
+##'        under `coef`, `vcov`, and `residuals`.
+##' @param fit.measures,baseline.model See [lavaan::fitMeasures()].
+##'        `summary(object, fit.measures = TRUE)` will print (but not
 ##'        return) a table of fit measures to the console.
-##' @param ... Additional arguments passed to \code{\link{lavTestLRT.mi}}, or
-##'        subsequently to \code{\link[lavaan]{lavTestLRT}}.
+##' @param ... Additional arguments passed to [lavTestLRT.mi()], or
+##'        subsequently to [lavaan::lavTestLRT()].
 ##'
 ##' @return
 ##'
-##' \item{coef}{\code{signature(object = "lavaan.mi", type = "free",
-##'   labels = TRUE, omit.imps = c("no.conv","no.se"))}:
-##'   See \code{\linkS4class{lavaan}}. Returns the pooled point estimates (i.e.,
+##' \item{coef}{`signature(object = "OLDlavaan.mi", type = "free",
+##'   labels = TRUE, omit.imps = c("no.conv","no.se"))`:
+##'   See [lavaan::lavaan-class]. Returns the pooled point estimates (i.e.,
 ##'   averaged across imputed data sets; see Rubin, 1987).}
 ##'
-##' \item{vcov}{\code{signature(object = "lavaan.mi", scale.W = TRUE,
+##' \item{vcov}{`signature(object = "OLDlavaan.mi", scale.W = TRUE,
 ##'   omit.imps = c("no.conv","no.se"),
-##'   type = c("pooled","between","within","ariv"))}:  By default, returns the
-##'   pooled covariance matrix of parameter estimates (\code{type = "pooled"}),
-##'   the within-imputations covariance matrix (\code{type = "within"}), the
-##'   between-imputations covariance matrix (\code{type = "between"}), or the
-##'   average relative increase in variance (\code{type = "ariv"}) due to
+##'   type = c("pooled","between","within","ariv"))`:  By default, returns the
+##'   pooled covariance matrix of parameter estimates (`type = "pooled"`),
+##'   the within-imputations covariance matrix (`type = "within"`), the
+##'   between-imputations covariance matrix (`type = "between"`), or the
+##'   average relative increase in variance (`type = "ariv"`) due to
 ##'   missing data.}
 ##'
-##' \item{fitted.values}{\code{signature(object = "lavaan.mi",
-##'   omit.imps = c("no.conv","no.se"))}: See \code{\linkS4class{lavaan}}.
+##' \item{fitted.values}{`signature(object = "OLDlavaan.mi",
+##'   omit.imps = c("no.conv","no.se"))`: See [lavaan::lavaan-class].
 ##'   Returns model-implied moments, evaluated at the pooled point estimates.}
-##' \item{fitted}{alias for \code{fitted.values}}
+##' \item{fitted}{alias for `fitted.values`}
 ##'
-##' \item{residuals}{\code{signature(object = "lavaan.mi",
-##'   type = c("raw","cor"), omit.imps = c("no.conv","no.se"))}:
-##'   See \code{\linkS4class{lavaan}}. By default (\code{type = "raw"}), returns
-##'   the difference between the model-implied moments from \code{fitted.values}
+##' \item{residuals}{`signature(object = "OLDlavaan.mi",
+##'   type = c("raw","cor"), omit.imps = c("no.conv","no.se"))`:
+##'   See [lavaan::lavaan-class]. By default (`type = "raw"`), returns
+##'   the difference between the model-implied moments from `fitted.values`
 ##'   and the pooled observed moments (i.e., averaged across imputed data sets).
 ##'   Standardized residuals are also available, using Bollen's
-##'   (\code{type = "cor"} or \code{"cor.bollen"}) or Bentler's
-##'   (\code{type = "cor.bentler"}) formulas.}
-##' \item{resid}{alias for \code{residuals}}
+##'   (`type = "cor"` or `"cor.bollen"`) or Bentler's
+##'   (`type = "cor.bentler"`) formulas.}
+##' \item{resid}{alias for `residuals`}
 ##'
-##' \item{nobs}{\code{signature(object = "lavaan.mi", total = TRUE)}: either
+##' \item{nobs}{`signature(object = "OLDlavaan.mi", total = TRUE)`: either
 ##'   the total (default) sample size or a vector of group sample sizes
-##'   (\code{total = FALSE}).}
+##'   (`total = FALSE`).}
 ##'
-##' \item{anova}{\code{signature(object = "lavaan.mi", ...)}:
-##'   Returns a test of model fit for a single model (\code{object}) or test(s)
-##'   of the difference(s) in fit between nested models passed via \code{...}.
-##'   See \code{\link{lavTestLRT.mi}} and \code{\link{compareFit}} for details.}
+##' \item{anova}{`signature(object = "OLDlavaan.mi", ...)`:
+##'   Returns a test of model fit for a single model (`object`) or test(s)
+##'   of the difference(s) in fit between nested models passed via `...`.
+##'   See [lavTestLRT.mi()] and [compareFit()] for details.}
 ##'
-##' \item{fitMeasures}{\code{signature(object = "lavaan.mi",
+##' \item{fitMeasures}{`signature(object = "OLDlavaan.mi",
 ##'   fit.measures = "all", baseline.model = NULL, output = "vector",
-##'   omit.imps = c("no.conv","no.se"), ...)}: See lavaan's
-##'   \code{\link[lavaan]{fitMeasures}} for details. Pass additional arguments
-##'   to \code{\link{lavTestLRT.mi}} via \code{...}.}
-##' \item{fitmeasures}{alias for \code{fitMeasures}.}
+##'   omit.imps = c("no.conv","no.se"), ...)`: See lavaan's
+##'   [lavaan::fitMeasures()] for details. Pass additional arguments
+##'   to [lavTestLRT.mi()] via `...`.}
+##' \item{fitmeasures}{alias for `fitMeasures`.}
 ##'
-##' \item{show}{\code{signature(object = "lavaan.mi")}: returns a message about
+##' \item{show}{`signature(object = "OLDlavaan.mi")`: returns a message about
 ##'  convergence rates and estimation problems (if applicable) across imputed
 ##'  data sets.}
 ##'
-##' \item{summary}{\code{signature(object = "lavaan.mi", se = TRUE, ci = FALSE,
+##' \item{summary}{`signature(object = "OLDlavaan.mi", se = TRUE, ci = FALSE,
 ##'  level = .95, standardized = FALSE, rsquare = FALSE, fmi = FALSE,
 ##'  scale.W = !asymptotic, omit.imps = c("no.conv","no.se"), asymptotic = FALSE,
-##'   header = TRUE, output = "text", fit.measures = FALSE, ...)}:
-##'  see \code{\link[lavaan]{parameterEstimates}} for details.
-##'  By default, \code{summary} returns pooled point and \emph{SE}
-##'  estimates, along with \emph{t} test statistics and their associated
-##'  \emph{df} and \emph{p} values. If \code{ci = TRUE}, confidence intervales
-##'  are returned with the specified confidence \code{level} (default 95\% CI).
-##'  If \code{asymptotic = TRUE}, \emph{z} instead of \emph{t} tests are
-##'  returned. \code{standardized} solution(s) can also be requested by name
-##'  (\code{"std.lv"} or \code{"std.all"}) or both are returned with \code{TRUE}.
-##'  \emph{R}-squared for endogenous variables can be requested, as well as the
+##'   header = TRUE, output = "text", fit.measures = FALSE, ...)`:
+##'  See [lavaan::parameterEstimates()] for details.
+##'  By default, `summary()` returns pooled point and *SE*
+##'  estimates, along with *t* test statistics and their associated
+##'  *df* and *p* values. If `ci = TRUE`, confidence intervals
+##'  are returned with the specified confidence `level` (default 95\% CI).
+##'  If `asymptotic = TRUE`, *z* instead of *t* tests are
+##'  returned. `standardized` solution(s) can also be requested by name
+##'  (`"std.lv"` or `"std.all"`) or both are returned with `TRUE`.
+##'  *R*-squared for endogenous variables can be requested, as well as the
 ##'  Fraction Missing Information (FMI) for parameter estimates. By default, the
-##'  output will appear like \code{lavaan}'s \code{summary} output, but if
-##'  \code{output == "data.frame"}, the returned \code{data.frame} will resemble
-##'  the \code{parameterEstimates} output. The \code{scale.W} argument is
-##'  passed to \code{vcov} (see description above).
-##'  Setting \code{fit.measures=TRUE} will additionally print fit measures to
+##'  output will appear like `lavaan`'s `summary()` output, but if
+##'  `output == "data.frame"`, the returned `data.frame` will resemble
+##'  the `parameterEstimates()` output. The `scale.W` argument is
+##'  passed to `vcov` (see description above).
+##'  Setting `fit.measures=TRUE` will additionally print fit measures to
 ##'  the console, but they will not be returned; additional arguments may be
-##'  passed via \code{...} to \code{\link[lavaan]{fitMeasures}} and
-##'  subsequently to \code{\link{lavTestLRT.mi}}.}
+##'  passed via `...` to [lavaan::fitMeasures()] and
+##'  subsequently to [lavTestLRT.mi()].}
 ##'
-##' @section Objects from the Class: See the \code{\link{runMI}} function for
-##'   details. Wrapper functions include \code{\link{lavaan.mi}},
-##'   \code{\link{cfa.mi}}, \code{\link{sem.mi}}, and \code{\link{growth.mi}}.
+##' @section Objects from the Class: See the [runMI()] function for details.
 ##'
 ##' @author Terrence D. Jorgensen (University of Amsterdam;
 ##'   \email{TJorgensen314@@gmail.com})
 ##'
 ##' @references
-##'   Asparouhov, T., & Muthen, B. (2010). \emph{Chi-square statistics
-##'   with multiple imputation}. Technical Report. Retrieved from
-##'   \url{http://www.statmodel.com/}
+##'   Asparouhov, T., & Muthen, B. (2010). *Chi-square statistics
+##'   with multiple imputation*. Technical Report. Retrieved from
+##'   <http://www.statmodel.com/>
 ##'
-##'   Enders, C. K. (2010). \emph{Applied missing data analysis}. New York, NY:
+##'   Enders, C. K. (2010). *Applied missing data analysis*. New York, NY:
 ##'   Guilford.
 ##'
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
-##'   Significance levels from repeated \emph{p}-values with multiply-imputed
-##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   \url{https://www.jstor.org/stable/24303994}
+##'   Significance levels from repeated *p*-values with multiply-imputed
+##'   data. *Statistica Sinica, 1*(1), 65--92. Retrieved from
+##'   <https://www.jstor.org/stable/24303994>
 ##'
 ##'   Meng, X.-L., & Rubin, D. B. (1992). Performing likelihood ratio tests with
-##'   multiply-imputed data sets. \emph{Biometrika, 79}(1), 103--111.
+##'   multiply-imputed data sets. *Biometrika, 79*(1), 103--111.
 ##'   \doi{10.2307/2337151}
 ##'
-##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+##'   Rubin, D. B. (1987). *Multiple imputation for nonresponse in surveys*.
 ##'   New York, NY: Wiley.
 ##'
 ##' @examples
 ##'
-##' ## See ?runMI help page
+##' ## See the new lavaan.mi package
 ##'
-setClass("lavaan.mi", contains = "lavaanList",
+setClass("OLDlavaan.mi", contains = "lavaanList",
          slots = c(coefList = "list",     # coefficients in matrix format
                    phiList = "list",      # list of model-implied latent covariance matrices
                    miList = "list",       # modification indices
@@ -226,10 +226,10 @@ setClass("lavaan.mi", contains = "lavaanList",
 
 
 
-##' @name lavaan.mi-class
-##' @aliases show,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases show,OLDlavaan.mi-method
 ##' @export
-setMethod("show", "lavaan.mi", function(object) {
+setMethod("show", "OLDlavaan.mi", function(object) {
   nData <- object@meta$ndat
 
   useImps <- sapply(object@convergence, "[[", i = "converged")
@@ -244,8 +244,8 @@ setMethod("show", "lavaan.mi", function(object) {
   Heywood.lv <- sapply(object@convergence, "[[", "Heywood.lv")
   Heywood.lv[is.na(Heywood.lv)] <- FALSE
 
-  cat('lavaan.mi object based on ', nData, ' imputed data sets. \n',
-      'See class?lavaan.mi help page for available methods. \n\n',
+  cat('OLDlavaan.mi object based on ', nData, ' imputed data sets. \n',
+      'See class?OLDlavaan.mi help page for available methods. \n\n',
       'Convergence information:\n', 'The model converged on ',
       nConverged, ' imputed data sets \n\n', sep = "")
 
@@ -269,7 +269,7 @@ setMethod("show", "lavaan.mi", function(object) {
 ##' @importFrom stats pt qt pnorm qnorm
 ##' @importFrom lavaan lavListInspect parTable lavNames
 ##' @importFrom methods getMethod
-summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
+summary_OLDlavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
                               standardized = FALSE, rsquare = FALSE,
                               fmi = FALSE, scale.W = !asymptotic,
                               omit.imps = c("no.conv","no.se"),
@@ -302,8 +302,8 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
   free <- PT$free > 0L | PT$op == ":="
   STDs <- !(PT$op %in% c("==","<",">")) # which rows can be standardized
 
-  PE$est <- getMethod("coef","lavaan.mi")(object, type = "all",
-                                          omit.imps = omit.imps)
+  PE$est <- getMethod("coef","OLDlavaan.mi")(object, type = "all",
+                                             omit.imps = omit.imps)
 
   if (lavoptions$se == "none") {
     warning('pooled variances and tests unavailable when se="none" is requested')
@@ -318,8 +318,8 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
                      if (se & !asymptotic) " test and CI.",
                      "\n")
   if (se) {
-    VCOV <- getMethod("vcov","lavaan.mi")(object, scale.W = scale.W,
-                                          omit.imps = omit.imps)
+    VCOV <- getMethod("vcov","OLDlavaan.mi")(object, scale.W = scale.W,
+                                             omit.imps = omit.imps)
     PE$se <- lavaan::lav_model_vcov_se(object@Model, VCOV = VCOV,
                                        lavpartable = object@ParTable)
     W <- rowMeans(sapply(object@ParTableList[useImps], "[[", i = "se")^2)
@@ -359,7 +359,7 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
 
   if (length(standardized) || rsquare) {
     ## pooled estimates for standardizedSolution()
-    est <- getMethod("coef", "lavaan.mi")(object, omit.imps = omit.imps)
+    est <- getMethod("coef", "OLDlavaan.mi")(object, omit.imps = omit.imps)
     ## updates @Model@GLIST for standardizedSolution(..., GLIST=)
     object@Model <- lavaan::lav_model_set_parameters(object@Model, x = est)
   }
@@ -396,6 +396,8 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
     PE$label <- PT$label
     #FIXME: no longer needed?  PE$exo <- 0L
     class(PE) <- c("lavaan.parameterEstimates","lavaan.data.frame","data.frame")
+    attr(PE, "categorical") <- lavoptions$categorical
+    attr(PE, "parameterization") <- lavoptions$parameterization
     attr(PE, "information") <- lavoptions$information[1]
     attr(PE, "information.meat") <- lavoptions$information.meat
     attr(PE, "se") <- lavoptions$se
@@ -438,7 +440,7 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
   rownames(PE) <- NULL
 
   if (output == "text") {
-    getMethod("show", "lavaan.mi")(object)
+    getMethod("show", "OLDlavaan.mi")(object)
     cat(messPool)
   }
   if (fit.measures) {
@@ -450,17 +452,17 @@ summary.lavaan.mi <- function(object, se = TRUE, ci = FALSE, level = .95,
 
   PE
 }
-##' @name lavaan.mi-class
-##' @aliases summary,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases summary,OLDlavaan.mi-method
 ##' @export
-setMethod("summary", "lavaan.mi", summary.lavaan.mi)
+setMethod("summary", "OLDlavaan.mi", summary_OLDlavaan.mi)
 
 
-##' @name lavaan.mi-class
-##' @aliases nobs,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases nobs,OLDlavaan.mi-method
 ##' @importFrom lavaan lavListInspect
 ##' @export
-setMethod("nobs", "lavaan.mi", function(object, total = TRUE) {
+setMethod("nobs", "OLDlavaan.mi", function(object, total = TRUE) {
   if (total) return(lavListInspect(object, "ntotal"))
   #FIXME: cluster N for multilevel?
   N <- lavListInspect(object, "norig")
@@ -471,7 +473,7 @@ setMethod("nobs", "lavaan.mi", function(object, total = TRUE) {
 
 
 ##' @importFrom lavaan parTable
-coef.lavaan.mi <- function(object, type = "free", labels = TRUE,
+coef_OLDlavaan.mi <- function(object, type = "free", labels = TRUE,
                            omit.imps = c("no.conv","no.se")) {
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
@@ -505,16 +507,16 @@ coef.lavaan.mi <- function(object, type = "free", labels = TRUE,
   class(out) <- c("lavaan.vector","numeric")
   out
 }
-##' @name lavaan.mi-class
-##' @aliases coef,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases coef,OLDlavaan.mi-method
 ##' @export
-setMethod("coef", "lavaan.mi", coef.lavaan.mi)
+setMethod("coef", "OLDlavaan.mi", coef_OLDlavaan.mi)
 
 
 
 ##' @importFrom stats cov
 ##' @importFrom lavaan lavListInspect parTable
-vcov.lavaan.mi <- function(object, type = c("pooled","between","within","ariv"),
+vcov_OLDlavaan.mi <- function(object, type = c("pooled","between","within","ariv"),
                            scale.W = TRUE, omit.imps = c("no.conv","no.se")) {
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
@@ -578,25 +580,25 @@ vcov.lavaan.mi <- function(object, type = c("pooled","between","within","ariv"),
   ## return pooled variance
   Total
 }
-##' @name lavaan.mi-class
-##' @aliases vcov,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases vcov,OLDlavaan.mi-method
 ##' @export
-setMethod("vcov", "lavaan.mi", vcov.lavaan.mi)
+setMethod("vcov", "OLDlavaan.mi", vcov_OLDlavaan.mi)
 
 
 ##' @importFrom lavaan lavListInspect lavTestLRT
-anova.lavaan.mi <- function(object, ...) {
+anova_OLDlavaan.mi <- function(object, ...) {
   ## save model names
   objname <- deparse(substitute(object))
   dotnames <- as.character(sapply(substitute(list(...))[-1], deparse))
 
   ## check class
-  if (!inherits(object, "lavaan.mi")) stop("object is not class 'lavaan.mi'")
+  if (!inherits(object, "OLDlavaan.mi")) stop("object is not class 'OLDlavaan.mi'")
   ## check for additional arguments
   dots <- list(...)
   if (length(dots)) {
-    ## separate lavaan.mi objects from other lavTestLRT.mi() arguments
-    idx.mi <- which(sapply(dots, inherits, what = "lavaan.mi"))
+    ## separate OLDlavaan.mi objects from other lavTestLRT.mi() arguments
+    idx.mi <- which(sapply(dots, inherits, what = "OLDlavaan.mi"))
     if (length(idx.mi)) {
       mods <- dots[idx.mi]
       dots <- dots[-idx.mi]
@@ -636,10 +638,10 @@ anova.lavaan.mi <- function(object, ...) {
 
   results
 }
-##' @name lavaan.mi-class
-##' @aliases anova,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases anova,OLDlavaan.mi-method
 ##' @export
-setMethod("anova", "lavaan.mi", anova.lavaan.mi)
+setMethod("anova", "OLDlavaan.mi", anova_OLDlavaan.mi)
 
 
 ##' @importFrom lavaan lavListInspect lavNames
@@ -666,10 +668,11 @@ getSRMR <- function(object, type = "cor.bentler", level = "within",
   }
 
   ## grab residuals
-  R <- getMethod("resid", "lavaan.mi")(object, type = type,
-                                       omit.imps = omit.imps)
-  if (mplus) Rd <- getMethod("resid", "lavaan.mi")(object, type = "cor.bentler",
-                                                   omit.imps = omit.imps)
+  R <- getMethod("resid", "OLDlavaan.mi")(object, type = type,
+                                          omit.imps = omit.imps)
+  if (mplus) Rd <- getMethod("resid", "OLDlavaan.mi")(object,
+                                                      type = "cor.bentler",
+                                                      omit.imps = omit.imps)
   ## restructure, if necessary
   if (nG == 1L) {
     loopBlocks <- 1L
@@ -717,7 +720,7 @@ getSRMR <- function(object, type = "cor.bentler", level = "within",
 }
 ##' @importFrom lavaan lavNames lavListInspect
 ##' @importFrom stats pchisq uniroot
-fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
+fitMeasures_OLDlavaan.mi <- function(object, fit.measures = "all", baseline.model = NULL,
                            output = "vector", omit.imps = c("no.conv","no.se"),
                            ...) {
 
@@ -836,9 +839,9 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
 
     ## fit baseline model if necessary
     if (any(indices %in% incremental)) {
-      if (inherits(baseline.model, "lavaan.mi")) {
+      if (inherits(baseline.model, "OLDlavaan.mi")) {
         baseFit <- baseline.model
-      } else if (inherits(object@external$baseline.model, "lavaan.mi")) {
+      } else if (inherits(object@external$baseline.model, "OLDlavaan.mi")) {
         baseFit <- object@external$baseline.model
 
         ## MUST fit PTb for "D3" likelihoods, but for "D2" use @baselineList
@@ -1262,22 +1265,22 @@ fitMeasures.mi <- function(object, fit.measures = "all", baseline.model = NULL,
   if (output == "text") class(fits) <- c("lavaan.fitMeasures", class(fits))
   fits
 }
-##' @name lavaan.mi-class
-##' @aliases fitMeasures,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases fitMeasures,OLDlavaan.mi-method
 ##' @importFrom lavaan fitMeasures
 ##' @export
-setMethod("fitMeasures", "lavaan.mi", fitMeasures.mi)
+setMethod("fitMeasures", "OLDlavaan.mi", fitMeasures_OLDlavaan.mi)
 ## lowercase 'm'
-##' @name lavaan.mi-class
-##' @aliases fitmeasures,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases fitmeasures,OLDlavaan.mi-method
 ##' @importFrom lavaan fitmeasures
 ##' @export
-setMethod("fitmeasures", "lavaan.mi", fitMeasures.mi)
+setMethod("fitmeasures", "OLDlavaan.mi", fitMeasures_OLDlavaan.mi)
 
 
 ##' @importFrom lavaan lavListInspect lavNames
 ##' @importFrom methods getMethod
-fitted.lavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
+fitted_OLDlavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
   if ("no.se" %in% omit.imps) useImps <- useImps & sapply(object@convergence, "[[", i = "SE")
@@ -1305,14 +1308,14 @@ fitted.lavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
                          sep = if (nG > 1L && nlevels > 1L) "_" else "")
   }
 
-  est <- getMethod("coef", "lavaan.mi")(object, omit.imps = omit.imps)
+  est <- getMethod("coef", "OLDlavaan.mi")(object, omit.imps = omit.imps)
   setpar <- lavaan::lav_model_set_parameters(object@Model, x = est)
   impMats <- lavaan::lav_model_implied(setpar)
-  if (lavListInspect(object, "categorical")) {
-    th.idx <- lavListInspect(object, "th.idx") # to select $(res.)th
-    if (nBlocks == 1L) th.idx <- list(th.idx)  # to loop over
-    #FIXME when multilevel accepts categorical
-  }
+  # if (lavListInspect(object, "categorical")) {
+  #   th.idx <- lavListInspect(object, "th.idx") # to select $(res.)th
+  #   if (nBlocks == 1L) th.idx <- list(th.idx)  # to loop over
+  #   #FIXME when multilevel accepts categorical
+  # }
 
   #TODO: adapt to multilevel, multigroup, or both
   ## loop over (blocks and) moments
@@ -1341,7 +1344,7 @@ fitted.lavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
         ##      apply once (not to each level, like for all groups).
         ##      Will lavaan return a vector of zeros for all but "within"?
         ##      If not, it will not exist for each block, so count over groups.
-        Implied[[b]][[nm]] <- as.numeric(Implied[[b]][[nm]])[ th.idx[[b]] ] # remove matrix & numeric -means
+        Implied[[b]][[nm]] <- as.numeric(Implied[[b]][[nm]]) #[ th.idx[[b]] ] # remove matrix & numeric -means
         names(Implied[[b]][[nm]]) <- lavNames(object, type = "th",
                                               block = b) #FIXME?
         class(Implied[[b]][[nm]]) <- c("lavaan.vector","numeric")
@@ -1379,22 +1382,22 @@ fitted.lavaan.mi <- function(object, omit.imps = c("no.conv","no.se")) {
 
   Implied
 }
-##' @name lavaan.mi-class
-##' @aliases fitted,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases fitted,OLDlavaan.mi-method
 ##' @export
-setMethod("fitted", "lavaan.mi", fitted.lavaan.mi)
-##' @name lavaan.mi-class
-##' @aliases fitted.values,lavaan.mi-method
+setMethod("fitted", "OLDlavaan.mi", fitted_OLDlavaan.mi)
+##' @name OLDlavaan.mi-class
+##' @aliases fitted.values,OLDlavaan.mi-method
 ##' @export
-setMethod("fitted.values", "lavaan.mi", fitted.lavaan.mi)
+setMethod("fitted.values", "OLDlavaan.mi", fitted_OLDlavaan.mi)
 
 
 
 ##' @importFrom lavaan lavListInspect
 ##' @importFrom methods getMethod
 ##' @importFrom stats cov2cor
-resid.lavaan.mi <- function(object, type = c("raw","cor"),
-                            omit.imps = c("no.conv","no.se")) {
+resid_OLDlavaan.mi <- function(object, type = c("raw","cor"),
+                               omit.imps = c("no.conv","no.se")) {
   ## @SampleStatsList is (for each imputation) output from:
   ##    getSampStats <- function(obj) lavInspect(obj, "sampstat")
   useImps <- rep(TRUE, length(object@DataList))
@@ -1442,7 +1445,7 @@ resid.lavaan.mi <- function(object, type = c("raw","cor"),
 
   ## H0-model-implied moments, already pooled
   ## (moments-list nested in block-list)
-  Implied <- getMethod("fitted", "lavaan.mi")(object, omit.imps = omit.imps)
+  Implied <- getMethod("fitted", "OLDlavaan.mi")(object, omit.imps = omit.imps)
   if (nBlocks == 1L) Implied <- list(Implied) # store single block in a block-list
 
   ## template to store observed moments & residuals
@@ -1544,14 +1547,14 @@ resid.lavaan.mi <- function(object, type = c("raw","cor"),
 
   RES
 }
-##' @name lavaan.mi-class
-##' @aliases residuals,lavaan.mi-method
+##' @name OLDlavaan.mi-class
+##' @aliases residuals,OLDlavaan.mi-method
 ##' @export
-setMethod("residuals", "lavaan.mi", resid.lavaan.mi)
-##' @name lavaan.mi-class
-##' @aliases resid,lavaan.mi-method
+setMethod("residuals", "OLDlavaan.mi", resid_OLDlavaan.mi)
+##' @name OLDlavaan.mi-class
+##' @aliases resid,OLDlavaan.mi-method
 ##' @export
-setMethod("resid", "lavaan.mi", resid.lavaan.mi)
+setMethod("resid", "OLDlavaan.mi", resid_OLDlavaan.mi)
 
 
 

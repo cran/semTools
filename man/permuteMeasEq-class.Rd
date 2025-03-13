@@ -11,7 +11,8 @@ Equivalence and DIF}
 \usage{
 \S4method{show}{permuteMeasEq}(object)
 
-\S4method{summary}{permuteMeasEq}(object, alpha = 0.05, nd = 3, extra = FALSE)
+\S4method{summary}{permuteMeasEq}(object, alpha = 0.05, nd = 3,
+  extra = FALSE)
 
 \S4method{hist}{permuteMeasEq}(x, ..., AFI, alpha = 0.05, nd = 3,
   printLegend = TRUE, legendArgs = list(x = "topleft"))
@@ -29,7 +30,7 @@ should return permutation-based \emph{p} values for each statistic returned
 by the \code{extra} function.  If \code{FALSE} (default), \code{summary}
 will return permutation-based \emph{p} values for each modification index.}
 
-\item{...}{Additional arguments to pass to \code{\link[graphics]{hist}}}
+\item{...}{Additional arguments to pass to \code{\link[graphics:hist]{graphics::hist()}}}
 
 \item{AFI}{\code{character} indicating the fit measure whose permutation
 distribution should be plotted}
@@ -38,39 +39,39 @@ distribution should be plotted}
 be printed with the histogram}
 
 \item{legendArgs}{\code{list} of arguments passed to the
-\code{\link[graphics]{legend}} function.  The default argument is a list
+\code{\link[graphics:legend]{graphics::legend()}} function.  The default argument is a list
 placing the legend at the top-left of the figure.}
 }
 \value{
 \itemize{
 \item The \code{show} method prints a summary of the multiparameter
-  omnibus test results, using the user-specified AFIs. The parametric
- (\eqn{\Delta})\eqn{\chi^2} test is also displayed.
+omnibus test results, using the user-specified AFIs. The parametric
+(\eqn{\Delta})\eqn{\chi^2} test is also displayed.
 \item The \code{summary} method prints the same information from the
-  \code{show} method, but when \code{extra = FALSE} (the default) it also
-  provides a table summarizing any requested follow-up tests of DIF using
-  modification indices in slot \code{MI.obs}. The user can also specify an
-  \code{alpha} level for flagging modification indices as significant, as
-  well as \code{nd} (the number of digits displayed). For each modification
-  index, the \emph{p} value is displayed using a central \eqn{\chi^2}
-  distribution with the \emph{df} shown in that column. Additionally, a
-  \emph{p} value is displayed using the permutation distribution of the
-  maximum index, which controls the familywise Type I error rate in a manner
-  similar to Tukey's studentized range test. If any indices are flagged as
-  significant using the \code{tukey.p.value}, then a message is displayed for
-  each flagged index. The invisibly returned \code{data.frame} is the
-  displayed table of modification indices, unless
-  \code{\link[semTools]{permuteMeasEq}} was called with \code{param = NULL},
-  in which case the invisibly returned object is \code{object}. If
-  \code{extra = TRUE}, the permutation-based \emph{p} values for each
-  statistic returned by the \code{extra} function are displayed and returned
-  in a \code{data.frame} instead of the modification indices requested in the
-  \code{param} argument.
+\code{show} method, but when \code{extra = FALSE} (the default) it also
+provides a table summarizing any requested follow-up tests of DIF using
+modification indices in slot \code{MI.obs}. The user can also specify an
+\code{alpha} level for flagging modification indices as significant, as
+well as \code{nd} (the number of digits displayed). For each modification
+index, the \emph{p} value is displayed using a central \eqn{\chi^2}
+distribution with the \emph{df} shown in that column. Additionally, a
+\emph{p} value is displayed using the permutation distribution of the
+maximum index, which controls the familywise Type I error rate in a manner
+similar to Tukey's studentized range test. If any indices are flagged as
+significant using the \code{tukey.p.value}, then a message is displayed for
+each flagged index. The invisibly returned \code{data.frame} is the
+displayed table of modification indices, unless
+\code{\link[=permuteMeasEq]{permuteMeasEq()}} was called with \code{param = NULL},
+in which case the invisibly returned object is \code{object}. If
+\code{extra = TRUE}, the permutation-based \emph{p} values for each
+statistic returned by the \code{extra} function are displayed and returned
+in a \code{data.frame} instead of the modification indices requested in the
+\code{param} argument.
 \item The \code{hist} method returns a list of \code{length == 2},
-   containing the arguments for the call to \code{hist} and the arguments
-   to the call for \code{legend}, respectively. This list may facilitate
-   creating a customized histogram of \code{AFI.dist}, \code{MI.dist}, or
-   \code{extra.dist}
+containing the arguments for the call to \code{hist} and the arguments
+to the call for \code{legend}, respectively. This list may facilitate
+creating a customized histogram of \code{AFI.dist}, \code{MI.dist}, or
+\code{extra.dist}
 }
 }
 \description{
@@ -81,7 +82,7 @@ Differential Item Functioning (DIF).
 
 \describe{
 \item{\code{PT}}{A \code{data.frame} returned by a call to
-\code{\link[lavaan]{parTable}} on the constrained model}
+\code{\link[lavaan:parTable]{lavaan::parTable()}} on the constrained model}
 
 \item{\code{modelType}}{A character indicating the specified \code{modelType} in the
 call to \code{permuteMeasEq}}
@@ -104,7 +105,7 @@ if the null hypothesis were true}
 \item{\code{MI.obs}}{A \code{data.frame} of observed Lagrange Multipliers
 (modification indices) associated with the equality constraints or fixed
 parameters specified in the \code{param} argument. This is a subset of the
-output returned by a call to \code{\link[lavaan]{lavTestScore}} on the
+output returned by a call to \code{\link[lavaan:lavTestScore]{lavaan::lavTestScore()}} on the
 constrained model.}
 
 \item{\code{MI.dist}}{The permutation distribution of the maximum modification index
@@ -145,7 +146,7 @@ previous \code{.Random.seed} state, if desired, by running:
 
 \section{Objects from the Class}{
  Objects can be created via the
-  \code{\link[semTools]{permuteMeasEq}} function.
+\code{\link[=permuteMeasEq]{permuteMeasEq()}} function.
 }
 
 \examples{
@@ -154,9 +155,9 @@ previous \code{.Random.seed} state, if desired, by running:
 
 }
 \seealso{
-\code{\link[semTools]{permuteMeasEq}}
+\code{\link[=permuteMeasEq]{permuteMeasEq()}}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam;
-  \email{TJorgensen314@gmail.com})
+\email{TJorgensen314@gmail.com})
 }

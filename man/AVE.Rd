@@ -8,11 +8,10 @@ AVE(object, obs.var = TRUE, omit.imps = c("no.conv", "no.se"),
   omit.factors = character(0), dropSingle = TRUE, return.df = TRUE)
 }
 \arguments{
-\item{object}{A \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object, expected to contain only
-exogenous common factors (i.e., a CFA model). Cross-loadings are not
-allowed and will result in \code{NA} for any factor with indicator(s)
-that cross-load.}
+\item{object}{A \link[lavaan:lavaan-class]{lavaan::lavaan} or \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object,
+expected to contain only exogenous common factors (i.e., a CFA model).
+Cross-loadings are not allowed and will result in \code{NA} for any factor with
+indicator(s) that cross-load.}
 
 \item{obs.var}{\code{logical} indicating whether to compute AVE using
 observed variances in the denominator. Setting \code{FALSE} triggers
@@ -48,13 +47,13 @@ those in \code{omit.factors} and applying \code{dropSingle}).}
 }
 \value{
 \code{numeric} vector of average variance extracted from indicators
-  per factor.  For models with multiple "blocks" (any combination of groups
-  and levels), vectors may be returned as columns in a \code{data.frame}
-  with additional columns indicating the group/level (see \code{return.df=}
-  argument description for caveat).
+per factor.  For models with multiple "blocks" (any combination of groups
+and levels), vectors may be returned as columns in a \code{data.frame}
+with additional columns indicating the group/level (see \verb{return.df=}
+argument description for caveat).
 }
 \description{
-Calculate average variance extracted (AVE) per factor from `lavaan` object
+Calculate average variance extracted (AVE) per factor from \code{lavaan} object
 }
 \details{
 The average variance extracted (AVE) can be calculated by
@@ -114,7 +113,7 @@ with unobservable variables and measurement errors. \emph{Journal of
 Marketing Research, 18}(1), 39--50. \doi{10.2307/3151312}
 }
 \seealso{
-\code{\link{compRelSEM}} for composite reliability estimates
+\code{\link[=compRelSEM]{compRelSEM()}} for composite reliability estimates
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})

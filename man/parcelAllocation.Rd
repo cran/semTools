@@ -10,11 +10,11 @@ parcelAllocation(model, data, parcel.names, item.syntax, nAlloc = 100,
   do.fit = TRUE, return.fit = FALSE, warn = FALSE)
 }
 \arguments{
-\item{model}{\code{\link[lavaan]{lavaan}} model syntax specifying the model
+\item{model}{\code{\link[lavaan:lavaan]{lavaan::lavaan()}} model syntax specifying the model
 fit to (at least some) parceled data. Note that there can be a mixture of
 items and parcels (even within the same factor), in case certain items
 should never be parceled. Can be a character string or parameter table.
-Also see \code{\link[lavaan]{lavaanify}} for more details.}
+Also see \code{\link[lavaan:model.syntax]{lavaan::lavaanify()}} for more details.}
 
 \item{data}{A \code{data.frame} containing all observed variables appearing
 in the \code{model}, as well as those in the \code{item.syntax} used to
@@ -27,27 +27,27 @@ allocation), each of which is a stacked, imputed data set with parcels.}
 \item{parcel.names}{\code{character} vector containing names of all parcels
 appearing as indicators in \code{model}.}
 
-\item{item.syntax}{\link[lavaan]{lavaan} model syntax specifying the model
+\item{item.syntax}{\code{\link[lavaan:model.syntax]{lavaan::model.syntax()}} specifying the model
 that would be fit to all of the unparceled items, including items that
 should be randomly allocated to parcels appearing in \code{model}.}
 
 \item{nAlloc}{The number of random items-to-parcels allocations to generate.}
 
 \item{fun}{\code{character} string indicating the name of the
-\code{\link[lavaan]{lavaan}} function used to fit \code{model} to
+\code{\link[lavaan:lavaan]{lavaan::lavaan()}} function used to fit \code{model} to
 \code{data}. Can only take the values \code{"lavaan"}, \code{"sem"},
 \code{"cfa"}, or \code{"growth"}.}
 
 \item{alpha}{Alpha level used as criterion for significance.}
 
 \item{fit.measures}{\code{character} vector containing names of fit measures
-to request from each fitted \code{\link[lavaan]{lavaan}} model.  See the
-output of \code{\link[lavaan]{fitMeasures}} for a list of available measures.}
+to request from each fitted \code{\link[lavaan:lavaan]{lavaan::lavaan()}} model.  See the
+output of \code{\link[lavaan:fitMeasures]{lavaan::fitMeasures()}} for a list of available measures.}
 
 \item{\dots}{Additional arguments to be passed to
-\code{\link[lavaan]{lavaanList}}. See also \code{\link[lavaan]{lavOptions}}}
+\code{\link[lavaan:lavaanList]{lavaan::lavaanList()}}. See also \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}}
 
-\item{show.progress}{If \code{TRUE}, show a \code{\link[utils]{txtProgressBar}}
+\item{show.progress}{If \code{TRUE}, show a \code{\link[utils:txtProgressBar]{utils::txtProgressBar()}}
 indicating how fast the model-fitting iterates over allocations.}
 
 \item{iseed}{(Optional) Random seed used for parceling items. When the same
@@ -63,29 +63,29 @@ section below). If \code{FALSE}, the items are randomly parceled, but the
 model is not fit; instead, the \code{list} of \code{data.frame}s is
 returned (so assign it to an object).}
 
-\item{return.fit}{If \code{TRUE}, a \code{\link[lavaan]{lavaanList}} object
+\item{return.fit}{If \code{TRUE}, a \link[lavaan:lavaanList-class]{lavaan::lavaanList} object
 is returned with the \code{list} of results across allocations}
 
 \item{warn}{Whether to print warnings when fitting \code{model} to each allocation}
 }
 \value{
 \item{Estimates}{A \code{data.frame} containing results related to
-    parameter estimates with columns corresponding to their names; average
-    and standard deviation across allocations; minimum, maximum, and range
-    across allocations; and the proportion of allocations in which each
-    parameter estimate was significant.}
-  \item{SE}{A \code{data.frame} containing results similar to
-    \code{Estimates}, but related to the standard errors of parameter
-    estimates.}
-  \item{Fit}{A \code{data.frame} containing results related to model fit,
-    with columns corresponding to fit index names; their average and
-    standard deviation across allocations; the minimum, maximum, and range
-    across allocations; and (if the test statistic or RMSEA is included in
-    \code{fit.measures}) the proportion of allocations in which each
-    test of (exact or close) fit was significant.}
-  \item{Model}{A \code{\link[lavaan]{lavaanList}} object containing results
-    of the \code{model} fitted to each parcel allocation. Only returned if
-    \code{return.fit = TRUE}.}
+parameter estimates with columns corresponding to their names; average
+and standard deviation across allocations; minimum, maximum, and range
+across allocations; and the proportion of allocations in which each
+parameter estimate was significant.}
+\item{SE}{A \code{data.frame} containing results similar to
+\code{Estimates}, but related to the standard errors of parameter
+estimates.}
+\item{Fit}{A \code{data.frame} containing results related to model fit,
+with columns corresponding to fit index names; their average and
+standard deviation across allocations; the minimum, maximum, and range
+across allocations; and (if the test statistic or RMSEA is included in
+\code{fit.measures}) the proportion of allocations in which each
+test of (exact or close) fit was significant.}
+\item{Model}{A \link[lavaan:lavaanList-class]{lavaan::lavaanList} object containing results
+of the \code{model} fitted to each parcel allocation. Only returned if
+\code{return.fit = TRUE}.}
 }
 \description{
 This function generates a given number of randomly generated item-to-parcel
@@ -96,11 +96,11 @@ over all allocations.
 This function implements the random item-to-parcel allocation procedure
 described in Sterba (2011) and Sterba and MacCallum (2010). The function
 takes a single data set with item-level data, randomly assigns items to
-parcels, fits a structural equation model to the parceled data (using
-\link[lavaan]{lavaanList}), and repeats this process for a user-specified
+parcels, fits a structural equation model to the parceled data using
+\code{\link[lavaan:lavaanList]{lavaan::lavaanList()}}, and repeats this process for a user-specified
 number of random allocations. Results from all fitted models are summarized
 in the output. For further details on the benefits of randomly allocating
-items to parcels, see Sterba (2011) and Sterba and MccCallum (2010).
+items to parcels, see Sterba (2011) and Sterba and MacCallum (2010).
 }
 \examples{
 
@@ -122,14 +122,14 @@ f2 =~ par4 + par5 + par6
 ## names of parcels
 (parcel.names <- paste0("par", 1:6))
 
-\dontrun{
+\donttest{
 ## override default random-number generator to use parallel options
 RNGkind("L'Ecuyer-CMRG")
 
 parcelAllocation(mod.parcels, data = simParcel, nAlloc = 100,
                  parcel.names = parcel.names, item.syntax = item.syntax,
-                 std.lv = TRUE,       # any addition lavaan arguments
-                 parallel = "snow")   # parallel options
+               # parallel = "multicore",  # parallel available in Mac/Linux
+                 std.lv = TRUE)           # any addition lavaan arguments
 
 
 
@@ -142,10 +142,11 @@ dataList <- parcelAllocation(mod.parcels, data = simParcel, nAlloc = 100,
                              item.syntax = item.syntax,
                              do.fit = FALSE)
 ## now fit the model to each data set
+library(lavaan.mi)
 fit.parcels <- cfa.mi(mod.parcels, data = dataList, std.lv = TRUE)
-summary(fit.parcels) # uses Rubin's rules
-anova(fit.parcels)   # pooled test statistic
-class?lavaan.mi      # find more methods for pooling results
+summary(fit.parcels)        # pooled using Rubin's rules
+anova(fit.parcels)          # pooled test statistic
+help(package = "lavaan.mi") # find more methods for pooling results
 }
 
 
@@ -210,8 +211,8 @@ selection: Parcel-allocation variability in model ranking.
 \emph{Psychological Methods, 22}(1), 47--68. \doi{10.1037/met0000067}
 }
 \seealso{
-\code{\link{PAVranking}} for comparing 2 models,
-  \code{\link{poolMAlloc}} for choosing the number of allocations
+\code{\link[=PAVranking]{PAVranking()}} for comparing 2 models,
+\code{\link[=poolMAlloc]{poolMAlloc()}} for choosing the number of allocations
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})

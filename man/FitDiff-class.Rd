@@ -9,15 +9,15 @@
 \usage{
 \S4method{show}{FitDiff}(object)
 
-\S4method{summary}{FitDiff}(object, fit.measures = "default", nd = 3, tag = "†")
+\S4method{summary}{FitDiff}(object, fit.measures = "default", nd = 3,
+  tag = "†")
 }
 \arguments{
 \item{object}{object of class \code{FitDiff}}
 
 \item{fit.measures}{\code{character} vector naming fit indices the user can
-request from \code{\link[lavaan]{fitMeasures}}. If \code{"default"}, the
-fit measures will be \code{c("chisq", "df", "pvalue", "cfi", "tli",
-"rmsea", "srmr", "aic", "bic")}. If \code{"all"}, all available fit
+request from \code{\link[lavaan:fitMeasures]{lavaan::fitMeasures()}}. If \code{"default"}, the
+fit measures will be \code{c("chisq", "df", "pvalue", "cfi", "tli", "rmsea", "srmr", "aic", "bic")}. If \code{"all"}, all available fit
 measures will be returned.}
 
 \item{nd}{number of digits printed}
@@ -48,7 +48,7 @@ the \code{fit} slot}
 
 \section{Objects from the Class}{
  Objects can be created via the
- \code{\link{compareFit}} function.
+\code{\link[=compareFit]{compareFit()}} function.
 }
 
 \examples{
@@ -69,7 +69,7 @@ summary(measEqOut)
 summary(measEqOut, fit.measures = "all")
 summary(measEqOut, fit.measures = c("aic", "bic"))
 
-\dontrun{
+if(interactive()){
 ## Save results to a file
 saveFile(measEqOut, file = "measEq.txt")
 
@@ -79,11 +79,11 @@ clipboard(measEqOut)
 
 }
 \seealso{
-\code{\link{compareFit}}; \code{\link{clipboard}}
+\code{\link[=compareFit]{compareFit()}}; \code{\link[=clipboard]{clipboard()}}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam;
-  \email{TJorgensen314@gmail.com})
+\email{TJorgensen314@gmail.com})
 
-  Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
+Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
 }

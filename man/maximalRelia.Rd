@@ -7,9 +7,8 @@
 maximalRelia(object, omit.imps = c("no.conv", "no.se"))
 }
 \arguments{
-\item{object}{A \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object, expected to contain only
-exogenous common factors (i.e., a CFA model).}
+\item{object}{A \link[lavaan:lavaan-class]{lavaan::lavaan} or \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object,
+expected to contain only exogenous common factors (i.e., a CFA model).}
 
 \item{omit.imps}{\code{character} vector specifying criteria for omitting
 imputations from pooled results.  Can include any of
@@ -28,8 +27,8 @@ imputations warrant further investigation.}
 }
 \value{
 Maximal reliability values of each group. The maximal-reliability
-  weights are also provided. Users may extracted the weighted by the
-  \code{attr} function (see example below).
+weights are also provided. Users may extracted the weighted by the
+\code{attr} function (see example below).
 }
 \description{
 Calculate maximal reliability of a scale
@@ -109,8 +108,8 @@ equation modeling. In R. H. Hoyle (Ed.), \emph{Handbook of structural
 equation modeling} (pp. 472--494). New York, NY: Guilford.
 }
 \seealso{
-\code{\link{reliability}} for reliability of an unweighted
-  composite score
+\code{\link[=reliability]{reliability()}} for reliability of an unweighted
+composite score
 }
 \author{
 Sunthud Pornprasertmanit (\email{psunthud@gmail.com})

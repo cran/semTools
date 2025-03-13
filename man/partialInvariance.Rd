@@ -16,8 +16,8 @@ partialInvarianceCat(fit, type, free = NULL, fix = NULL, refgroup = 1,
 \arguments{
 \item{fit}{A list of models for invariance testing. Each model should be
 assigned by appropriate names (see details). The result from
-\code{\link{measurementInvariance}} or
-\code{\link{measurementInvarianceCat}} could be used in this argument
+\code{\link[=measurementInvariance]{measurementInvariance()}} or
+\code{\link[=measurementInvarianceCat]{measurementInvarianceCat()}} could be used in this argument
 directly.}
 
 \item{type}{The types of invariance testing: "metric", "scalar", "strict",
@@ -39,7 +39,7 @@ standardization. Otherwise, the variances of the reference group are used
 for standardization.}
 
 \item{p.adjust}{The method used to adjust p values. See
-\code{\link[stats]{p.adjust}} for the options for adjusting p values. The
+\code{\link[stats:p.adjust]{stats::p.adjust()}} for the options for adjusting p values. The
 default is to not use any corrections.}
 
 \item{fbound}{The z-scores of factor that is used to calculate the effect
@@ -49,42 +49,42 @@ size of the loading difference proposed by Millsap and Olivera-Aguilar
 \item{return.fit}{Return the submodels fitted by this function}
 
 \item{method}{The method used to calculate likelihood ratio test. See
-\code{\link[lavaan]{lavTestLRT}} for available options}
+\code{\link[lavaan:lavTestLRT]{lavaan::lavTestLRT()}} for available options}
 }
 \value{
 A list of results are provided. The list will consists of at least
 two elements:
 \enumerate{
- \item \code{estimates}: The results of parameter estimates including pooled
-  estimates (\code{poolest}), the estimates for each group, standardized
-  estimates for each group (\code{std}), the difference in standardized
-  values, and the effect size statistic (\emph{q} for factor loading
-  difference and \emph{h} for error variance difference). See the details of
-  this effect size statistic by running \code{vignette("partialInvariance")}.
-  In the \code{partialInvariance} function, the additional effect statistics
-  proposed by Millsap and Olivera-Aguilar (2012) are provided. For factor
-  loading, the additional outputs are the observed mean difference
-  (\code{diff_mean}), the mean difference if factor scores are low
-  (\code{low_fscore}), and the mean difference if factor scores are high
-  (\code{high_fscore}). The low factor score is calculated by (a) finding the
-  factor scores that its \emph{z} score equals -\code{bound} (the default is
-  \eqn{-2}) from all groups and (b) picking the minimum value among the
-  factor scores. The high factor score is calculated by (a) finding the
-  factor scores that its \emph{z} score equals \code{bound} (default = 2)
-  from all groups and (b) picking the maximum value among the factor scores.
-  For measurement intercepts, the additional outputs are the observed means
-  difference (\code{diff_mean}) and the proportion of the differences in the
-  intercepts over the observed means differences (\code{propdiff}). For error
-  variances, the additional outputs are the proportion of the difference in
-  error variances over the difference in observed variances (\code{propdiff}).
+\item \code{estimates}: The results of parameter estimates including pooled
+estimates (\code{poolest}), the estimates for each group, standardized
+estimates for each group (\code{std}), the difference in standardized
+values, and the effect size statistic (\emph{q} for factor loading
+difference and \emph{h} for error variance difference). See the details of
+this effect size statistic by running \code{vignette("partialInvariance")}.
+In the \code{partialInvariance} function, the additional effect statistics
+proposed by Millsap and Olivera-Aguilar (2012) are provided. For factor
+loading, the additional outputs are the observed mean difference
+(\code{diff_mean}), the mean difference if factor scores are low
+(\code{low_fscore}), and the mean difference if factor scores are high
+(\code{high_fscore}). The low factor score is calculated by (a) finding the
+factor scores that its \emph{z} score equals -\code{bound} (the default is
+\eqn{-2}) from all groups and (b) picking the minimum value among the
+factor scores. The high factor score is calculated by (a) finding the
+factor scores that its \emph{z} score equals \code{bound} (default = 2)
+from all groups and (b) picking the maximum value among the factor scores.
+For measurement intercepts, the additional outputs are the observed means
+difference (\code{diff_mean}) and the proportion of the differences in the
+intercepts over the observed means differences (\code{propdiff}). For error
+variances, the additional outputs are the proportion of the difference in
+error variances over the difference in observed variances (\code{propdiff}).
 
- \item \code{results}: Statistical tests as well as the change in CFI are
-  provided. \eqn{\chi^2} and \emph{p} value are provided for all methods.
+\item \code{results}: Statistical tests as well as the change in CFI are
+provided. \eqn{\chi^2} and \emph{p} value are provided for all methods.
 
- \item \code{models}: The submodels used in the \code{free} and \code{fix}
-  methods, as well as the nested and parent models. The nested and parent
-  models will be changed from the original models if \code{free} or
-  \code{fit} arguments are specified.
+\item \code{models}: The submodels used in the \code{free} and \code{fix}
+methods, as well as the nested and parent models. The nested and parent
+models will be changed from the original models if \code{free} or
+\code{fit} arguments are specified.
 }
 }
 \description{
@@ -99,7 +99,7 @@ variable. The \code{partialInvarianceCat} is used for categorical variables.
 There are four types of partial invariance testing:
 
 \itemize{
- \item Partial weak invariance. The model named 'fit.configural'
+\item Partial weak invariance. The model named 'fit.configural'
 from the list of models is compared with the model named 'fit.loadings'.
 Each loading will be freed or fixed from the metric and configural
 invariance models respectively. The modified models are compared with the
@@ -109,7 +109,7 @@ names of "fit.configural" and "fit.loadings". Users may use "metric",
 testing invariance on marker variables, other variables will be assigned as
 marker variables automatically.
 
- \item Partial strong invariance. The model
+\item Partial strong invariance. The model
 named 'fit.loadings' from the list of models is compared with the model
 named either 'fit.intercepts' or 'fit.thresholds'. Each intercept will be
 freed or fixed from the scalar and metric invariance models respectively.
@@ -122,7 +122,7 @@ other variables will be assigned as marker variables automatically. Note
 that if all variables are dichotomous, scalar invariance testing is not
 available.
 
- \item Partial strict invariance. The model named either
+\item Partial strict invariance. The model named either
 'fit.intercepts' or 'fit.thresholds' (or 'fit.loadings') from the list of
 models is compared with the model named 'fit.residuals'. Each residual
 variance will be freed or fixed from the strict and scalar (or metric)
@@ -132,7 +132,7 @@ names of "fit.residuals" and either "fit.intercepts", "fit.thresholds", or
 "fit.loadings". Users may use "strict", "residual", "residuals", "error", or
 "errors" in the \code{type} argument.
 
- \item Partial mean invariance. The
+\item Partial mean invariance. The
 model named either 'fit.intercepts' or 'fit.thresholds' (or 'fit.residuals'
 or 'fit.loadings') from the list of models is compared with the model named
 'fit.means'. Each factor mean will be freed or fixed from the means and
@@ -159,7 +159,7 @@ likelihood-ratio test and the difference in CFI are provided.
 \item \code{wald}: This method is similar to the \code{fix} method. However,
 instead of building a new model and compare them with likelihood-ratio test,
 multivariate wald test is used to compare equality between parameter
-estimates. See \code{\link[lavaan]{lavTestWald}} for further details. Note
+estimates. See \code{\link[lavaan:lavTestWald]{lavaan::lavTestWald()}} for further details. Note
 that if any rows of the contrast cannot be summed to 0, the Wald test is not
 provided, such as comparing two means where one of the means is fixed as 0.
 This test statistic is not as accurate as likelihood-ratio test provided in
@@ -201,7 +201,7 @@ weak <- cfa(weak, data = HolzingerSwineford1939, group="school", group.equal="lo
 models <- list(fit.configural = configural, fit.loadings = weak)
 partialInvariance(models, "metric")
 
-\dontrun{
+\donttest{
 partialInvariance(models, "metric", free = "x5") # "x5" is free across groups in advance
 partialInvariance(models, "metric", fix = "x4") # "x4" is fixed across groups in advance
 
@@ -290,9 +290,9 @@ measurement invariance using confirmatory factor analysis. In R. H. Hoyle
 York, NY: Guilford.
 }
 \seealso{
-\code{\link{measurementInvariance}} for measurement invariance for
-continuous variables; \code{\link{measurementInvarianceCat}} for measurement
-invariance for categorical variables; \code{\link[lavaan]{lavTestWald}} for
+\code{\link[=measurementInvariance]{measurementInvariance()}} for measurement invariance for
+continuous variables; \code{\link[=measurementInvarianceCat]{measurementInvarianceCat()}} for measurement
+invariance for categorical variables; \code{\link[lavaan:lavTestWald]{lavaan::lavTestWald()}} for
 multivariate Wald test
 }
 \author{

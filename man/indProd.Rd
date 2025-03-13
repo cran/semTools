@@ -9,7 +9,8 @@ centering, or residual centering}
 indProd(data, var1, var2, var3 = NULL, match = TRUE, meanC = TRUE,
   residualC = FALSE, doubleMC = TRUE, namesProd = NULL)
 
-orthogonalize(data, var1, var2, var3 = NULL, match = TRUE, namesProd = NULL)
+orthogonalize(data, var1, var2, var3 = NULL, match = TRUE,
+  namesProd = NULL)
 }
 \arguments{
 \item{data}{The desired data to be transformed.}
@@ -72,7 +73,7 @@ dat6 <- indProd(attitude[ , -1], var1 = 1:2, var2 = 3:4, var3 = 5:6,
 
 
 ## To add product-indicators to multiple-imputed data sets
-\dontrun{
+\donttest{
 HSMiss <- HolzingerSwineford1939[ , c(paste0("x", 1:9), "ageyr","agemo")]
 set.seed(12345)
 HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
@@ -107,15 +108,15 @@ interactions among latent variables. \emph{Structural Equation Modeling,
 13}(4), 497--519. \doi{10.1207/s15328007sem1304_1}
 }
 \seealso{
-\itemize{ \item \code{\link{probe2WayMC}} For probing the two-way
+\itemize{ \item \code{\link[=probe2WayMC]{probe2WayMC()}} For probing the two-way
 latent interaction when the results are obtained from mean-centering, or
-double-mean centering.  \item \code{\link{probe3WayMC}} For probing the
+double-mean centering.  \item \code{\link[=probe3WayMC]{probe3WayMC()}} For probing the
 three-way latent interaction when the results are obtained from
-mean-centering, or double-mean centering.  \item \code{\link{probe2WayRC}}
+mean-centering, or double-mean centering.  \item \code{\link[=probe2WayRC]{probe2WayRC()}}
 For probing the two-way latent interaction when the results are obtained
-from residual-centering approach.  \item \code{\link{probe3WayRC}} For
+from residual-centering approach.  \item \code{\link[=probe3WayRC]{probe3WayRC()}} For
 probing the two-way latent interaction when the results are obtained from
-residual-centering approach.  \item \code{\link{plotProbe}} Plot the simple
+residual-centering approach.  \item \code{\link[=plotProbe]{plotProbe()}} Plot the simple
 intercepts and slopes of the latent interaction.  }
 }
 \author{

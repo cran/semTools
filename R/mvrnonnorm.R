@@ -1,13 +1,13 @@
 ### Yves Rosseel, Sunthud Pornprasertmanit, & Terrence D. Jorgensen
-### Last updated: 10 January 2021
+### Last updated: 10 June 2024
 
 
 ##' Generate Non-normal Data using Vale and Maurelli (1983) method
 ##'
 ##' Generate Non-normal Data using Vale and Maurelli (1983) method. The function
-##' is designed to be as similar as the popular \code{mvrnorm} function in the
-##' \code{MASS} package. The codes are copied from \code{mvrnorm} function in
-##' the \code{MASS} package for argument checking and \code{lavaan} package for
+##' is designed to be as similar as the popular `mvrnorm` function in the
+##' `MASS` package. The codes are copied from `mvrnorm` function in
+##' the `MASS` package for argument checking and `lavaan` package for
 ##' data generation using Vale and Maurelli (1983) method.
 ##'
 ##'
@@ -17,21 +17,20 @@
 ##' @param mu A mean vector. If elements are named, those will be used as
 ##' variable names in the returned data matrix.
 ##' @param Sigma A positive-definite symmetric matrix specifying the covariance
-##' matrix of the variables. If rows or columns are named (and \code{mu} is
+##' matrix of the variables. If rows or columns are named (and `mu` is
 ##' unnamed), those will be used as variable names in the returned data matrix.
 ##' @param skewness A vector of skewness of the variables
 ##' @param kurtosis A vector of excessive kurtosis of the variables
-##' @param empirical If \code{TRUE}, \code{mu} and \code{Sigma} specify the
-##' empirical rather than population mean and covariance matrix
+##' @param empirical deprecated, ignored.
 ##' @return A data matrix
-##' @author The original function is the \code{\link[lavaan]{simulateData}}
-##' function written by Yves Rosseel in the \code{lavaan} package. The function
+##' @author The original function is the [lavaan::simulateData()]
+##' function written by Yves Rosseel in the `lavaan` package. The function
 ##' is adjusted for a convenient usage by Sunthud Pornprasertmanit
 ##' (\email{psunthud@@gmail.com}). Terrence D. Jorgensen added the feature to
-##' retain variable names from \code{mu} or \code{Sigma}.
+##' retain variable names from `mu` or `Sigma`.
 ##'
 ##' @references Vale, C. D. & Maurelli, V. A. (1983). Simulating multivariate
-##' nonormal distributions. \emph{Psychometrika, 48}(3), 465--471.
+##' nonormal distributions. *Psychometrika, 48*(3), 465--471.
 ##' \doi{10.1007/BF02293687}
 ##'
 ##' @examples
@@ -61,10 +60,8 @@ mvrnonnorm <- function(n, mu, Sigma, skewness = NULL,
     stop("'Sigma' is not positive definite")
   ## simulate X <- NULL
   if (is.null(skewness) && is.null(kurtosis)) {
-    X <- MASS::mvrnorm(n = n, mu = mu, Sigma = Sigma, empirical = empirical)
+    X <- mnormt::rmnorm(n = n, mean = mu, varcov = Sigma)
   } else {
-    if (empirical) warning(c("The empirical argument does not work when the ",
-                             "Vale and Maurelli's method is used."))
     if (is.null(skewness)) skewness <- rep(0, p)
     if (is.null(kurtosis)) kurtosis <- rep(0, p)
     Z <- ValeMaurelli1983copied(n = n, COR = cov2cor(Sigma),
@@ -174,10 +171,10 @@ ValeMaurelli1983copied <- function(n = 100L, COR, skewness, kurtosis,
          print( eigen(ICOR)$values )
     }
 
-    # generate Z ## FIXME: replace by rmvnorm once we use that package
-    X <- Z <- MASS::mvrnorm(n=n, mu=rep(0,nvar), Sigma=ICOR)
+    # generate Z
+    X <- Z <- mnormt::rmnorm(n = n, mean = rep(0,nvar), varcov = ICOR)
 
-    # transform Z using Fleishman constants
+    # transform Z using Fleischman constants
     for(i in 1:nvar) {
         X[,i] <- FTable[i,1L] + FTable[i,2L]*Z[,i] + FTable[i,3L]*Z[,i]^2 +
                  FTable[i,4L]*Z[,i]^3

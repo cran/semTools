@@ -1,6 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 10 January 2021
-### new auxiliary function does NOT create a lavaanStar-class instance
+### Last updated: 12 February 2025
 
 ##' Implement Saturated Correlates with FIML
 ##'
@@ -8,55 +7,62 @@
 ##' information maximum likelihood (FIML) to handle missing data
 ##'
 ##' These functions are wrappers around the corresponding lavaan functions.
-##' You can use them the same way you use \code{\link[lavaan]{lavaan}}, but you
-##' \emph{must} pass your full \code{data.frame} to the \code{data} argument.
-##' Because the saturated-correlates approaches (Enders, 2008) treates exogenous
-##' variables as random, \code{fixed.x} must be set to \code{FALSE}. Because FIML
+##' You can use them the same way you use [lavaan::lavaan()], but you
+##' *must* pass your full `data.frame` to the `data` argument.
+##' Because the saturated-correlates approaches (Enders, 2008) treats exogenous
+##' variables as random, `fixed.x` must be set to `FALSE`. Because FIML
 ##' requires continuous data (although nonnormality corrections can still be
 ##' requested), no variables in the model nor auxiliary variables specified in
-##' \code{aux} can be declared as \code{ordered}.
+##' `aux` can be declared as `ordered`.
 ##'
 ##' @aliases auxiliary lavaan.auxiliary cfa.auxiliary sem.auxiliary growth.auxiliary
-##' @importFrom lavaan lavInspect parTable
+##' @importFrom lavaan lavInspect parTable lavNames
 ##' @importFrom stats cov quantile
 ##'
 ##' @param model The analysis model can be specified with 1 of 2 objects:
 ##'   \enumerate{
-##'     \item  lavaan \code{\link[lavaan]{model.syntax}} specifying a hypothesized
-##'            model \emph{without} mention of auxiliary variables in \code{aux}
-##'     \item  a parameter table, as returned by \code{\link[lavaan]{parTable}},
-##'            specifying the target model \emph{without} auxiliary variables.
+##'     \item  lavaan [lavaan::model.syntax()] specifying a hypothesized
+##'            model *without* mention of auxiliary variables in `aux`
+##'     \item  a parameter table, as returned by [lavaan::parTable()],
+##'            specifying the target model *without* auxiliary variables.
 ##'            This option requires these columns (and silently ignores all others):
-##'            \code{c("lhs","op","rhs","user","group","free","label","plabel","start")}
+##'            `c("lhs","op","rhs","user","group","free","label","plabel","start")`
 ##'   }
-##' @param data \code{data.frame} that includes auxiliary variables as well as
-##'   any observed variables in the \code{model}
-##' @param aux \code{character}. Names of auxiliary variables to add to \code{model}
-##' @param fun \code{character}. Name of a specific lavaan function used to fit
-##'   \code{model} to \code{data} (i.e., \code{"lavaan"}, \code{"cfa"},
-##'   \code{"sem"}, or \code{"growth"}). Only required for \code{auxiliary}.
-##' @param ... additional arguments to pass to \code{\link[lavaan]{lavaan}}.
+##' @param data `data.frame` that includes auxiliary variables as well as
+##'   any observed variables in the `model`
+##' @param aux `character`. Names of auxiliary variables to add to `model`
+##' @param fun `character`. Name of a specific lavaan function used to fit
+##'   `model` to `data` (i.e., `"lavaan"`, `"cfa"`,
+##'   `"sem"`, or `"growth"`). Only required for `auxiliary`.
+##' @param ... Additional arguments to pass to `fun=`.
+##' @param envir Passed to [do.call()].
+##' @param return.syntax `logical` indicating whether to return a
+##'   `character` string of [lavaan::model.syntax()] that can be
+##'   added to a target `model=` that is also a `character` string.
+##'   This can be advantageous, for example, to use add saturated correlates to
+##'   a \pkg{blavaan} model.
 ##'
 ##' @author
 ##' Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
 ##'
-##' @references Enders, C. K. (2008). A note on the use of missing auxiliary
-##'   variables in full information maximum likelihood-based structural equation
-##'   models. \emph{Structural Equation Modeling, 15}(3), 434--448.
+##' @references
+##'   Enders, C. K. (2008). A note on the use of missing auxiliary variables in
+##'   full information maximum likelihood-based structural equation models.
+##'   *Structural Equation Modeling, 15*(3), 434--448.
 ##'   \doi{10.1080/10705510802154307}
 ##'
-##' @return a fitted \code{\linkS4class{lavaan}} object.  Additional
-##'   information is stored as a \code{list} in the \code{@@external} slot:
+##' @return a fitted [lavaan::lavaan-class] object.  Additional
+##'   information is stored as a `list` in the `@@external` slot:
 ##'   \itemize{
-##'     \item \code{baseline.model}. a fitted \code{\linkS4class{lavaan}}
+##'     \item `baseline.model`. a fitted [lavaan::lavaan-class]
 ##'           object. Results of fitting an appropriate independence model for
 ##'           the calculation of incremental fit indices (e.g., CFI, TLI) in
 ##'           which the auxiliary variables remain saturated, so only the target
 ##'           variables are constrained to be orthogonal. See Examples for how
-##'           to send this baseline model to \code{\link[lavaan]{fitMeasures}}.
-##'     \item \code{aux}. The character vector of auxiliary variable names.
-##'     \item \code{baseline.syntax}. A character vector generated within the
-##'           \code{auxiliary} function, specifying the \code{baseline.model}
+##'           to send this baseline model to [lavaan::fitMeasures()].
+##'     \item `aux`. The character vector of auxiliary variable names.
+##'     \item `baseline.syntax`. A character vector generated within the
+##'           `auxiliary` function, specifying the `baseline.model`
 ##'           syntax.
 ##'   }
 ##'
@@ -87,24 +93,30 @@
 ##' ##       is the independence model plus saturated auxiliary parameters
 ##' lavInspect(fitaux2@external$baseline.model, "free")
 ##'
+##'
 ##' @export
-auxiliary <- function(model, data, aux, fun, ...) {
+auxiliary <- function(model, data, aux, fun, ...,
+                      envir = getNamespace("lavaan"), return.syntax = FALSE) {
   lavArgs <- list(...)
-  lavArgs$data <- data
+  lavArgs$data <- substitute(data)
   lavArgs$fixed.x <- FALSE
-  lavArgs$missing <- "fiml"
-  lavArgs$meanstructure <- TRUE
+  if (fun %in% c("lavaan","cfa","sem","growth")) {
+    #TODO: allow fun = "efa"?
+    lavArgs$missing <- "fiml"
+    lavArgs$meanstructure <- TRUE
+  }
   lavArgs$ordered <- NULL
 
   if (missing(aux))
     stop("Please provide a character vector with names of auxiliary variables")
   if (missing(data))
     stop("Please provide a data.frame that includes modeled and auxiliary variables")
-  if (!all(sapply(data[aux], is.numeric)))
+  if (fun %in% c("lavaan","cfa","sem","growth") && !all(sapply(data[aux], is.numeric)))
     stop("missing = 'FIML' is unavailable for categorical data")
 
 
   PTcols <- c("lhs","op","rhs","user","block","group","free","label","plabel","start")
+  #TODO: add any? if fun %in% c("blavaan","bcfa","bsem","bgrowth")
   ## check parameter table, or create one from syntax
   if (is.list(model)) {
 	  if (any(model$exo == 1))
@@ -118,7 +130,7 @@ auxiliary <- function(model, data, aux, fun, ...) {
 	    startArgs <- lavArgs
 	    startArgs$model <- model
 	    startArgs$do.fit <- FALSE
-	    model$start <- parTable(do.call(fun, startArgs))$start
+	    model$start <- parTable(do.call(fun, startArgs, envir = envir))$start
 	  }
 
 	  missingCols <- setdiff(PTcols, names(model))
@@ -129,8 +141,8 @@ auxiliary <- function(model, data, aux, fun, ...) {
 	} else if (is.character(model)) {
 	  ptArgs <- lavArgs
 	  ptArgs$model <- model
-	  ptArgs$do.fit <- FALSE
-	  PT <- parTable(do.call(fun, ptArgs))[PTcols]
+	  ptArgs$do.fit <- FALSE #FIXME: does this work with blavaan?
+	  PT <- parTable(do.call(fun, ptArgs, envir = envir))[PTcols]
 	} else stop("The 'model' argument must be a character vector of",
 	            " lavaan syntax or a parameter table")
 
@@ -143,13 +155,14 @@ auxiliary <- function(model, data, aux, fun, ...) {
   } else CON <- data.frame(NULL)
 
   ## variable names
-  varnames <- lavaan::lavNames(PT, type = "ov")
+  varnames <- lavNames(PT, type = "ov")
 	if (length(intersect(varnames, aux))) stop('modeled variable declared as auxiliary')
 
 	## specify a saturated model for auxiliaries
 	covstruc <- outer(aux, aux, function(x, y) paste(x, "~~", y))
 	satMod <- c(covstruc[lower.tri(covstruc, diag = TRUE)], paste(aux, "~ 1"), # among auxiliaries
 	            outer(aux, varnames, function(x, y) paste(x, "~~", y)))        # between aux and targets
+	if (return.syntax) return(satMod)
 	satPT <- lavaan::lavaanify(satMod, ngroups = max(PT$group))[c("lhs","op","rhs",
 	                                                              "user","block","group")]
 
@@ -157,7 +170,7 @@ auxiliary <- function(model, data, aux, fun, ...) {
 	mergedPT <- lavaan::lav_partable_merge(PT, satPT, remove.duplicated = TRUE, warn = FALSE)
 	nAuxPar <- nrow(mergedPT) - nrow(PT)
 	newRows <- 1L:nAuxPar + nrow(PT)
-	##FIXME:  mergedPT$user[newRows] <- 2L (list as constraints to omit printing?) or new code (9L)?
+	#TODO:  mergedPT$user[newRows] <- 2L (list as constraints to omit printing?) or new code (9L)?
 	mergedPT$free[newRows] <- 1L:nAuxPar + max(PT$free)
 	mergedPT$plabel[newRows] <- paste0(".p", 1L:nAuxPar + nrow(PT), ".")
 	## calculate sample moments as starting values (recycle over groups)
@@ -186,58 +199,77 @@ auxiliary <- function(model, data, aux, fun, ...) {
 	#   ## match order of parameters in syntax above
 	#   mergedPT$start[newRows] <- startVals
 	# }
-	lavArgs$model <- lavaan::lav_partable_complete(rbind(mergedPT, CON))
-  result <- do.call(fun, lavArgs)
+	lavArgs$model <- lavaan::lav_partable_complete(rbind(mergedPT, CON)) #FIXME for blavaan
+  result <- do.call(fun, lavArgs, envir = envir)
 
-  ## specify, fit, and attach an appropriate independence model
-  baseArgs <- list()
-  baseArgs$model                  <- lavaan::lav_partable_complete(satPT)
-  baseArgs$data                   <- data
-  baseArgs$group                  <- lavArgs$group
-  baseArgs$group.label            <- lavArgs$group.label
-  baseArgs$missing                <- "fiml"
-  baseArgs$cluster                <- lavArgs$cluster
-  baseArgs$sample.cov.rescale     <- lavArgs$sample.cov.rescale
-  baseArgs$estimator              <- lavArgs$estimator
-  baseArgs$information            <- lavArgs$information
-  baseArgs$se                     <- lavArgs$se
-  baseArgs$test                   <- lavArgs$test
-  baseArgs$bootstrap              <- lavArgs$bootstrap
-  baseArgs$control                <- lavArgs$control
-  baseArgs$optim.method           <- lavArgs$optim.method
+  if (fun %in% c("lavaan","cfa","sem","growth")) {
+    ## specify, fit, and attach an appropriate independence model
+    baseArgs <- list()
+    baseArgs$model                  <- lavaan::lav_partable_complete(satPT)
+    baseArgs$data                   <- data
+    baseArgs$group                  <- lavArgs$group
+    baseArgs$group.label            <- lavArgs$group.label
+    baseArgs$missing                <- "fiml"
+    baseArgs$cluster                <- lavArgs$cluster
+    baseArgs$sample.cov.rescale     <- lavArgs$sample.cov.rescale
+    baseArgs$estimator              <- lavArgs$estimator
+    baseArgs$information            <- lavArgs$information
+    baseArgs$se                     <- lavArgs$se
+    baseArgs$test                   <- lavArgs$test
+    baseArgs$bootstrap              <- lavArgs$bootstrap
+    baseArgs$control                <- lavArgs$control
+    baseArgs$optim.method           <- lavArgs$optim.method
 
-  result@external$baseline.model  <- do.call(lavaan::lavaan, baseArgs)
-  result@external$aux             <- aux
-  result@external$baseline.syntax <- satMod
+    result@external$baseline.model  <- do.call("lavaan", baseArgs, envir = envir)
+    result@external$aux             <- aux
+    result@external$baseline.syntax <- satMod
+  } # else something similar for blavaan?  Better to fit manually for blavFitIndices
+
 	result
 }
 
 ##' @rdname auxiliary
 ##' @aliases lavaan.auxiliary
 ##' @export
-lavaan.auxiliary <- function(model, data, aux, ...) {
-	auxiliary(model = model, data = data, aux = aux, fun = "lavaan", ...)
+lavaan.auxiliary <- function(model, data, aux, ...,
+                             envir = getNamespace("lavaan")) {
+  mc <- match.call(expand.dots = TRUE)
+  mc$fun <- "lavaan"
+  mc[[1L]] <- quote(semTools::auxiliary)
+  eval(mc, parent.frame())
 }
 
 ##' @rdname auxiliary
 ##' @aliases cfa.auxiliary
 ##' @export
-cfa.auxiliary <- function(model, data, aux, ...) {
-	auxiliary(model = model, data = data, aux = aux, fun = "cfa", ...)
+cfa.auxiliary <- function(model, data, aux, ...,
+                          envir = getNamespace("lavaan")) {
+  mc <- match.call(expand.dots = TRUE)
+  mc$fun <- "cfa"
+  mc[[1L]] <- quote(semTools::auxiliary)
+  eval(mc, parent.frame())
 }
 
 ##' @rdname auxiliary
 ##' @aliases sem.auxiliary
 ##' @export
-sem.auxiliary <- function(model, data, aux, ...) {
-	auxiliary(model = model, data = data, aux = aux, fun = "sem", ...)
+sem.auxiliary <- function(model, data, aux, ...,
+                          envir = getNamespace("lavaan")) {
+  mc <- match.call(expand.dots = TRUE)
+  mc$fun <- "sem"
+  mc[[1L]] <- quote(semTools::auxiliary)
+  eval(mc, parent.frame())
 }
 
 ##' @rdname auxiliary
 ##' @aliases growth.auxiliary
 ##' @export
-growth.auxiliary <- function(model, data, aux, ...) {
-	auxiliary(model = model, data = data, aux = aux, fun = "growth", ...)
+growth.auxiliary <- function(model, data, aux, ...,
+                             envir = getNamespace("lavaan")) {
+  mc <- match.call(expand.dots = TRUE)
+  mc$fun <- "growth"
+  mc[[1L]] <- quote(semTools::auxiliary)
+  eval(mc, parent.frame())
 }
 
 

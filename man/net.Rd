@@ -16,8 +16,8 @@ their \eqn{\chi^2} fit statistics is less than this criterion.}
 }
 \value{
 The \linkS4class{Net} object representing the outputs for nesting
-  and equivalent testing, including a logical matrix of test results and a
-  vector of degrees of freedom for each model.
+and equivalent testing, including a logical matrix of test results and a
+vector of degrees of freedom for each model.
 }
 \description{
 This test examines whether pairs of SEMs are nested or equivalent.
@@ -36,7 +36,6 @@ categorical data, following the procedure described by Asparouhov & Muthen
 }
 \examples{
 
-\dontrun{
 m1 <- ' visual  =~ x1 + x2 + x3
 	       textual =~ x4 + x5 + x6
 	       speed   =~ x7 + x8 + x9 '
@@ -54,6 +53,7 @@ fit1a <- cfa(m1, data = HolzingerSwineford1939, std.lv = TRUE) # Equivalent to f
 fit2 <- cfa(m2, data = HolzingerSwineford1939) # Not equivalent to or nested in fit1
 fit3 <- cfa(m3, data = HolzingerSwineford1939) # Nested in fit1 and fit1a
 
+\donttest{
 tests <- net(fit1, fit1a, fit2, fit3)
 tests
 summary(tests)

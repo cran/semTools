@@ -5,7 +5,8 @@
 \title{Find the minimum sample size for a given statistical power based on
 population RMSEA}
 \usage{
-findRMSEAsamplesize(rmsea0, rmseaA, df, power = 0.8, alpha = 0.05, group = 1)
+findRMSEAsamplesize(rmsea0, rmseaA, df, power = 0.8, alpha = 0.05,
+  group = 1)
 }
 \arguments{
 \item{rmsea0}{Null RMSEA}
@@ -29,7 +30,7 @@ and test of not-close fit (MacCallum, Browne, & Suguwara, 1996)
 \details{
 This function find the minimum sample size for a specified power based on an
 iterative routine. The sample size keep increasing until the calculated
-power from \code{\link{findRMSEApower}} function is just over the specified
+power from \code{\link[=findRMSEApower]{findRMSEApower()}} function is just over the specified
 power. If \code{group} is greater than 1, the resulting sample size is the
 sample size per group.
 }
@@ -43,18 +44,18 @@ MacCallum, R. C., Browne, M. W., & Sugawara, H. M. (1996). Power analysis
 and determination of sample size for covariance structure modeling.
 \emph{Psychological Methods, 1}(2), 130--149. \doi{10.1037/1082-989X.1.2.130}
 
- Jak, S., Jorgensen, T. D., Verdam, M. G., Oort, F. J., & Elffers, L.
- (2021). Analytical power calculations for structural equation modeling:
- A tutorial and Shiny app. \emph{Behavior Research Methods, 53}, 1385--1406.
- \doi{10.3758/s13428-020-01479-0}
+Jak, S., Jorgensen, T. D., Verdam, M. G., Oort, F. J., & Elffers, L.
+(2021). Analytical power calculations for structural equation modeling:
+A tutorial and Shiny app. \emph{Behavior Research Methods, 53}, 1385--1406.
+\doi{10.3758/s13428-020-01479-0}
 }
 \seealso{
 \itemize{
- \item \code{\link{plotRMSEApower}} to plot the statistical power based on
-  population RMSEA given the sample size
- \item \code{\link{plotRMSEAdist}} to visualize the RMSEA distributions
- \item \code{\link{findRMSEApower}} to find the statistical power based on
-  population RMSEA given a sample size
+\item \code{\link[=plotRMSEApower]{plotRMSEApower()}} to plot the statistical power based on
+population RMSEA given the sample size
+\item \code{\link[=plotRMSEAdist]{plotRMSEAdist()}} to visualize the RMSEA distributions
+\item \code{\link[=findRMSEApower]{findRMSEApower()}} to find the statistical power based on
+population RMSEA given a sample size
 }
 }
 \author{

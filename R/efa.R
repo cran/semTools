@@ -1,5 +1,7 @@
 ### Sunthud Pornprasertmanit & Terrence D. Jorgensen
-### Last updated: 27 May 2020
+### Last updated: 27 May      2020
+###   DEPRECATED  24 November 2022 (after 0.5-6 was on CRAN)
+###   REMOVED     next time!
 ### fit and rotate EFA models in lavaan
 
 
@@ -52,6 +54,8 @@
 ##'
 ##' @examples
 ##'
+##' \donttest{
+##'
 ##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
 ##'                          varList = paste0("x", 1:9), estimator = "mlr")
 ##' summary(unrotated, std = TRUE)
@@ -60,10 +64,37 @@
 ##' dat <- data.frame(HolzingerSwineford1939,
 ##'                   z = rnorm(nrow(HolzingerSwineford1939), 0, 1))
 ##' unrotated2 <- efaUnrotate(dat, nf = 2, varList = paste0("x", 1:9), aux = "z")
+##' }
+##'
+##' @name efaUnrotate-deprecated
+##' @usage
+##' efaUnrotate(data = NULL, nf, varList = NULL,
+##'             start = TRUE, aux = NULL, ...)
+##' @seealso \code{\link{semTools-deprecated}}
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
+##'
+##' @section Support functions for exploratory factor analysis in \code{lavaan}:
+##' The \code{efaUnrotate}, \code{orthRotate}, \code{oblqRotate}, and
+##' \code{funRotate} functions will no longer be supported. These functions
+##' allowed users to estimate EFA parameters with \code{lavaan}. Instead, users
+##' can now directly use \code{lavaan}'s \code{\link[lavaan]{efa}()} function.
+##' Exploratory SEM (ESEM) is also supported by lavaan using special operators
+##' in \code{lavaan}'s \code{\link[lavaan]{model.syntax}}; see
+##' \url{https://github.com/yrosseel/lavaan/issues/112} for details.
 ##'
 ##' @export
 efaUnrotate <- function(data = NULL, nf, varList = NULL,
                         start = TRUE, aux = NULL, ...) {
+
+  .Deprecated(msg = c("The efaUnrotate function is deprecated, and it will ",
+                      "cease to be included in future versions of semTools. ",
+                      "The lavaan package itself now provides EFA support. ",
+                      "See help('semTools-deprecated) for details."))
+
   efaArgs <- list(...)
   if (is.null(data)) {
     ## check for summary statistics
@@ -213,6 +244,8 @@ efaUnrotate <- function(data = NULL, nf, varList = NULL,
 ##' \code{\link{oblqRotate}}
 ##' @examples
 ##'
+##' \donttest{
+##'
 ##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
 ##'                          varList = paste0("x", 1:9), estimator = "mlr")
 ##' summary(unrotated, std = TRUE)
@@ -221,6 +254,7 @@ efaUnrotate <- function(data = NULL, nf, varList = NULL,
 ##' # Rotated by Quartimin
 ##' rotated <- oblqRotate(unrotated, method = "quartimin")
 ##' summary(rotated)
+##' }
 ##'
 setClass("EFA", representation(loading = "matrix",
                                rotate = "matrix",
@@ -284,8 +318,8 @@ setMethod("summary", signature(object = "EFA"),
 ##' delta method by numerically computing the Jacobian matrix by the
 ##' \code{\link[lavaan]{lav_func_jacobian_simple}} function.
 ##'
-##' @aliases orthRotate oblqRotate funRotate
-##' @rdname rotate
+## @aliases orthRotate oblqRotate funRotate
+## @rdname rotate
 ##' @param object A lavaan output
 ##' @param method The method of rotations, such as \code{"varimax"},
 ##' \code{"quartimax"}, \code{"geomin"}, \code{"oblimin"}, or any gradient
@@ -303,7 +337,7 @@ setMethod("summary", signature(object = "EFA"),
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @examples
 ##'
-##' \dontrun{
+##' \donttest{
 ##'
 ##' unrotated <- efaUnrotate(HolzingerSwineford1939, nf = 3,
 ##'                          varList = paste0("x", 1:9), estimator = "mlr")
@@ -332,8 +366,29 @@ setMethod("summary", signature(object = "EFA"),
 ##' funRotate(unrotated, fun = "targetQ", Target = target)
 ##' }
 ##'
+##' @name rotate-deprecated
+##'
+##' @usage
+##' orthRotate(object, method = "varimax", ...)
+##'
+##' oblqRotate(object, method = "quartimin", ...)
+##'
+##' funRotate(object, fun, ...)
+##'
+##' @seealso \code{\link{semTools-deprecated}}
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
 ##' @export
 orthRotate <- function(object, method = "varimax", ...) {
+
+  .Deprecated(msg = c("The orthRotate function is deprecated, and it will ",
+                      "cease to be included in future versions of semTools. ",
+                      "The lavaan package itself now provides support EFA. ",
+                      "See help('semTools-deprecated) for details."))
+
 	requireNamespace("GPArotation")
 	if (!("package:GPArotation" %in% search())) attachNamespace("GPArotation")
 	mc <- match.call()
@@ -357,10 +412,16 @@ orthRotate <- function(object, method = "varimax", ...) {
 
 
 
-##' @rdname rotate
+##' @rdname semTools-deprecated
 ##' @export
 oblqRotate <- function(object, method = "quartimin", ...) {
-	requireNamespace("GPArotation")
+
+  .Deprecated(msg = c("The oblqRotate function is deprecated, and it will ",
+                      "cease to be included in future versions of semTools. ",
+                      "The lavaan package itself now provides support EFA. ",
+                      "See help('semTools-deprecated) for details."))
+
+  requireNamespace("GPArotation")
 	if (!("package:GPArotation" %in% search())) attachNamespace("GPArotation")
 	mc <- match.call()
 	initL <- getLoad(object)
@@ -383,10 +444,16 @@ oblqRotate <- function(object, method = "quartimin", ...) {
 
 
 
-##' @rdname rotate
+##' @rdname semTools-deprecated
 ##' @export
 funRotate <- function(object, fun, ...) {
-	stopifnot(is.character(fun))
+
+  .Deprecated(msg = c("The funRotate function is deprecated, and it will ",
+                      "cease to be included in future versions of semTools. ",
+                      "The lavaan package itself now provides support EFA. ",
+                      "See help('semTools-deprecated) for details."))
+
+  stopifnot(is.character(fun))
 	requireNamespace("GPArotation")
 	if (!("package:GPArotation" %in% search())) attachNamespace("GPArotation")
 	mc <- match.call()

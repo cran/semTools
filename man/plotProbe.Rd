@@ -8,9 +8,10 @@ plotProbe(object, xlim, xlab = "Indepedent Variable",
   ylab = "Dependent Variable", legend = TRUE, legendArgs = list(), ...)
 }
 \arguments{
-\item{object}{The result of probing latent interaction obtained from
-\code{\link{probe2WayMC}}, \code{\link{probe2WayRC}},
-\code{\link{probe3WayMC}}, or \code{\link{probe3WayRC}} function.}
+\item{object}{A \code{list}, typically the result of probing a latent 2-way
+or 3-way interaction obtained from the \code{\link[=probe2WayMC]{probe2WayMC()}},
+\code{\link[=probe2WayRC]{probe2WayRC()}}, \code{\link[=probe3WayMC]{probe3WayMC()}}, or
+\code{\link[=probe3WayRC]{probe3WayRC()}} functions.}
 
 \item{xlim}{The vector of two numbers: the minimum and maximum values of the
 independent variable}
@@ -21,10 +22,10 @@ independent variable}
 
 \item{legend}{\code{logical}. If \code{TRUE} (default), a legend is printed.}
 
-\item{legendArgs}{\code{list} of arguments passed to \code{\link{legend}}
+\item{legendArgs}{\code{list} of arguments passed to \code{\link[=legend]{legend()}}
 function if \code{legend=TRUE}.}
 
-\item{\dots}{Any addition argument for the \code{\link{plot}} function}
+\item{\dots}{Any additional argument for the \code{\link[=plot]{plot()}} function}
 }
 \value{
 None. This function will plot the simple main effect only.
@@ -34,6 +35,16 @@ This function will plot the line graphs representing the simple effect of
 the independent variable given the values of the moderator. For multigroup
 models, it will only generate a plot for 1 group, as specified in the
 function used to obtain the first argument.
+}
+\note{
+If the \code{object} does not contain simple intercepts (i.e., if the
+\code{object$SimpleIntcept} element is \code{NULL}), then all simple
+intercepts are arbitrarily set to zero in order to plot the simple slopes.
+This may not be consistent with the fitted model, but was (up until version
+0.5-7) the default behavior when the y-intercept was fixed to 0. In this case,
+although the relative steepness of simple slopes can still meaningfully be
+compared, the relative vertical positions of lines at any point along the
+\emph{x}-axis should not be interpreted.
 }
 \examples{
 
@@ -123,16 +134,16 @@ latent variable interactions using the \code{semTools} package.
 }
 \seealso{
 \itemize{
- \item \code{\link{indProd}} For creating the indicator products with no
-  centering, mean centering, double-mean centering, or residual centering.
- \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
-  when the results are obtained from mean-centering, or double-mean centering
- \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
-  when the results are obtained from mean-centering, or double-mean centering
- \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
-  when the results are obtained from residual-centering approach.
- \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
-  when the results are obtained from residual-centering approach.
+\item \code{\link[=indProd]{indProd()}} For creating the indicator products with no
+centering, mean centering, double-mean centering, or residual centering.
+\item \code{\link[=probe2WayMC]{probe2WayMC()}} For probing the two-way latent interaction
+when the results are obtained from mean-centering, or double-mean centering
+\item \code{\link[=probe3WayMC]{probe3WayMC()}} For probing the three-way latent interaction
+when the results are obtained from mean-centering, or double-mean centering
+\item \code{\link[=probe2WayRC]{probe2WayRC()}} For probing the two-way latent interaction
+when the results are obtained from residual-centering approach.
+\item \code{\link[=probe3WayRC]{probe3WayRC()}} For probing the two-way latent interaction
+when the results are obtained from residual-centering approach.
 }
 }
 \author{

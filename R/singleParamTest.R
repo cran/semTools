@@ -1,5 +1,5 @@
 ### Sunthud Pornprasertmanit
-### Last updated: 25 June 2018
+### Last updated: 2 June 2022
 
 
 ##' Single Parameter Test Divided from Nested Model Comparison
@@ -16,16 +16,16 @@
 ##' implemented here:
 ##'
 ##' \enumerate{
-##'  \item \code{free}: The nested model is used as a template. Then,
+##'  \item `free`: The nested model is used as a template. Then,
 ##' one parameter indicating the differences between two models is freed. The new
 ##' model is compared with the nested model. This process is repeated for all
 ##' differences between two models.
-##'  \item\code{fix}: The parent model is used
+##'  \item`fix`: The parent model is used
 ##' as a template. Then, one parameter indicating the differences between two
 ##' models is fixed or constrained to be equal to other parameters. The new
 ##' model is then compared with the parent model. This process is repeated for
 ##' all differences between two models.
-##'  \item\code{mi}: No longer available
+##'  \item`mi`: No longer available
 ##' because the test of modification indices is not consistent. For example, if
 ##' two parameters are equality constrained, the modification index from the
 ##' first parameter is not equal to the second parameter.
@@ -41,15 +41,15 @@
 ##' by this function.
 ##' @param return.fit Return the submodels fitted by this function
 ##' @param method The method used to calculate likelihood ratio test. See
-##' \code{\link[lavaan]{lavTestLRT}} for available options
-##' @return If \code{return.fit = FALSE}, the result tables are provided.
-##' \eqn{\chi^2} and \emph{p} value are provided for all methods. Note that the
-##' \eqn{\chi^2} is all based on 1 \emph{df}. Expected parameter changes
+##' [lavaan::lavTestLRT()] for available options
+##' @return If `return.fit = FALSE`, the result tables are provided.
+##' \eqn{\chi^2} and *p* value are provided for all methods. Note that the
+##' \eqn{\chi^2} is all based on 1 *df*. Expected parameter changes
 ##' and their standardized forms are also provided.
 ##'
-##' If \code{return.fit = TRUE}, a list with two elements are provided. The
+##' If `return.fit = TRUE`, a list with two elements are provided. The
 ##' first element is the tabular result. The second element is the submodels
-##' used in the \code{free} and \code{fix} methods.
+##' used in the `free` and `fix` methods.
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @examples
 ##'
@@ -226,10 +226,14 @@ paramNameFromPt <- function(pt) {
 refit <- function(pt, object, resetstart = TRUE) {
 	if (resetstart && "start" %in% names(pt)) pt <- pt[-which("start" == names(pt))]
 	previousCall <- lavInspect(object, "call")
+	## Why this?
 	args <- previousCall[-1]
 	args$model <- pt
 	funcall <- as.character(previousCall[[1]])
-	tempfit <- do.call(funcall[length(funcall)], args)
+	do.call(funcall[length(funcall)], args)
+	## instead of this?
+	# previousCall$model <- pt
+	# eval(previousCall)
 }
 
 

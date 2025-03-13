@@ -31,26 +31,26 @@ imputation method procedure.  Otherwise, use the default \code{order = 1}.}
 \item{silent}{If \code{FALSE}, the details of the \code{quark} process are
 printed.}
 
-\item{\dots}{additional arguments to pass to \code{\link[mice]{mice}}.}
+\item{\dots}{additional arguments to pass to \code{\link[mice:mice]{mice::mice()}}.}
 }
 \value{
 The output value from using the quark function is a list. It will
 return a list with 7 components.
- \item{ID Columns}{Is a vector of the identifier columns entered when
-  running quark.}
- \item{ID Variables}{Is a subset of the dataset that contains the identifiers
-  as acknowledged when running quark.}
- \item{Used Data}{Is a matrix / dataframe of the data provided by user as
-  the basis for quark to process.}
- \item{Imputed Data}{Is a matrix / dataframe of the data after the multiple
-  method imputation process.}
- \item{Big Matrix}{Is the expanded product and polynomial matrix.}
- \item{Principal Components}{Is the entire dataframe of principal components
-  for the dataset.  This dataset will have the same number of rows of the big
-  matrix, but will have 1 less column (as is the case with principal
-  component analyses).}
- \item{Percent Variance Explained}{Is a vector of the percent variance
-  explained with each column of principal components.}
+\item{ID Columns}{Is a vector of the identifier columns entered when
+running quark.}
+\item{ID Variables}{Is a subset of the dataset that contains the identifiers
+as acknowledged when running quark.}
+\item{Used Data}{Is a matrix / dataframe of the data provided by user as
+the basis for quark to process.}
+\item{Imputed Data}{Is a matrix / dataframe of the data after the multiple
+method imputation process.}
+\item{Big Matrix}{Is the expanded product and polynomial matrix.}
+\item{Principal Components}{Is the entire dataframe of principal components
+for the dataset.  This dataset will have the same number of rows of the big
+matrix, but will have 1 less column (as is the case with principal
+component analyses).}
+\item{Percent Variance Explained}{Is a vector of the percent variance
+explained with each column of principal components.}
 }
 \description{
 The \code{quark} function provides researchers with the ability to calculate
@@ -71,7 +71,7 @@ dataset contains all of the original data post imputation, the second third
 contains the means of the polynomial effects (squares and cubes), and the
 final third contains the means of the non-overlapping interaction effects. A
 full principal componenent analysis is conducted and the individual
-components are retained. The subsequent \code{\link{combinequark}} function
+components are retained. The subsequent \code{\link[=combinequark]{combinequark()}} function
 provides researchers the control in determining how many components to
 extract and retain. The function returns the dataset as submitted (with
 missing values) and the component scores as requested for a more accurate
@@ -85,7 +85,7 @@ dat <- HolzingerSwineford1939[,7:15]
 misspat <- matrix(runif(nrow(dat) * 9) < 0.3, nrow(dat))
 dat[misspat] <- NA
 dat <- cbind(HolzingerSwineford1939[,1:3], dat)
-\dontrun{
+\donttest{
 quark.list <- quark(data = dat, id = c(1, 2))
 
 final.data <- combinequark(quark = quark.list, percent = 80)
@@ -102,7 +102,7 @@ Principal Components as Auxiliary Variables in Missing Data Estimation.
 \doi{10.1080/00273171.2014.999267}
 }
 \seealso{
-\code{\link{combinequark}}
+\code{\link[=combinequark]{combinequark()}}
 }
 \author{
 Steven R. Chesnut (University of Southern Mississippi;

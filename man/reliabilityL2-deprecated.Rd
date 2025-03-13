@@ -7,9 +7,8 @@
 reliabilityL2(object, secondFactor, omit.imps = c("no.conv", "no.se"))
 }
 \arguments{
-\item{object}{A \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object, expected to contain a least one
-exogenous higher-order common factor.}
+\item{object}{A \link[lavaan:lavaan-class]{lavaan::lavaan} or \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object,
+expected to contain a least one exogenous higher-order common factor.}
 
 \item{secondFactor}{The name of a single second-order factor in the
 model fitted in \code{object}. The function must be called multiple
@@ -32,7 +31,7 @@ imputations warrant further investigation.}
 }
 \value{
 Reliability values at Levels 1 and 2 of the second-order factor, as
-  well as the partial reliability value at Level 1
+well as the partial reliability value at Level 1
 }
 \description{
 Calculate the reliability values (coefficient omega) of a second-order
@@ -40,7 +39,7 @@ factor
 }
 \details{
 The first formula of the coefficient omega (in the
-\code{\link{reliability}}) will be mainly used in the calculation. The
+\code{\link[=reliability]{reliability()}}) will be mainly used in the calculation. The
 model-implied covariance matrix of a second-order factor model can be
 separated into three sources: the second-order common-factor variance,
 the residual variance of the first-order common factors (i.e., not
@@ -78,11 +77,11 @@ Thus, the proportion of variance among first-order common factors that is
 attributable to the second-order factor (i.e., coefficient omega at Level 2)
 can be calculated as:
 
-\deqn{ \omega_{L2} = \frac{\bold{1_F}^{\prime} \bold{B} \Phi_2
-\bold{B}^{\prime} \bold{1_F}}{\bold{1_F}^{\prime} \bold{B} \Phi_2
-\bold{B}^{\prime} \bold{1_F} + \bold{1_F}^{\prime} \Psi_{u} \bold{1_F}}, }
+\deqn{ \omega_{L2} = \frac{\bold{1}_F^{\prime} \bold{B} \Phi_2
+\bold{B}^{\prime} \bold{1}_F}{\bold{1}_F^{\prime} \bold{B} \Phi_2
+\bold{B}^{\prime} \bold{1}_F + \bold{1}_F^{\prime} \Psi_{u} \bold{1}_F}, }
 
-where \eqn{\bold{1_F}} is the \emph{F}-dimensional vector of 1 and \emph{F}
+where \eqn{\bold{1}_F} is the \emph{F}-dimensional vector of 1 and \emph{F}
 is the number of first-order factors. This Level-2 omega can be interpreted
 as an estimate of the reliability of a hypothetical composite calculated
 from error-free observable variables representing the first-order common
@@ -119,7 +118,7 @@ reliabilityL2(fit6, "higher")
 
 }
 \seealso{
-\code{\link{semTools-deprecated}}
+\code{\link[=semTools-deprecated]{semTools-deprecated()}}
 }
 \author{
 Sunthud Pornprasertmanit (\email{psunthud@gmail.com})

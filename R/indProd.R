@@ -1,14 +1,14 @@
 ### Sunthud Pornprasertmanit and Alexander M. Schoemann
-### Last updated: 10 January 2021
+### Last updated: 12 March 2025
 ### prepare product indicators for 2-way and 3-way interactions in SEM
 
 
 ##' Make products of indicators using no centering, mean centering, double-mean
 ##' centering, or residual centering
 ##'
-##' The \code{indProd} function will make products of indicators using no
+##' The `indProd` function will make products of indicators using no
 ##' centering, mean centering, double-mean centering, or residual centering. The
-##' \code{orthogonalize} function is the shortcut of the \code{indProd} function
+##' `orthogonalize` function is the shortcut of the `indProd` function
 ##' to make the residual-centered indicators products.
 ##'
 ##'
@@ -20,43 +20,43 @@
 ##' @param var2 Names or indices of the variables loaded on the second factor
 ##' @param var3 Names or indices of the variables loaded on the third factor
 ##' (for three-way interaction)
-##' @param match Specify \code{TRUE} to use match-paired approach (Marsh, Wen, &
-##' Hau, 2004). If \code{FALSE}, the resulting products are all possible
+##' @param match Specify `TRUE` to use match-paired approach (Marsh, Wen, &
+##' Hau, 2004). If `FALSE`, the resulting products are all possible
 ##' products.
-##' @param meanC Specify \code{TRUE} for mean centering the main effect
+##' @param meanC Specify `TRUE` for mean centering the main effect
 ##' indicator before making the products
-##' @param residualC Specify \code{TRUE} for residual centering the products by
+##' @param residualC Specify `TRUE` for residual centering the products by
 ##' the main effect indicators (Little, Bovaird, & Widaman, 2006).
-##' @param doubleMC Specify \code{TRUE} for centering the resulting products
+##' @param doubleMC Specify `TRUE` for centering the resulting products
 ##' (Lin et. al., 2010)
 ##' @param namesProd The names of resulting products
 ##' @return The original data attached with the products.
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com}) Alexander
 ##' Schoemann (East Carolina University; \email{schoemanna@@ecu.edu})
-##' @seealso \itemize{ \item \code{\link{probe2WayMC}} For probing the two-way
+##' @seealso \itemize{ \item [probe2WayMC()] For probing the two-way
 ##' latent interaction when the results are obtained from mean-centering, or
-##' double-mean centering.  \item \code{\link{probe3WayMC}} For probing the
+##' double-mean centering.  \item [probe3WayMC()] For probing the
 ##' three-way latent interaction when the results are obtained from
-##' mean-centering, or double-mean centering.  \item \code{\link{probe2WayRC}}
+##' mean-centering, or double-mean centering.  \item [probe2WayRC()]
 ##' For probing the two-way latent interaction when the results are obtained
-##' from residual-centering approach.  \item \code{\link{probe3WayRC}} For
+##' from residual-centering approach.  \item [probe3WayRC()] For
 ##' probing the two-way latent interaction when the results are obtained from
-##' residual-centering approach.  \item \code{\link{plotProbe}} Plot the simple
+##' residual-centering approach.  \item [plotProbe()] Plot the simple
 ##' intercepts and slopes of the latent interaction.  }
 ##' @references Marsh, H. W., Wen, Z. & Hau, K. T. (2004). Structural equation
 ##' models of latent interactions: Evaluation of alternative estimation
-##' strategies and indicator construction. \emph{Psychological Methods, 9}(3),
+##' strategies and indicator construction. *Psychological Methods, 9*(3),
 ##' 275--300. \doi{10.1037/1082-989X.9.3.275}
 ##'
 ##' Lin, G. C., Wen, Z., Marsh, H. W., & Lin, H. S. (2010). Structural equation
 ##' models of latent interactions: Clarification of orthogonalizing and
-##' double-mean-centering strategies. \emph{Structural Equation Modeling, 17}(3),
+##' double-mean-centering strategies. *Structural Equation Modeling, 17*(3),
 ##' 374--391. \doi{10.1080/10705511.2010.488999}
 ##'
 ##' Little, T. D., Bovaird, J. A., & Widaman, K. F. (2006). On the merits of
 ##' orthogonalizing powered and product terms: Implications for modeling
-##' interactions among latent variables. \emph{Structural Equation Modeling,
-##' 13}(4), 497--519. \doi{10.1207/s15328007sem1304_1}
+##' interactions among latent variables. *Structural Equation Modeling,
+##' 13*(4), 497--519. \doi{10.1207/s15328007sem1304_1}
 ##' @examples
 ##'
 ##' ## Mean centering / two-way interaction / match-paired
@@ -84,7 +84,7 @@
 ##'
 ##'
 ##' ## To add product-indicators to multiple-imputed data sets
-##' \dontrun{
+##' \donttest{
 ##' HSMiss <- HolzingerSwineford1939[ , c(paste0("x", 1:9), "ageyr","agemo")]
 ##' set.seed(12345)
 ##' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)

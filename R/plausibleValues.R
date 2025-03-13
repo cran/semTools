@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 9 May 2022
+### Last updated: 12 March 2025
 ### function to draw plausible values of factor scores from lavPredict
 
 
@@ -19,33 +19,33 @@
 ##' Plausible-Values Imputation of Factor Scores Estimated from a lavaan Model
 ##'
 ##' Draw plausible values of factor scores estimated from a fitted
-##' \code{\link[lavaan]{lavaan}} model, then treat them as multiple imputations
-##' of missing data using \code{\link{runMI}}.
+##' [lavaan::lavaan()] model, then treat them as multiple imputations
+##' of missing data using [lavaan.mi::lavaan.mi()].
 ##'
 ##'
 ##' Because latent variables are unobserved, they can be considered as missing
 ##' data, which can be imputed using Monte Carlo methods.  This may be of
 ##' interest to researchers with sample sizes too small to fit their complex
 ##' structural models.  Fitting a factor model as a first step,
-##' \code{\link[lavaan]{lavPredict}} provides factor-score estimates, which can
+##' [lavaan::lavPredict()] provides factor-score estimates, which can
 ##' be treated as observed values in a path analysis (Step 2).  However, the
 ##' resulting standard errors and test statistics could not be trusted because
 ##' the Step-2 analysis would not take into account the uncertainty about the
 ##' estimated factor scores.  Using the asymptotic sampling covariance matrix
-##' of the factor scores provided by \code{\link[lavaan]{lavPredict}},
-##' \code{plausibleValues} draws a set of \code{nDraws} imputations from the
+##' of the factor scores provided by [lavaan::lavPredict()],
+##' `plausibleValues` draws a set of `nDraws` imputations from the
 ##' sampling distribution of each factor score, returning a list of data sets
 ##' that can be treated like multiple imputations of incomplete data.  If the
-##' data were already imputed to handle missing data, \code{plausibleValues}
-##' also accepts an object of class \code{\linkS4class{lavaan.mi}}, and will
-##' draw \code{nDraws} plausible values from each imputation.  Step 2 would
+##' data were already imputed to handle missing data, `plausibleValues`
+##' also accepts an object of class [lavaan.mi::lavaan.mi-class], and will
+##' draw `nDraws` plausible values from each imputation.  Step 2 would
 ##' then take into account uncertainty about both missing values and factor
 ##' scores.  Bayesian methods can also be used to generate factor scores, as
 ##' available with the \pkg{blavaan} package, in which case plausible
 ##' values are simply saved parameters from the posterior distribution. See
 ##' Asparouhov and Muthen (2010) for further technical details and references.
 ##'
-##' Each returned \code{data.frame} includes a \code{case.idx} column that
+##' Each returned `data.frame` includes a `case.idx` column that
 ##' indicates the corresponding rows in the data set to which the model was
 ##' originally fitted (unless the user requests only Level-2 variables).  This
 ##' can be used to merge the plausible values with the original observed data,
@@ -54,54 +54,54 @@
 ##' because they were not accounted for in the Step-1 model from which factor
 ##' scores were estimated.
 ##'
-##' If \code{object} is a multilevel \code{lavaan} model, users can request
+##' If `object` is a multilevel `lavaan` model, users can request
 ##' plausible values for latent variables at particular levels of analysis by
-##' setting the \code{\link[lavaan]{lavPredict}} argument \code{level=1} or
-##' \code{level=2}.  If the \code{level} argument is not passed via \dots,
+##' setting the [lavaan::lavPredict()] argument `level=1` or
+##' `level=2`.  If the `level` argument is not passed via \dots,
 ##' then both levels are returned in a single merged data set per draw.  For
-##' multilevel models, each returned \code{data.frame} also includes a column
+##' multilevel models, each returned `data.frame` also includes a column
 ##' indicating to which cluster each row belongs (unless the user requests only
 ##' Level-2 variables).
 ##'
 ##'
 ##' @importFrom lavaan lavInspect lavPredict
 ##'
-##' @param object A fitted model of class \code{\linkS4class{lavaan}},
-##'   \code{\link[blavaan]{blavaan}}, or \code{\linkS4class{lavaan.mi}}
-##' @param nDraws \code{integer} specifying the number of draws, analogous to
-##'   the number of imputed data sets. If \code{object} is of class
-##'   \code{\linkS4class{lavaan.mi}}, this will be the number of draws taken
-##'   \emph{per imputation}.  If \code{object} is of class
-##'   \code{\link[blavaan]{blavaan}}, \code{nDraws} cannot exceed
-##'   \code{blavInspect(object, "niter") * blavInspect(bfitc, "n.chains")}
+##' @param object A fitted model of class [lavaan::lavaan-class],
+##'   [blavaan::blavaan-class], or [lavaan.mi::lavaan.mi-class]
+##' @param nDraws `integer` specifying the number of draws, analogous to
+##'   the number of imputed data sets. If `object` is of class
+##'   [lavaan.mi::lavaan.mi-class], this will be the number of draws taken
+##'   *per imputation*.  If `object` is of class
+##'   [blavaan::blavaan-class], `nDraws` cannot exceed
+##'   `blavInspect(object, "niter") * blavInspect(bfitc, "n.chains")`
 ##'   (number of MCMC samples from the posterior). The drawn samples will be
-##'   evenly spaced (after permutation for \code{target="stan"}), using
-##'   \code{\link{ceiling}} to resolve decimals.
-##' @param seed \code{integer} passed to \code{\link{set.seed}()}.
-##' @param omit.imps \code{character} vector specifying criteria for omitting
-##'   imputations when \code{object} is of class \code{\linkS4class{lavaan.mi}}.
-##'   Can include any of \code{c("no.conv", "no.se", "no.npd")}.
-##' @param ... Optional arguments to pass to \code{\link[lavaan]{lavPredict}}.
-##'   \code{assemble} will be ignored because multiple groups are always
-##'   assembled into a single \code{data.frame} per draw. \code{type} will be
-##'   ignored because it is set internally to \code{type="lv"}.
+##'   evenly spaced (after permutation for `target="stan"`), using
+##'   [ceiling()] to resolve decimals.
+##' @param seed `integer` passed to [set.seed()].
+##' @param omit.imps `character` vector specifying criteria for omitting
+##'   imputations when `object` is of class [lavaan.mi::lavaan.mi-class].
+##'   Can include any of `c("no.conv", "no.se", "no.npd")`.
+##' @param ... Optional arguments to pass to [lavaan::lavPredict()].
+##'   `assemble` will be ignored because multiple groups are always
+##'   assembled into a single `data.frame` per draw. `type` will be
+##'   ignored because it is set internally to `type="lv"`.
 ##'
-##' @return A \code{list} of length \code{nDraws}, each of which is a
-##'   \code{data.frame} containing plausible values, which can be treated as
-##'   a \code{list} of imputed data sets to be passed to \code{\link{runMI}}
-##'   (see \bold{Examples}). If \code{object} is of class
-##'   \code{\linkS4class{lavaan.mi}}, the \code{list} will be of length
-##'   \code{nDraws*m}, where \code{m} is the number of imputations.
+##' @return A `list` of length `nDraws`, each of which is a
+##'   `data.frame` containing plausible values, which can be treated as
+##'   a `list` of imputed data sets to be passed to [runMI()]
+##'   (see **Examples**). If `object` is of class
+##'   [lavaan.mi::lavaan.mi-class], the `list` will be of length
+##'   `nDraws*m`, where `m` is the number of imputations.
 ##'
 ##' @author Terrence D. Jorgensen (University of Amsterdam;
 ##'   \email{TJorgensen314@@gmail.com})
 ##'
 ##' @references
-##'   Asparouhov, T. & Muthen, B. O. (2010). \emph{Plausible values for latent
-##'   variables using M}plus. Technical Report. Retrieved from
+##'   Asparouhov, T. & Muthen, B. O. (2010). *Plausible values for latent
+##'   variables using M*plus. Technical Report. Retrieved from
 ##'   www.statmodel.com/download/Plausible.pdf
 ##'
-##' @seealso \code{\link{runMI}}, \code{\linkS4class{lavaan.mi}}
+##' @seealso [lavaan.mi::lavaan.mi()], [lavaan.mi::lavaan.mi-class]
 ##'
 ##' @examples
 ##'
@@ -116,6 +116,7 @@
 ##'                        append.data = TRUE)
 ##' lapply(fs1, head)
 ##'
+##' \donttest{
 ##' ## To merge factor scores to original data.frame (not just modeled data)
 ##' fs1 <- plausibleValues(fit1, nDraws = 3)
 ##' idx <- lavInspect(fit1, "case.idx")      # row index for each case
@@ -136,10 +137,11 @@
 ##'
 ##' ## subsequent path analysis
 ##' path.model <- ' visual ~ c(t1, t2)*textual + c(s1, s2)*speed '
-##' \dontrun{
-##' step2 <- sem.mi(path.model, data = PV.list, group = "school")
-##' ## test equivalence of both slopes across groups
-##' lavTestWald.mi(step2, constraints = 't1 == t2 ; s1 == s2')
+##' if(requireNamespace("lavaan.mi")){
+##'   library(lavaan.mi)
+##'   step2 <- sem.mi(path.model, data = PV.list, group = "school")
+##'   ## test equivalence of both slopes across groups
+##'   lavTestWald.mi(step2, constraints = 't1 == t2 ; s1 == s2')
 ##' }
 ##'
 ##'
@@ -164,43 +166,35 @@
 ##'
 ##'
 ##'
-##' ## example with 10 multiple imputations of missing data:
-##'
-##' \dontrun{
-##' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
-##'                                       "ageyr","agemo","school")]
-##' set.seed(12345)
-##' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
-##' age <- HSMiss$ageyr + HSMiss$agemo/12
-##' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
-##' ## impute data
-##' library(Amelia)
-##' set.seed(12345)
-##' HS.amelia <- amelia(HSMiss, m = 10, noms = "school", p2s = FALSE)
-##' imps <- HS.amelia$imputations
-##' ## specify CFA model from lavaan's ?cfa help page
-##' HS.model <- '
-##'   visual  =~ x1 + x2 + x3
-##'   textual =~ x4 + x5 + x6
-##'   speed   =~ x7 + x8 + x9
-##' '
-##' out2 <- cfa.mi(HS.model, data = imps)
-##' PVs <- plausibleValues(out2, nDraws = nPVs)
-##'
-##' idx <- out2@@Data@@case.idx # can't use lavInspect() on lavaan.mi
-##' ## empty list to hold expanded imputations
-##' impPVs <- list()
+##' ## example with 20 multiple imputations of missing data:
 ##' nPVs <- 5
-##' nImps <- 10
-##' for (m in 1:nImps) {
-##'   imps[[m]]["case.idx"] <- idx
-##'   for (i in 1:nPVs) {
-##'     impPVs[[ nPVs*(m - 1) + i ]] <- merge(imps[[m]],
-##'                                           PVs[[ nPVs*(m - 1) + i ]],
-##'                                           by = "case.idx")
+##' nImps <- 20
+##'
+##' if(requireNamespace("lavaan.mi")){
+##'   data(HS20imps, package = "lavaan.mi")
+##'
+##'   ## specify CFA model from lavaan's ?cfa help page
+##'   HS.model <- '
+##'     visual  =~ x1 + x2 + x3
+##'     textual =~ x4 + x5 + x6
+##'     speed   =~ x7 + x8 + x9
+##'   '
+##'   out2 <- cfa.mi(HS.model, data = HS20imps)
+##'   PVs <- plausibleValues(out2, nDraws = nPVs)
+##'
+##'   idx <- out2@@Data@@case.idx # can't use lavInspect() on lavaan.mi
+##'   ## empty list to hold expanded imputations
+##'   impPVs <- list()
+##'   for (m in 1:nImps) {
+##'     HS20imps[[m]]["case.idx"] <- idx
+##'     for (i in 1:nPVs) {
+##'       impPVs[[ nPVs*(m - 1) + i ]] <- merge(HS20imps[[m]],
+##'                                             PVs[[ nPVs*(m - 1) + i ]],
+##'                                             by = "case.idx")
+##'     }
 ##'   }
+##'   lapply(impPVs, head)
 ##' }
-##' lapply(impPVs, head)
 ##'
 ##' }
 ##'
@@ -245,6 +239,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
     stop("Plausible values not available (yet) for categorical data")
   }
   if (lavInspect(object, "options")$missing %in% c("ml", "ml.x")) {
+    #TODO: verify this:
     stop("Plausible values not available (yet) for missing data + fiml.\n",
          "       Multiple imputations can be used via lavaan.mi()")
   }
@@ -312,7 +307,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
       ACOV <- attr(FS, "acov")[[1]]
       v.idx <- if (only.L2) 2L else 1L
       PV <- apply(FS[ , l.names[[v.idx]], drop = FALSE], 1, function(mu) {
-        MASS::mvrnorm(n = 1, mu = mu, Sigma = ACOV)
+        mnormt::rmnorm(n = 1, mean = mu, varcov = ACOV)
       })
       if (is.null(dim(PV))) {
         PV <- as.matrix(PV)
@@ -331,7 +326,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
         ACOV2 <- attr(FS2, "acov")[[1]]
         #FIXME: how will Yves handle lavPredict(fit, append=T, level=2)?
         PV2 <- apply(FS2, 1, function(mu) {
-          out <- MASS::mvrnorm(n = 1, mu = mu, Sigma = ACOV2)
+          out <- mnormt::rmnorm(n = 1, mean = mu, varcov = ACOV2)
         })
         if (is.null(dim(PV2))) {
           PV2 <- as.matrix(PV2)
@@ -351,7 +346,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
         ACOV[[gg]] <- attr(FS, "acov")[[gg]]
         v.idx <- if (only.L2) (2L + (gg - 1L)*nL) else (1L + (gg - 1L)*nL)
         PV[[gg]] <- apply(FS[[gg]][ , l.names[[v.idx]], drop = FALSE], 1, function(mu) {
-          MASS::mvrnorm(n = 1, mu = mu, Sigma = ACOV[[gg]])
+          mnormt::rmnorm(n = 1, mean = mu, varcov = ACOV[[gg]])
         })
         if (is.null(dim(PV[[gg]]))) {
           PV[[gg]] <- as.matrix(PV[[gg]])
@@ -375,7 +370,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
           ACOV2[[gg]] <- attr(FS2, "acov")[[gg]]
           #FIXME: how will Yves handle lavPredict(fit, append=T, level=2)?
           PV2[[gg]] <- apply(FS2[[gg]], 1, function(mu) {
-            MASS::mvrnorm(n = 1, mu = mu, Sigma = ACOV2[[gg]])
+            mnormt::rmnorm(n = 1, mean = mu, varcov = ACOV2[[gg]])
           })
           if (is.null(dim(PV2[[gg]]))) {
             PV2[[gg]] <- as.matrix(PV2[[gg]])
@@ -449,6 +444,7 @@ plaus.lavaan <- function(seed = 1, object, ...) {
 ##' @importFrom lavaan lavInspect lavPredict
 plaus.mi <- function(object, seeds = 1:5, omit.imps = c("no.conv","no.se"), ...) {
   stopifnot(inherits(object, "lavaan.mi"))
+  if (!"package:lavaan.mi" %in% search()) attachNamespace("lavaan.mi")
 
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
@@ -491,7 +487,6 @@ plaus.mi <- function(object, seeds = 1:5, omit.imps = c("no.conv","no.se"), ...)
 ##' @importFrom lavaan lavNames lavInspect
 plaus.blavaan <- function(object, nDraws = 20L, seed = 12345, ...) {
   stopifnot(inherits(object, "blavaan"))
-  requireNamespace("blavaan")
   if (!"package:blavaan" %in% search()) attachNamespace("blavaan")
 
   # cluster <- lavInspect(object, "cluster")

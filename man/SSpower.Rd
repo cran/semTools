@@ -8,7 +8,7 @@ SSpower(powerModel, n, nparam, popModel, mu, Sigma, fun = "sem",
   alpha = 0.05, ...)
 }
 \arguments{
-\item{powerModel}{lavaan \code{\link[lavaan]{model.syntax}} for the model to
+\item{powerModel}{lavaan \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}} for the model to
 be analyzed. This syntax should constrain at least one nonzero parameter
 to 0 (or another number).}
 
@@ -21,11 +21,11 @@ the number of groups.}
 
 \item{nparam}{\code{integer}. Number of invalid constraints in \code{powerModel}.}
 
-\item{popModel}{lavaan \code{\link[lavaan]{model.syntax}} specifying the
+\item{popModel}{lavaan \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}} specifying the
 data-generating model. This syntax should specify values for all nonzero
 parameters in the model. If \code{length(n) > 1}, the same population
 values will be used for each group, unless different population values are
-specified per group, either in the lavaan \code{\link[lavaan]{model.syntax}}
+specified per group, either in the lavaan \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}}
 or by utilizing a list of \code{Sigma} (and optionally \code{mu}).}
 
 \item{mu}{\code{numeric} or \code{list}. For a single-group model, a vector
@@ -44,8 +44,8 @@ model-implied Sigma.}
 
 \item{alpha}{Type I error rate used to set a criterion for rejecting H0.}
 
-\item{...}{additional arguments to pass to \code{\link[lavaan]{lavaan}}.
-See also \code{\link[lavaan]{lavOptions}}.}
+\item{...}{additional arguments to pass to \code{\link[lavaan:lavaan]{lavaan::lavaan()}}.
+See also \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 }
 \description{
 Apply Satorra & Saris (1985) method for chi-squared power analysis.
@@ -137,13 +137,13 @@ legend("bottomright", c("80\% Power","90\% Power"), lty = c("dotted","dashed"))
 }
 \references{
 Satorra, A., & Saris, W. E. (1985). Power of the likelihood ratio
- test in covariance structure analysis. \emph{Psychometrika, 50}(1), 83--90.
- \doi{10.1007/BF02294150}
+test in covariance structure analysis. \emph{Psychometrika, 50}(1), 83--90.
+\doi{10.1007/BF02294150}
 
- Jak, S., Jorgensen, T. D., Verdam, M. G., Oort, F. J., & Elffers, L.
- (2021). Analytical power calculations for structural equation modeling:
- A tutorial and Shiny app. \emph{Behavior Research Methods, 53}, 1385--1406.
- \doi{10.3758/s13428-020-01479-0}
+Jak, S., Jorgensen, T. D., Verdam, M. G., Oort, F. J., & Elffers, L.
+(2021). Analytical power calculations for structural equation modeling:
+A tutorial and Shiny app. \emph{Behavior Research Methods, 53}, 1385--1406.
+\doi{10.3758/s13428-020-01479-0}
 }
 \author{
 Alexander M. Schoemann (East Carolina University; \email{schoemanna@ecu.edu})

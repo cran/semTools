@@ -8,26 +8,26 @@ htmt(model, data = NULL, sample.cov = NULL, missing = "listwise",
   ordered = NULL, absolute = TRUE, htmt2 = TRUE)
 }
 \arguments{
-\item{model}{lavaan \link[lavaan]{model.syntax} of a confirmatory factor
+\item{model}{lavaan \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}} of a confirmatory factor
 analysis model where at least two factors are required for indicators
 measuring the same construct.}
 
 \item{data}{A \code{data.frame} or data \code{matrix}}
 
 \item{sample.cov}{A covariance or correlation matrix can be used, instead of
-\code{data}, to estimate the HTMT values.}
+\verb{data=}, to estimate the HTMT values.}
 
-\item{missing}{If "listwise", cases with missing values are removed listwise
-from the data frame. If "direct" or "ml" or "fiml" and the estimator is
+\item{missing}{If \code{"listwise"}, cases with missing values are removed listwise
+from the data frame. If \code{"direct"} or \code{"ml"} or \code{"fiml"} and the estimator is
 maximum likelihood, an EM algorithm is used to estimate the unrestricted
-covariance matrix (and mean vector). If "pairwise", pairwise deletion is
-used. If "default", the value is set depending on the estimator and the
-mimic option (see details in \link[lavaan]{lavCor}).}
+covariance matrix (and mean vector). If \code{"pairwise"}, pairwise deletion is
+used. If \code{"default"}, the value is set depending on the estimator and the
+mimic option (see details in \code{\link[lavaan:lavCor]{lavaan::lavCor()}}).}
 
 \item{ordered}{Character vector. Only used if object is a \code{data.frame}.
 Treat these variables as ordered (ordinal) variables. Importantly, all
 other variables will be treated as numeric (unless \code{is.ordered} in
-\code{data}). (see also \link[lavaan]{lavCor})}
+\verb{data=}). See also \code{\link[lavaan:lavCor]{lavaan::lavCor()}}.}
 
 \item{absolute}{\code{logical} indicating whether HTMT values should be
 estimated based on absolute correlations (default is \code{TRUE}). This
@@ -39,7 +39,7 @@ is recommended for HTMT but required for HTMT2 (so silently ignored).}
 }
 \value{
 A matrix showing HTMT(2) values (i.e., discriminant validity)
-  between each pair of factors.
+between each pair of factors.
 }
 \description{
 This function assesses discriminant validity through the
@@ -52,7 +52,7 @@ within the same construct (i.e. monotrait--heteromethod correlations).
 The resulting HTMT(2) values are interpreted as estimates of inter-construct
 correlations. Absolute values of the correlations are recommended to
 calculate the HTMT matrix, and are required to calculate HTMT2. Correlations
-are estimated using the \code{\link[lavaan]{lavCor}} function.
+are estimated using the \code{\link[lavaan:lavCor]{lavaan::lavCor()}} function.
 }
 \examples{
 
@@ -71,20 +71,20 @@ htmt(HS.model, sample.cov = HS.cov, htmt2 = FALSE)
 }
 \references{
 Henseler, J., Ringle, C. M., & Sarstedt, M. (2015). A new criterion for
-  assessing discriminant validity in variance-based structural equation
-  modeling. \emph{Journal of the Academy of Marketing Science, 43}(1),
-  115--135. \doi{10.1007/s11747-014-0403-8}
+assessing discriminant validity in variance-based structural equation
+modeling. \emph{Journal of the Academy of Marketing Science, 43}(1),
+115--135. \doi{10.1007/s11747-014-0403-8}
 
-  Roemer, E., Schuberth, F., & Henseler, J. (2021). HTMT2-An improved
-  criterion for assessing discriminant validity in structural equation
-  modeling. \emph{Industrial Management & Data Systems}.
-  \doi{10.1108/IMDS-02-2021-0082}
+Roemer, E., Schuberth, F., & Henseler, J. (2021). HTMT2---An improved
+criterion for assessing discriminant validity in structural equation
+modeling. \emph{Industrial Management & Data Systems, 121}(21), 2637--2650.
+\doi{10.1108/IMDS-02-2021-0082}
 
-  Voorhees, C. M., Brady, M. K., Calantone, R., & Ramirez, E. (2016).
-  Discriminant validity testing in marketing: An analysis, causes for
-  concern, and proposed remedies.
-  \emph{Journal of the Academy of Marketing Science, 44}(1), 119--134.
-  \doi{10.1007/s11747-015-0455-4}
+Voorhees, C. M., Brady, M. K., Calantone, R., & Ramirez, E. (2016).
+Discriminant validity testing in marketing: An analysis, causes for
+concern, and proposed remedies.
+\emph{Journal of the Academy of Marketing Science, 44}(1), 119--134.
+\doi{10.1007/s11747-015-0455-4}
 }
 \author{
 Ylenio Longo (University of Nottingham; \email{yleniolongo@gmail.com})

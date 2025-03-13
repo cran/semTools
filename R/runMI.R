@@ -1,7 +1,9 @@
 ### Terrence D. Jorgensen
-### Last updated: 10 January 2021
-### runMI creates lavaan.mi object, inherits from lavaanList class
+### Last updated: 12 March 2025
+### runMI creates OLDlavaan.mi object, inherits from lavaanList class
 
+### DEPRECATED: 16 June 2024
+### supplanted by lavaan.mi package
 
 ## -------------
 ## Main function
@@ -11,177 +13,103 @@
 ##' Fit a lavaan Model to Multiple Imputed Data Sets
 ##'
 ##' This function fits a lavaan model to a list of imputed data sets, and can
-##' also implement multiple imputation for a single \code{data.frame} with
+##' also implement multiple imputation for a single `data.frame` with
 ##' missing observations, using either the Amelia package or the mice package.
 ##'
 ##'
-##' @aliases runMI lavaan.mi cfa.mi sem.mi growth.mi
+##' @aliases runMI-deprecated lavaan.mi-deprecated cfa.mi-deprecated sem.mi-deprecated growth.mi-deprecated
 ##' @importFrom lavaan lavInspect parTable
 ##' @importFrom methods getMethod
 ##'
-##' @param model The analysis model can be specified using lavaan
-##'   \code{\link[lavaan]{model.syntax}} or a parameter table (as returned by
-##'   \code{\link[lavaan]{parTable}}).
-##' @param data A \code{data.frame} with missing observations, or a \code{list}
-##'   of imputed data sets (if data are imputed already). If \code{runMI} has
+##' @param model The analysis model can be specified using
+##'   [lavaan::model.syntax()] or a [lavaan::parTable()]
+##' @param data A `data.frame` with missing observations, or a `list`
+##'   of imputed data sets (if data are imputed already). If `runMI()` has
 ##'   already been called, then imputed data sets are stored in the
-##'   \code{@@DataList} slot, so \code{data} can also be a \code{lavaan.mi} object
+##'   `@@DataList` slot, so `data=` can also be an `OLDlavaan.mi` object
 ##'   from which the same imputed data will be used for additional analyses.
-##' @param fun \code{character}. Name of a specific lavaan function used to fit
-##'   \code{model} to \code{data} (i.e., \code{"lavaan"}, \code{"cfa"},
-##'   \code{"sem"}, or \code{"growth"}). Only required for \code{runMI}.
-##' @param \dots additional arguments to pass to \code{\link[lavaan]{lavaan}} or
-##'   \code{\link[lavaan]{lavaanList}}. See also \code{\link[lavaan]{lavOptions}}.
-##'   Note that \code{lavaanList} provides parallel computing options, as well as
-##'   a \code{FUN} argument so the user can extract custom output after the model
-##'   is fitted to each imputed data set (see \strong{Examples}).  TIP: If a
-##'   custom \code{FUN} is used \emph{and} \code{parallel = "snow"} is requested,
-##'   the user-supplied function should explicitly call \code{library} or use
+##' @param fun `character`. Name of a specific lavaan function used to fit
+##'   `model=` to `data=` (i.e., `"lavaan"`, `"cfa"`, `"sem"`, or `"growth"`).
+##'   Only required for `runMI()`.
+##' @param \dots additional arguments to pass to [lavaan::lavaan()] or
+##'   [lavaan::lavaanList()]. See also [lavaan::lavOptions()].
+##'   Note that `lavaanList` provides parallel computing options, as well as
+##'   a `FUN` argument so the user can extract custom output after the model
+##'   is fitted to each imputed data set (see **Examples**).  TIP: If a
+##'   custom `FUN` is used *and* `parallel = "snow"` is requested,
+##'   the user-supplied function should explicitly call `library` or use
 ##'   \code{\link[base]{::}} for any functions not part of the base distribution.
-##' @param m \code{integer}. Request the number of imputations. Ignored if
-##'   \code{data} is already a \code{list} of imputed data sets or a
-##'   \code{lavaan.mi} object.
+##' @param m `integer`. Request the number of imputations. Ignored if `data=` is
+##'   already a `list` of imputed data sets or an `OLDlavaan.mi` object.
 ##' @param miArgs Addition arguments for the multiple-imputation function
-##'   (\code{miPackage}). The arguments should be put in a list (see example
-##'   below). Ignored if \code{data} is already a \code{list} of imputed data
-##'   sets or a \code{lavaan.mi} object.
+##'   (`miPackage`). The arguments should be put in a list (see example
+##'   below). Ignored if `data=` is already a `list` of imputed data
+##'   sets or an `OLDlavaan.mi` object.
 ##' @param miPackage Package to be used for imputation. Currently these
-##'   functions only support \code{"Amelia"} or \code{"mice"} for imputation.
-##'   Ignored if \code{data} is already a \code{list} of imputed data sets or a
-##'   \code{lavaan.mi} object.
-##' @param seed \code{integer}. Random number seed to be set before imputing the
-##'   data. Ignored if \code{data} is already a \code{list} of imputed data sets
-##'   or a \code{lavaan.mi} object.
+##'   functions only support `"Amelia"` or `"mice"` for imputation.
+##'   Ignored if `data` is already a `list` of imputed data sets or an
+##'   `OLDlavaan.mi` object.
+##' @param seed `integer`. Random number seed to be set before imputing the
+##'   data. Ignored if `data` is already a `list` of imputed data sets
+##'   or an `OLDlavaan.mi` object.
 ##'
-##' @return A \code{\linkS4class{lavaan.mi}} object
+##' @return A [semTools::OLDlavaan.mi-class] object
 ##'
 ##' @author
 ##'   Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
 ##'
 ##' @references
-##'   Enders, C. K. (2010). \emph{Applied missing data analysis}. New
+##'   Enders, C. K. (2010). *Applied missing data analysis*. New
 ##'   York, NY: Guilford.
 ##'
-##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+##'   Rubin, D. B. (1987). *Multiple imputation for nonresponse in surveys*.
 ##'   New York, NY: Wiley.
 ##'
 ##' @examples
-##'  \dontrun{
-##' ## impose missing data for example
-##' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
-##'                                       "ageyr","agemo","school")]
-##' set.seed(12345)
-##' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
-##' age <- HSMiss$ageyr + HSMiss$agemo/12
-##' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
 ##'
-##' ## specify CFA model from lavaan's ?cfa help page
-##' HS.model <- '
-##'   visual  =~ x1 + x2 + x3
-##'   textual =~ x4 + x5 + x6
-##'   speed   =~ x7 + x8 + x9
-##' '
+##' ## See the new lavaan.mi package
 ##'
-##' ## impute data within runMI...
-##' out1 <- cfa.mi(HS.model, data = HSMiss, m = 20, seed = 12345,
-##'                miArgs = list(noms = "school"))
-##'
-##' ## ... or impute missing data first
-##' library(Amelia)
-##' set.seed(12345)
-##' HS.amelia <- amelia(HSMiss, m = 20, noms = "school", p2s = FALSE)
-##' imps <- HS.amelia$imputations
-##' out2 <- cfa.mi(HS.model, data = imps)
-##'
-##' ## same results (using the same seed results in the same imputations)
-##' cbind(impute.within = coef(out1), impute.first = coef(out2))
-##'
-##' summary(out1, fit.measures = TRUE)
-##' summary(out1, ci = FALSE, fmi = TRUE, output = "data.frame")
-##' summary(out1, ci = FALSE, stand = TRUE, rsq = TRUE)
-##'
-##' ## model fit. D3 includes information criteria
-##' anova(out1)
-##' ## equivalently:
-##' lavTestLRT.mi(out1)
-##' ## request D2
-##' anova(out1, test = "D2")
-##' ## request fit indices
-##' fitMeasures(out1)
-##'
-##'
-##' ## fit multigroup model without invariance constraints
-##' mgfit.config <- cfa.mi(HS.model, data = imps, estimator = "mlm",
-##'                        group = "school")
-##' ## add invariance constraints, and use previous fit as "data"
-##' mgfit.metric <- cfa.mi(HS.model, data = mgfit.config, estimator = "mlm",
-##'                        group = "school", group.equal = "loadings")
-##' mgfit.scalar <- cfa.mi(HS.model, data = mgfit.config, estimator = "mlm",
-##'                        group = "school",
-##'                        group.equal = c("loadings","intercepts"))
-##'
-##' ## compare fit of 2 models to test metric invariance
-##' ## (scaled likelihood ratio test)
-##' lavTestLRT.mi(mgfit.metric, h1 = mgfit.config)
-##' ## To compare multiple models, you must use anova()
-##' anova(mgfit.config, mgfit.metric, mgfit.scalar)
-##' ## or compareFit(), which also includes fit indices for comparison
-##' ## (optional: name the models)
-##' compareFit(config = mgfit.config, metric = mgfit.metric,
-##'            scalar = mgfit.scalar,
-##'            argsLRT = list(test = "D2", method = "satorra.bentler.2010"))
-##'
-##' ## correlation residuals to investigate local misfit
-##' resid(mgfit.scalar, type = "cor.bentler")
-##' ## modification indices for fixed parameters, to investigate local misfit
-##' modindices.mi(mgfit.scalar)
-##' ## or lavTestScore.mi for modification indices about equality constraints
-##' lavTestScore.mi(mgfit.scalar)
-##'
-##' ## Wald test of whether latent means are == (fix 3 means to zero in group 2)
-##' eq.means <- ' .p70. == 0
-##'               .p71. == 0
-##'               .p72. == 0 '
-##' lavTestWald.mi(mgfit.scalar, constraints = eq.means)
-##'
-##'
-##'
-##' ## ordered-categorical data
-##' data(datCat)
-##' lapply(datCat, class) # indicators already stored as ordinal
-##' ## impose missing values
-##' set.seed(123)
-##' for (i in 1:8) datCat[sample(1:nrow(datCat), size = .1*nrow(datCat)), i] <- NA
-##'
-##' ## impute ordinal missing data using mice package
-##' library(mice)
-##' set.seed(456)
-##' miceImps <- mice(datCat)
-##' ## save imputations in a list of data.frames
-##' impList <- list()
-##' for (i in 1:miceImps$m) impList[[i]] <- complete(miceImps, action = i)
-##'
-##' ## fit model, save zero-cell tables and obsolete "WRMR" fit indices
-##' catout <- cfa.mi(' f =~ 1*u1 + 1*u2 + 1*u3 + 1*u4 ', data = impList,
-##'                  FUN = function(fit) {
-##'                    list(wrmr = lavaan::fitMeasures(fit, "wrmr"),
-##'                         zeroCells = lavaan::lavInspect(fit, "zero.cell.tables"))
-##'                  })
-##' summary(catout)
-##' lavTestLRT.mi(catout, test = "D2", pool.robust = TRUE)
-##' fitMeasures(catout, fit.measures = c("rmsea","srmr","cfi"),
-##'             test = "D2", pool.robust = TRUE)
-##'
-##' ## extract custom output
-##' sapply(catout@funList, function(x) x$wrmr) # WRMR for each imputation
-##' catout@funList[[1]]$zeroCells # zero-cell tables for first imputation
-##' catout@funList[[2]]$zeroCells # zero-cell tables for second imputation ...
-##'
-##' }
+##' @name runMI-deprecated
+##' @usage
+##' runMI(model, data, fun = "lavaan", ...,
+##'       m, miArgs = list(), miPackage = "Amelia", seed = 12345)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
+##' @section `runMI()` and the `lavaan.mi` class functionality:
+##' The `runMI()` function and support for `lavaan.mi-class` objects became
+##' such a large part of semTools that it made sense to move that functionality
+##' to its own package.  The \pkg{lavaan.mi} package is now available for users
+##' to fit `lavaan` models to their multiply imputed data.  The new package
+##' already fixes many bugs and provides many new features that make the
+##' semTools `OLDlavaan.mi-class` obsolete.  Please immediately discontinue
+##' your dependence on `semTools::runMI()` amd transition to the new
+##' \pkg{lavaan.mi} package, which also provides a more similar user interface
+##' as the \pkg{lavaan} package provides for a single `data=` set. The README
+##' on <https://github.com/TDJorgensen/lavaan.mi> provides a list of analogous
+##' functionality in \pkg{lavaan} and \pkg{lavaan.mi}, and the NEWS file
+##' documents new features and other differences from the deprecated
+##' `semTools::runMI()` functionality.
 ##'
 ##' @export
 runMI <- function(model, data, fun = "lavaan", ...,
                   m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
+
+  .Deprecated(msg = c("\nThe runMI() function and lavaan.mi-class have been ",
+                      "deprecated and will cease to be included in future ",
+                      "versions of semTools.\n\nSupport is still provided for ",
+                      "analyzing lavaan.mi-class objects (e.g., compRelSEM() ",
+                      "can estimate reliability using pooled results), which ",
+                      "can now be created using the lavaan.mi package.\n\nThe ",
+                      "deprecated runMI() function now creates an object of ",
+                      "class OLDlavaan.mi, which can be analyzed using the ",
+                      "deprecated functions in semTools, like lavTestLRT.mi(),",
+                      " that have been updated and improved in the lavaan.mi ",
+                      "package.\n\nFind more details help('semTools-deprecated)"))
+
   CALL <- match.call()
   dots <- list(...)
 
@@ -191,7 +119,7 @@ runMI <- function(model, data, fun = "lavaan", ...,
       all(!is.null(dots$se), tolower(dots$se) %in% c("boot","bootstrap"))) {
     stop('Bootstraping unavailable (and not recommended) in combination with ',
          'multiple imputations. For robust confidence intervals of indirect',
-         ' effects, see the ?semTools::monteCarloMed help page. To bootstrap ',
+         ' effects, see the ?semTools::monteCarloCI help page. To bootstrap ',
          'within each imputation, users can pass a custom function to the ',
          'FUN= argument (see ?lavaanList) to save bootstrap distributions in ',
          'the @funList slot, then manually combine afterward.')
@@ -250,15 +178,15 @@ runMI <- function(model, data, fun = "lavaan", ...,
       m <- length(data)
       class(imputedData) <- "list" # override inheritance (e.g., "mi" if Amelia)
     }
-  } else if (is(data, "lavaan.mi")) {
+  } else if (is(data, "OLDlavaan.mi")) {
     seed <- data@seed
     imputeCall <- data@imputeCall
     imputedData <- data@DataList
     m <- length(imputedData)
   } else stop("data is not a valid input type: a partially observed data.frame,",
-              " a list of imputed data.frames, or previous lavaan.mi object")
+              " a list of imputed data.frames, or previous OLDlavaan.mi object")
 
-  ## Function to get custom output for lavaan.mi object
+  ## Function to get custom output for OLDlavaan.mi object
   ## NOTE: Need "lavaan::" to allow for parallel computations
   .getOutput. <- function(obj) {
     converged <- lavaan::lavInspect(obj, "converged")
@@ -311,7 +239,7 @@ runMI <- function(model, data, fun = "lavaan", ...,
   for (i in 1:m) fit@h1List[[i]] <- c(fit@h1List[[i]],
                                       list(PT = fit@funList[[i]]$satPT))
   ## assign class and add new slots
-  fit <- as(fit, "lavaan.mi")
+  fit <- as(fit, "OLDlavaan.mi")
   fit@coefList <- lapply(fit@funList, "[[", i = "coefMats")
   fit@miList <- lapply(fit@funList, "[[", i = "modindices")
   fit@phiList <- lapply(fit@funList, "[[", i = "cov.lv")
@@ -345,14 +273,25 @@ runMI <- function(model, data, fun = "lavaan", ...,
     }
   } else fit@funList <- list()
 
-  NewStartVals <- try(getMethod("coef", "lavaan.mi")(fit, type = "user",
-                                                          labels = FALSE),
-                           silent = TRUE)
+  NewStartVals <- try(getMethod("coef", "OLDlavaan.mi")(fit, type = "user",
+                                                        labels = FALSE),
+                      silent = TRUE)
   if (!inherits(NewStartVals, "try-error")) fit@ParTable$start <- NewStartVals
   fit
 }
 
-##' @rdname runMI
+
+
+
+##' @name runMI-deprecated
+##' @usage
+##' lavaan.mi(model, data, ...,
+##'           m, miArgs = list(), miPackage = "Amelia", seed = 12345)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+##' @rdname semTools-deprecated
 ##' @export
 lavaan.mi <- function(model, data, ...,
                       m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
@@ -364,7 +303,15 @@ lavaan.mi <- function(model, data, ...,
   eval(mc, parent.frame())
 }
 
-##' @rdname runMI
+##' @name runMI-deprecated
+##' @usage
+##' cfa.mi(model, data, ...,
+##'        m, miArgs = list(), miPackage = "Amelia", seed = 12345)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+##' @rdname semTools-deprecated
 ##' @export
 cfa.mi <- function(model, data, ...,
                    m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
@@ -376,7 +323,15 @@ cfa.mi <- function(model, data, ...,
   eval(mc, parent.frame())
 }
 
-##' @rdname runMI
+##' @name runMI-deprecated
+##' @usage
+##' sem.mi(model, data, ...,
+##'        m, miArgs = list(), miPackage = "Amelia", seed = 12345)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+##' @rdname semTools-deprecated
 ##' @export
 sem.mi <- function(model, data, ...,
                    m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
@@ -388,7 +343,15 @@ sem.mi <- function(model, data, ...,
   eval(mc, parent.frame())
 }
 
-##' @rdname runMI
+##' @name runMI-deprecated
+##' @usage
+##' growth.mi(model, data, ...,
+##'           m, miArgs = list(), miPackage = "Amelia", seed = 12345)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+##' @rdname semTools-deprecated
 ##' @export
 growth.mi <- function(model, data, ...,
                       m, miArgs = list(), miPackage = "Amelia", seed = 12345) {
@@ -410,9 +373,9 @@ growth.mi <- function(model, data, ...,
 ##'
 ##' This is a utility function used to calculate the "D2" statistic for pooling
 ##' test statistics across multiple imputations. This function is called by
-##' several functions used for \code{\linkS4class{lavaan.mi}} objects, such as
-##' \code{\link{lavTestLRT.mi}}, \code{\link{lavTestWald.mi}}, and
-##' \code{\link{lavTestScore.mi}}. But this function can be used for any general
+##' several functions used for [OLDlavaan.mi-class] objects, such as
+##' [lavTestLRT.mi()], [lavTestWald.mi()], and
+##' [lavTestScore.mi()]. But this function can be used for any general
 ##' scenario because it only requires a vector of \eqn{\chi^2} statistics (one
 ##' from each imputation) and the degrees of freedom for the test statistic.
 ##' See Li, Meng, Raghunathan, & Rubin (1991) and Enders (2010, chapter 8) for
@@ -420,39 +383,38 @@ growth.mi <- function(model, data, ...,
 ##'
 ##' @importFrom stats var pf pchisq
 ##'
-##' @param w \code{numeric} vector of Wald \eqn{\chi^2} statistics. Can also
-##'   be Wald \emph{z} statistics, which will be internally squared to make
-##'   \eqn{\chi^2} statistics with one \emph{df} (must set \code{DF = 0L}).
-##' @param DF degrees of freedom (\emph{df}) of the \eqn{\chi^2} statistics.
-##'   If \code{DF = 0L} (default), \code{w} is assumed to contain \emph{z}
+##' @param w `numeric` vector of Wald \eqn{\chi^2} statistics. Can also
+##'   be Wald *z* statistics, which will be internally squared to make
+##'   \eqn{\chi^2} statistics with one *df* (must set `DF = 0L`).
+##' @param DF degrees of freedom (*df*) of the \eqn{\chi^2} statistics.
+##'   If `DF = 0L` (default), `w` is assumed to contain *z*
 ##'   statistics, which will be internally squared.
-##' @param asymptotic \code{logical}. If \code{FALSE} (default), the pooled test
-##'   will be returned as an \emph{F}-distributed statistic with numerator
-##'   (\code{df1}) and denominator (\code{df2}) degrees of freedom.
-##'   If \code{TRUE}, the pooled \emph{F} statistic will be multiplied by its
-##'   \code{df1} on the assumption that its \code{df2} is sufficiently large
+##' @param asymptotic `logical`. If `FALSE` (default), the pooled test
+##'   will be returned as an *F*-distributed statistic with numerator
+##'   (`df1`) and denominator (`df2`) degrees of freedom.
+##'   If `TRUE`, the pooled *F* statistic will be multiplied by its
+##'   `df1` on the assumption that its `df2` is sufficiently large
 ##'   enough that the statistic will be asymptotically \eqn{\chi^2} distributed
-##'   with \code{df1}.
+##'   with `df1`.
 ##'
-##' @return A \code{numeric} vector containing the test statistic, \emph{df},
-##'   its \emph{p} value, and 2 missing-data diagnostics: the relative invrease
+##' @return A `numeric` vector containing the test statistic, *df*,
+##'   its *p* value, and 2 missing-data diagnostics: the relative invrease
 ##'   in variance (RIV, or average for multiparameter tests: ARIV) and the
 ##'   fraction missing information (FMI = ARIV / (1 + ARIV)).
 ##'
-##' @seealso \code{\link{lavTestLRT.mi}}, \code{\link{lavTestWald.mi}},
-##'   \code{\link{lavTestScore.mi}}
+##' @seealso [lavTestLRT.mi()], [lavTestWald.mi()], [lavTestScore.mi()]
 ##'
 ##' @author Terrence D. Jorgensen (University of Amsterdam;
 ##'   \email{TJorgensen314@@gmail.com})
 ##'
 ##' @references
-##'   Enders, C. K. (2010). \emph{Applied missing data analysis}. New
+##'   Enders, C. K. (2010). *Applied missing data analysis*. New
 ##'   York, NY: Guilford.
 ##'
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
-##'   Significance levels from repeated \emph{p}-values with multiply-imputed
-##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   \url{https://www.jstor.org/stable/24303994}
+##'   Significance levels from repeated *p*-values with multiply-imputed
+##'   data. *Statistica Sinica, 1*(1), 65--92. Retrieved from
+##'   <https://www.jstor.org/stable/24303994>
 ##'
 ##' @examples
 ##' ## generate a vector of chi-squared values, just for example
@@ -469,9 +431,23 @@ growth.mi <- function(model, data, ...,
 ##' calculate.D2(Z) # default DF = 0 will square Z to make chisq(DF = 1)
 ##' ## F test is equivalent to a t test with the denominator DF
 ##'
+##' @name calculate.D2-deprecated
+##' @usage calculate.D2(w, DF = 0L, asymptotic = FALSE)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
 ##'
 ##' @export
 calculate.D2 <- function(w, DF = 0L, asymptotic = FALSE) {
+
+  .Deprecated(msg = c("\nThe calculate.D2() function has been deprecated from ",
+                      "semTools and moved to the new lavaan.mi package, along ",
+                      "with other multiple-imputation functionality related to",
+                      " runMI().\nSee help('semTools-deprecated)"))
+
   if (length(w) == 0L) return(NA)
   w <- as.numeric(w)
   DF <- as.numeric(DF)

@@ -8,8 +8,8 @@ probe2WayRC(fit, nameX, nameY, modVar, valProbe, group = 1L,
   omit.imps = c("no.conv", "no.se"))
 }
 \arguments{
-\item{fit}{A fitted \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object with a latent 2-way interaction.}
+\item{fit}{A fitted \link[lavaan:lavaan-class]{lavaan::lavaan} or
+\link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object with a latent 2-way interaction.}
 
 \item{nameX}{\code{character} vector of all 3 factor names used as the
 predictors. The lower-order factors must be listed first, and the final
@@ -26,12 +26,12 @@ effect of the focal predictor.}
 
 \item{group}{In multigroup models, the label of the group for which the
 results will be returned. Must correspond to one of
-\code{\link[lavaan]{lavInspect}(fit, "group.label")}, or an integer
+\code{lavInspect(fit, "group.label")}, or an integer
 corresponding to which of those group labels.}
 
 \item{omit.imps}{\code{character} vector specifying criteria for omitting
 imputations from pooled results. Ignored unless \code{fit} is of
-class \code{\linkS4class{lavaan.mi}}. Can include any of
+class \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi}. Can include any of
 \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
 default setting, which excludes any imputations that did not
 converge or for which standard errors could not be computed.  The
@@ -48,17 +48,16 @@ imputations warrant further investigation.}
 \value{
 A list with two elements:
 \enumerate{
- \item \code{SimpleIntercept}: The intercepts given each value of the
-  moderator. This element will be \code{NULL} unless the factor intercept is
-  estimated (e.g., not fixed at 0).
- \item \code{SimpleSlope}: The slopes given each value of the moderator.
+\item \code{SimpleIntercept}: The simple intercepts given each value of the
+moderator.
+\item \code{SimpleSlope}: The simple slopes given each value of the moderator.
 }
 In each element, the first column represents the values of the moderators
 specified in the \code{valProbe} argument. The second column is the simple
 intercept or simple slope. The third column is the standard error of the
-simple intercept or simple slope. The fourth column is the Wald (\emph{z})
-statistic. The fifth column is the \emph{p} value testing whether the simple
-intercepts or slopes are different from 0.
+simple intercept or slope. The fourth column is the Wald (\emph{z})
+statistic, and the fifth column is the associated \emph{p} value testing
+the null hypothesis that each simple intercept or slope is 0.
 }
 \description{
 Probing interaction for simple intercept and simple slope for the
@@ -68,7 +67,7 @@ residual-centered latent two-way interaction (Geldhof et al., 2013)
 Before using this function, researchers need to make the products of the
 indicators between the first-order factors and residualize the products by
 the original indicators (Lance, 1988; Little, Bovaird, & Widaman, 2006). The
-process can be automated by the \code{\link{indProd}} function. Note that
+process can be automated by the \code{\link[=indProd]{indProd()}} function. Note that
 the indicator products can be made for all possible combination or
 matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
 with the regression with latent interaction will be used to fit all original
@@ -79,11 +78,11 @@ probe the interaction.
 
 The probing process on residual-centered latent interaction is based on
 transforming the residual-centered result into the no-centered result. See
-Geldhof et al. (2013) for further details. Note that this approach based on
-a strong assumption that the first-order latent variables are normally
+Geldhof et al. (2013) for further details. Note that this approach is based
+on a strong assumption that the first-order latent variables are normally
 distributed. The probing process is applied after the no-centered result
 (parameter estimates and their covariance matrix among parameter estimates)
-has been computed. See the \code{\link{probe2WayMC}} for further details.
+has been computed. See the \code{\link[=probe2WayMC]{probe2WayMC()}} for further details.
 }
 \examples{
 
@@ -159,16 +158,16 @@ and caveats. \emph{Educational and Psychological Measurement, 73}(1), 27--46.
 }
 \seealso{
 \itemize{
- \item \code{\link{indProd}} For creating the indicator products with no
-  centering, mean centering, double-mean centering, or residual centering.
- \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
-  when the results are obtained from mean-centering, or double-mean centering
- \item \code{\link{probe3WayMC}} For probing the three-way latent interaction
-  when the results are obtained from mean-centering, or double-mean centering
- \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
-  when the results are obtained from residual-centering approach.
- \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
-  latent interaction.
+\item \code{\link[=indProd]{indProd()}} For creating the indicator products with no
+centering, mean centering, double-mean centering, or residual centering.
+\item \code{\link[=probe2WayMC]{probe2WayMC()}} For probing the two-way latent interaction
+when the results are obtained from mean-centering, or double-mean centering
+\item \code{\link[=probe3WayMC]{probe3WayMC()}} For probing the three-way latent interaction
+when the results are obtained from mean-centering, or double-mean centering
+\item \code{\link[=probe3WayRC]{probe3WayRC()}} For probing the two-way latent interaction
+when the results are obtained from residual-centering approach.
+\item \code{\link[=plotProbe]{plotProbe()}} Plot the simple intercepts and slopes of the
+latent interaction.
 }
 }
 \author{

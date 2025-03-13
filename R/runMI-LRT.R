@@ -1,7 +1,10 @@
 ### Terrence D. Jorgensen & Yves Rosseel
-### Last updated: 10 January 2021
+### Last updated: 12 March 2025
 ### Pooled likelihood ratio test for multiple imputations
 ### Borrowed source code from lavaan/R/lav_test_LRT.R
+
+### DEPRECATED: 16 June 2024
+### supplanted by lavaan.mi package
 
 
 ## -------------
@@ -16,135 +19,127 @@
 ##' Meng & Rubin (1992), or by pooling the LRT statistics from each imputation,
 ##' as described by Li, Meng, Raghunathan, & Rubin (1991).
 ##'
-##' The Meng & Rubin (1992) method, also referred to as the \code{"D3"}
+##' The Meng & Rubin (1992) method, also referred to as the `"D3"`
 ##' statistic, is only applicable when using a likelihood-based estimator.
 ##' Otherwise (e.g., DWLS for categorical outcomes), users are notified that
-##' \code{test} was set to \code{"D2"}.
+##' `test` was set to `"D2"`.
 ##'
-##' \code{test = "Mplus"} implies \code{"D3"} and \code{asymptotic = TRUE}
+##' `test = "Mplus"` implies `"D3"` and `asymptotic = TRUE`
 ##' (see Asparouhov & Muthen, 2010).
 ##'
-##' Note that unlike \code{\link[lavaan]{lavTestLRT}}, \code{lavTestLRT} can
+##' Note that unlike [lavaan::lavTestLRT()], `lavTestLRT` can
 ##' only be used to compare a single pair of models, not a longer list of
 ##' models.  To compare several nested models fitted to multiple imputations,
-##' see examples on the \code{\link{compareFit}} help page.
+##' see examples on the [compareFit()] help page.
 ##'
-##' @aliases lavTestLRT.mi
+## @aliases lavTestLRT.mi
 ##' @importFrom lavaan lavListInspect parTable lavTestLRT
 ##' @importFrom stats cov pchisq pf
 ##'
-##' @param object,h1 An object of class \code{\linkS4class{lavaan.mi}}.
-##'   \code{object} should be nested within (more constrained than) \code{h1}.
-##' @param test \code{character} indicating which pooling method to use.
-##'   \code{"D3"}, \code{"mr"}, or \code{"meng.rubin"} (default) requests the
-##'   method described by Meng & Rubin (1992). \code{"D2"}, \code{"LMRR"},
-##'   or \code{"Li.et.al"} requests the complete-data LRT statistic should be
+##' @param object,h1 An object of class [OLDlavaan.mi-class].
+##'   `object` should be nested within (more constrained than) `h1`.
+##' @param test `character` indicating which pooling method to use.
+##'   `"D3"`, `"mr"`, or `"meng.rubin"` (default) requests the
+##'   method described by Meng & Rubin (1992). `"D2"`, `"LMRR"`,
+##'   or `"Li.et.al"` requests the complete-data LRT statistic should be
 ##'   calculated using each imputed data set, which will then be pooled across
 ##'   imputations, as described in Li, Meng, Raghunathan, & Rubin (1991).
 ##'   Find additional details in Enders (2010, chapter 8).
-##' @param omit.imps \code{character} vector specifying criteria for omitting
+##' @param omit.imps `character` vector specifying criteria for omitting
 ##'   imputations from pooled results.  Can include any of
-##'   \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
+##'   `c("no.conv", "no.se", "no.npd")`, the first 2 of which are the
 ##'   default setting, which excludes any imputations that did not
 ##'   converge or for which standard errors could not be computed.  The
-##'   last option (\code{"no.npd"}) would exclude any imputations which
+##'   last option (`"no.npd"`) would exclude any imputations which
 ##'   yielded a nonpositive definite covariance matrix for observed or
 ##'   latent variables, which would include any "improper solutions" such
 ##'   as Heywood cases. Specific imputation numbers can also be included in this
 ##'   argument, in case users want to  apply their own custom omission criteria
 ##'   (or simulations can use different numbers of imputations without
 ##'   redundantly refitting the model).
-##' @param asymptotic \code{logical}. If \code{FALSE} (default), the pooled test
-##'   will be returned as an \emph{F}-distributed statistic with numerator
-##'   (\code{df1}) and denominator (\code{df2}) degrees of freedom.
-##'   If \code{TRUE}, the pooled \emph{F} statistic will be multiplied by its
-##'   \code{df1} on the assumption that its \code{df2} is sufficiently large
+##' @param asymptotic `logical`. If `FALSE` (default), the pooled test
+##'   will be returned as an *F*-distributed statistic with numerator
+##'   (`df1`) and denominator (`df2`) degrees of freedom.
+##'   If `TRUE`, the pooled *F* statistic will be multiplied by its
+##'   `df1` on the assumption that its `df2` is sufficiently large
 ##'   enough that the statistic will be asymptotically \eqn{\chi^2} distributed
-##'   with \code{df1}.
-##' @param pool.robust \code{logical}. Ignored unless \code{test = "D2"} and a
-##'   robust test was requested. If \code{pool.robust = TRUE}, the robust test
-##'   statistic is pooled, whereas \code{pool.robust = FALSE} will pool
+##'   with `df1`.
+##' @param pool.robust `logical`. Ignored unless `test = "D2"` and a
+##'   robust test was requested. If `pool.robust = TRUE`, the robust test
+##'   statistic is pooled, whereas `pool.robust = FALSE` will pool
 ##'   the naive test statistic (or difference statistic) and apply the average
 ##'   scale/shift parameter to it (unavailable for mean- and variance-adjusted
-##'   difference statistics, so \code{pool.robust} will be set \code{TRUE}).
-##' @param ... Additional arguments passed to \code{\link[lavaan]{lavTestLRT}},
-##'   only if \code{test = "D2"} and \code{pool.robust = TRUE}
+##'   difference statistics, so `pool.robust` will be set `TRUE`).
+##' @param ... Additional arguments passed to [lavaan::lavTestLRT()],
+##'   only if `test = "D2"` and `pool.robust = TRUE`
 ##'
 ##' @return
-##'   A vector containing the LRT statistic (either an \code{F} or \eqn{\chi^2}
-##'   statistic, depending on the \code{asymptotic} argument), its degrees of
-##'   freedom (numerator and denominator, if \code{asymptotic = FALSE}), its
-##'   \emph{p} value, and 2 missing-data diagnostics: the relative invrease
+##'   A vector containing the LRT statistic (either an `F` or \eqn{\chi^2}
+##'   statistic, depending on the `asymptotic` argument), its degrees of
+##'   freedom (numerator and denominator, if `asymptotic = FALSE`), its
+##'   *p* value, and 2 missing-data diagnostics: the relative invrease
 ##'   in variance (RIV, or average for multiparameter tests: ARIV) and the
 ##'   fraction missing information (FMI = ARIV / (1 + ARIV)). Robust statistics
 ##'   will also include the average (across imputations) scaling factor and
-##'   (if relevant) shift parameter(s), unless \code{pool.robust = TRUE}.
+##'   (if relevant) shift parameter(s), unless `pool.robust = TRUE`.
 ##'
 ##' @author
 ##'   Terrence D. Jorgensen (University of Amsterdam;
 ##'   \email{TJorgensen314@@gmail.com})
 ##'
 ##' @references
-##'   Enders, C. K. (2010). \emph{Applied missing data analysis}.
+##'   Enders, C. K. (2010). *Applied missing data analysis*.
 ##'   New York, NY: Guilford.
 ##'
 ##'   Li, K.-H., Meng, X.-L., Raghunathan, T. E., & Rubin, D. B. (1991).
-##'   Significance levels from repeated \emph{p}-values with multiply-imputed
-##'   data. \emph{Statistica Sinica, 1}(1), 65--92. Retrieved from
-##'   \url{https://www.jstor.org/stable/24303994}
+##'   Significance levels from repeated *p*-values with multiply-imputed
+##'   data. *Statistica Sinica, 1*(1), 65--92. Retrieved from
+##'   <https://www.jstor.org/stable/24303994>
 ##'
 ##'   Meng, X.-L., & Rubin, D. B. (1992). Performing likelihood ratio tests with
-##'   multiply-imputed data sets. \emph{Biometrika, 79}(1), 103--111.
+##'   multiply-imputed data sets. *Biometrika, 79*(1), 103--111.
 ##'   \doi{10.2307/2337151}
 ##'
-##'   Rubin, D. B. (1987). \emph{Multiple imputation for nonresponse in surveys}.
+##'   Rubin, D. B. (1987). *Multiple imputation for nonresponse in surveys*.
 ##'   New York, NY: Wiley.
 ##'
-##' @seealso \code{\link[lavaan]{lavTestLRT}}, \code{\link{compareFit}}
+##' @seealso [lavaan::lavTestLRT()], [compareFit()]
 ##'
 ##' @examples
-##'  \dontrun{
-##' ## impose missing data for example
-##' HSMiss <- HolzingerSwineford1939[ , c(paste("x", 1:9, sep = ""),
-##'                                       "ageyr","agemo","school")]
-##' set.seed(12345)
-##' HSMiss$x5 <- ifelse(HSMiss$x5 <= quantile(HSMiss$x5, .3), NA, HSMiss$x5)
-##' age <- HSMiss$ageyr + HSMiss$agemo/12
-##' HSMiss$x9 <- ifelse(age <= quantile(age, .3), NA, HSMiss$x9)
 ##'
-##' ## impute missing data
-##' library(Amelia)
-##' set.seed(12345)
-##' HS.amelia <- amelia(HSMiss, m = 20, noms = "school", p2s = FALSE)
-##' imps <- HS.amelia$imputations
+##' ## See the new lavaan.mi package
 ##'
-##' ## specify CFA model from lavaan's ?cfa help page
-##' HS.model <- '
-##'   visual  =~ x1 + b1*x2 + x3
-##'   textual =~ x4 + b2*x5 + x6
-##'   speed   =~ x7 + b3*x8 + x9
-##' '
-##'
-##' fit1 <- cfa.mi(HS.model, data = imps, estimator = "mlm")
-##' fit0 <- cfa.mi(HS.model, data = imps, estimator = "mlm", orthogonal = TRUE)
-##'
-##' ## By default, use D3.
-##' ## Must request a chi-squared statistic to be robustified.
-##' lavTestLRT.mi(fit1, h1 = fit0, asymptotic = TRUE)
-##'
-##' ## Using D2, you can either robustify the pooled naive statistic ...
-##' lavTestLRT.mi(fit1, h1 = fit0, asymptotic = TRUE, test = "D2")
-##' ## ... or pool the robust chi-squared statistic
-##' lavTestLRT.mi(fit1, h1 = fit0, asymptotic = TRUE, test = "D2",
-##'               pool.robust = TRUE)
-##' }
+##' @name lavTestLRT.mi-deprecated
+##' @usage
+##' lavTestLRT.mi(object, h1 = NULL, test = c("D3","D2"),
+##'               omit.imps = c("no.conv","no.se"),
+##'               asymptotic = FALSE, pool.robust = FALSE, ...)
+##' @seealso [semTools-deprecated()]
+##' @keywords internal
+NULL
+
+
+##' @rdname semTools-deprecated
 ##'
 ##' @export
 lavTestLRT.mi <- function(object, h1 = NULL, test = c("D3","D2"),
                           omit.imps = c("no.conv","no.se"),
                           asymptotic = FALSE, pool.robust = FALSE, ...) {
+
+  .Deprecated(msg = c("\nThe runMI() and related lavaan.mi functions have been",
+                      " deprecated and will cease to be included in future ",
+                      "versions of semTools.\n\nSupport is still provided for ",
+                      "analyzing lavaan.mi-class objects (e.g., compRelSEM() ",
+                      "can estimate reliability using pooled results), which ",
+                      "can now be created using the lavaan.mi package.\n\nThe ",
+                      "deprecated runMI() function now creates an object of ",
+                      "class OLDlavaan.mi, which can be analyzed using the ",
+                      "deprecated functions in semTools, like lavTestLRT.mi(),",
+                      " that have been updated and improved in the lavaan.mi ",
+                      "package.\n\nFind more details help('semTools-deprecated)"))
+
   ## check class
-  if (!inherits(object, "lavaan.mi")) stop("object is not class 'lavaan.mi'")
+  if (!inherits(object, "OLDlavaan.mi")) stop("object is not class 'OLDlavaan.mi'")
 
   useImps <- rep(TRUE, length(object@DataList))
   if ("no.conv" %in% omit.imps) useImps <- sapply(object@convergence, "[[", i = "converged")
@@ -166,7 +161,7 @@ lavTestLRT.mi <- function(object, h1 = NULL, test = c("D3","D2"),
 
   ## model comparison?
   if (!is.null(h1)) {
-    if (!inherits(h1, "lavaan.mi")) stop("h1 is not class 'lavaan.mi'")
+    if (!inherits(h1, "OLDlavaan.mi")) stop("h1 is not class 'OLDlavaan.mi'")
     if (!all(lavListInspect(object, "options")$test == lavListInspect(h1, "options")$test)) {
       stop('Different (sets of) test statistics were requested for the 2 models.')
     }
@@ -484,8 +479,8 @@ getLLs <- function(object, useImps, saturated = FALSE,
     PT$free <- 0L
     PT$user <- 1L
     ## fix them to pooled estimates
-    fixedValues <- getMethod("coef","lavaan.mi")(object, type = "user",
-                                                 omit.imps = omit.imps)
+    fixedValues <- getMethod("coef","OLDlavaan.mi")(object, type = "user",
+                                                    omit.imps = omit.imps)
     PT$ustart <- fixedValues
     PT$start <- NULL
     PT$est <- NULL

@@ -7,8 +7,8 @@
 lrv2ord(Sigma, Mu, thresholds, cWts)
 }
 \arguments{
-\item{Sigma}{Population covariance \code{\link{matrix}}, with variable names
-saved in the \code{\link{dimnames}} attribute.}
+\item{Sigma}{Population covariance \code{\link[=matrix]{matrix()}}, with variable names
+saved in the \code{\link[=dimnames]{dimnames()}} attribute.}
 
 \item{Mu}{Optional \code{numeric} vector of population means. If missing,
 all means will be set to zero.}
@@ -28,12 +28,12 @@ discretized variable's vector of category weights.}
 }
 \value{
 A \code{list} including the LRV-scale population moments (means,
-  covariance matrix, correlation matrix, and thresholds), the category
-  weights, a \code{data.frame} of implied univariate moments (means,
-  \emph{SD}s, skewness, and excess kurtosis (i.e., in excess of 3, which is
-  the kurtosis of the normal distribution) for discretized data treated as
-  \code{numeric}, and the implied covariance and correlation matrix of
-  discretized data treated as \code{numeric}.
+covariance matrix, correlation matrix, and thresholds), the category
+weights, a \code{data.frame} of implied univariate moments (means,
+\emph{SD}s, skewness, and excess kurtosis (i.e., in excess of 3, which is
+the kurtosis of the normal distribution) for discretized data treated as
+\code{numeric}, and the implied covariance and correlation matrix of
+discretized data treated as \code{numeric}.
 }
 \description{
 This function calculates ordinal-scale moments implied by LRV-scale moments
@@ -43,6 +43,8 @@ Binary and ordinal data are frequently accommodated in SEM by incorporating
 a threshold model that links each observed categorical response variable to
 a corresponding latent response variable that is typically assumed to be
 normally distributed (Kamata & Bauer, 2008; Wirth & Edwards, 2007).
+This function can be useful for real-data analysis or for designing
+Monte Carlo simulations, as described by Jorgensen and Johnson (2022).
 }
 \examples{
 
@@ -98,17 +100,22 @@ lrv2ord(Sigma = cov2cor(Sigma_LRV), thresholds = fit)
 
 }
 \references{
+Jorgensen, T. D., & Johnson, A. R. (2022). How to derive expected values of
+structural equation model parameters when treating discrete data as
+continuous. \emph{Structural Equation Modeling, 29}(4), 639--650.
+\doi{10.1080/10705511.2021.1988609}
+
 Kamata, A., & Bauer, D. J. (2008). A note on the relation between factor
-  analytic and item response theory models.
-  \emph{Structural Equation Modeling, 15}(1), 136--153.
-  \doi{10.1080/10705510701758406}
+analytic and item response theory models.
+\emph{Structural Equation Modeling, 15}(1), 136--153.
+\doi{10.1080/10705510701758406}
 
 Wirth, R. J., & Edwards, M. C. (2007). Item factor analysis: Current
-  approaches and future directions. \emph{Psychological Methods, 12}(1),
-  58--79. \doi{10.1037/1082-989X.12.1.58}
+approaches and future directions. \emph{Psychological Methods, 12}(1),
+58--79. \doi{10.1037/1082-989X.12.1.58}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 
-  Andrew Johnson (Curtin University; \email{andrew.johnson@curtin.edu.au})
+Andrew R. Johnson (Curtin University; \email{andrew.johnson@curtin.edu.au})
 }

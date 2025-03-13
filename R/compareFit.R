@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Sunthud Pornprasertmanit
-### Last updated: 9 May 2022
+### Last updated: 12 March 2025
 ### source code for compareFit() function and FitDiff class
 
 
@@ -17,17 +17,17 @@
 ##' @aliases FitDiff-class show,FitDiff-method summary,FitDiff-method
 ##' @docType class
 ##'
-##' @slot name \code{character}. The name of each model
-##' @slot model.class \code{character}. One class to which each model belongs
-##' @slot nested \code{data.frame}. Model fit comparisons between adjacently
-##'   nested models that are ordered by their degrees of freedom (\emph{df})
-##' @slot fit \code{data.frame}. Fit measures of all models specified in the
-##'   \code{name} slot, ordered by their \emph{df}
-##' @slot fit.diff \code{data.frame}. Sequential differences in fit measures in
-##'   the \code{fit} slot
+##' @slot name `character`. The name of each model
+##' @slot model.class `character`. One class to which each model belongs
+##' @slot nested `data.frame`. Model fit comparisons between adjacently
+##'   nested models that are ordered by their degrees of freedom (*df*)
+##' @slot fit `data.frame`. Fit measures of all models specified in the
+##'   `name` slot, ordered by their *df*
+##' @slot fit.diff `data.frame`. Sequential differences in fit measures in
+##'   the `fit` slot
 ##'
 ##' @section Objects from the Class: Objects can be created via the
-##'  \code{\link{compareFit}} function.
+##'  [compareFit()] function.
 ##'
 ##'
 ##' @author Terrence D. Jorgensen (University of Amsterdam;
@@ -35,7 +35,7 @@
 ##'
 ##'   Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
-##' @seealso \code{\link{compareFit}}; \code{\link{clipboard}}
+##' @seealso [compareFit()]; [clipboard()]
 ##'
 ##' @examples
 ##'
@@ -55,7 +55,7 @@
 ##' summary(measEqOut, fit.measures = "all")
 ##' summary(measEqOut, fit.measures = c("aic", "bic"))
 ##'
-##' \dontrun{
+##' if(interactive()){
 ##' ## Save results to a file
 ##' saveFile(measEqOut, file = "measEq.txt")
 ##'
@@ -87,15 +87,15 @@ setMethod("show", signature(object = "FitDiff"), function(object) {
 ##' @rdname FitDiff-class
 ##' @aliases summary,FitDiff-method
 ##'
-##' @param object object of class \code{FitDiff}
-##' @param fit.measures \code{character} vector naming fit indices the user can
-##'   request from \code{\link[lavaan]{fitMeasures}}. If \code{"default"}, the
-##'   fit measures will be \code{c("chisq", "df", "pvalue", "cfi", "tli",
-##'   "rmsea", "srmr", "aic", "bic")}. If \code{"all"}, all available fit
+##' @param object object of class `FitDiff`
+##' @param fit.measures `character` vector naming fit indices the user can
+##'   request from [lavaan::fitMeasures()]. If `"default"`, the
+##'   fit measures will be `c("chisq", "df", "pvalue", "cfi", "tli",
+##'   "rmsea", "srmr", "aic", "bic")`. If `"all"`, all available fit
 ##'   measures will be returned.
 ##' @param nd number of digits printed
-##' @param tag single \code{character} used to flag the model preferred by each
-##'   fit index. To omit tags, set to \code{NULL} or \code{NA}.
+##' @param tag single `character` used to flag the model preferred by each
+##'   fit index. To omit tags, set to `NULL` or `NA`.
 ##'
 ##' @export
 setMethod("summary", signature(object = "FitDiff"),
@@ -224,29 +224,28 @@ saveFileFitDiff <- function(object, file, what = "summary",
 ##' @importFrom lavaan lavTestLRT
 ##' @importMethodsFrom lavaan fitMeasures
 ##'
-##' @param ...  fitted \code{lavaan} models or list(s) of \code{lavaan} objects.
-##'   \code{\linkS4class{lavaan.mi}} objects are also accepted, but all models
+##' @param ...  fitted `lavaan` models or list(s) of `lavaan` objects.
+##'   [lavaan.mi::lavaan.mi-class] objects are also accepted, but all models
 ##'   must belong to the same class.
-##' @param nested \code{logical} indicating whether the models in \code{...} are
-##'   nested. See \code{\link{net}} for an empirical test of nesting.
-##' @param argsLRT \code{list} of arguments to pass to
-##'   \code{\link[lavaan]{lavTestLRT}}, as well as to
-##'   \code{\link{lavTestLRT.mi}} and \code{\link{fitMeasures}} when
-##'   comparing \code{\linkS4class{lavaan.mi}} models.
-##' @param indices \code{logical} indicating whether to return fit indices from
-##'   the \code{\link[lavaan]{fitMeasures}} function. Selecting particular
-##'   indices is controlled in the \code{summary} method; see
-##'   \code{\linkS4class{FitDiff}}.
-##' @param moreIndices \code{logical} indicating whether to return fit indices
-##'   from the \code{\link{moreFitIndices}} function. Selecting particular
-##'   indices is controlled in the \code{summary} method; see
-##'   \code{\linkS4class{FitDiff}}.
-##' @param baseline.model optional fitted \code{\linkS4class{lavaan}} model
-##'   passed to \code{\link[lavaan]{fitMeasures}} to calculate incremental fit
-##'   indices.
-##' @param nPrior passed to \code{\link{moreFitIndices}}, if relevant
+##' @param nested `logical` indicating whether the models in `...` are
+##'   nested. See [net()] for an empirical test of nesting.
+##' @param argsLRT `list` of arguments to pass to
+##'   [lavaan::lavTestLRT()], as well as to
+##'   [lavaan.mi::lavTestLRT.mi()] and [lavaan::fitMeasures()] when
+##'   comparing [lavaan.mi::lavaan.mi-class] models.
+##' @param indices `logical` indicating whether to return fit indices from
+##'   the [lavaan::fitMeasures()] function. Selecting particular
+##'   indices is controlled in the `summary` method; see
+##'   [FitDiff-class].
+##' @param moreIndices `logical` indicating whether to return fit indices
+##'   from the [moreFitIndices()] function. Selecting particular
+##'   indices is controlled in the `summary` method; see
+##'   [FitDiff-class].
+##' @param baseline.model optional fitted [lavaan::lavaan-class] model passed to
+##'   [lavaan::fitMeasures()] to calculate incremental fit indices.
+##' @param nPrior passed to [moreFitIndices()], if relevant
 ##'
-##' @return A \code{\linkS4class{FitDiff}} object that saves model fit
+##' @return A [FitDiff-class] object that saves model fit
 ##'   comparisons across multiple models. If the models are not nested, only
 ##'   fit indices for each model are returned. If the models are nested, the
 ##'   differences in fit indices are additionally returned, as well as test
@@ -258,7 +257,7 @@ saveFileFitDiff <- function(object, file, what = "summary",
 ##'
 ##' Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##'
-##' @seealso \code{\linkS4class{FitDiff}}, \code{\link{clipboard}}
+##' @seealso [FitDiff-class], [clipboard()]
 ##'
 ##' @examples
 ##'
@@ -293,36 +292,29 @@ saveFileFitDiff <- function(object, file, what = "summary",
 ##' summary(measEqOut, fit.measures = c("aic", "bic", "sic", "ibic"))
 ##'
 ##'
-##' \dontrun{
-##' ## also applies to lavaan.mi objects (fit model to multiple imputations)
-##' set.seed(12345)
-##' HSMiss <- HolzingerSwineford1939[ , paste("x", 1:9, sep = "")]
-##' HSMiss$x5 <- ifelse(HSMiss$x1 <= quantile(HSMiss$x1, .3), NA, HSMiss$x5)
-##' HSMiss$x9 <- ifelse(is.na(HSMiss$x5), NA, HSMiss$x9)
-##' HSMiss$school <- HolzingerSwineford1939$school
-##'
-##' library(Amelia)
-##' HS.amelia <- amelia(HSMiss, m = 20, noms = "school")
-##' imps <- HS.amelia$imputations
-##'
-##' ## request robust test statistics
-##' mgfit2 <- cfa.mi(HS.model, data = imps, group = "school", estimator = "mlm")
-##' mgfit1 <- cfa.mi(HS.model, data = imps, group = "school", estimator = "mlm",
-##'                  group.equal = "loadings")
-##' mgfit0 <- cfa.mi(HS.model, data = imps, group = "school", estimator = "mlm",
-##'                  group.equal = c("loadings","intercepts"))
-##'
-##' ## request the strictly-positive robust test statistics
-##' out2 <- compareFit(scalar = mgfit0, metric = mgfit1, config = mgfit2,
-##'                    argsLRT = list(asymptotic = TRUE,
-##'                                   method = "satorra.bentler.2010"))
-##' ## note that moreFitIndices() does not work for lavaan.mi objects, but the
-##' ## fitMeasures() method for lavaan.mi objects already returns gammaHat(s)
-##' summary(out2, fit.measures = c("ariv","fmi","df","crmr","srmr",
-##'                                "cfi.robust","tli.robust",
-##'                                "adjGammaHat.scaled","rmsea.ci.lower.robust",
-##'                                "rmsea.robust","rmsea.ci.upper.robust"))
-##' }
+#FIXME: why doesn't this example work?
+## \donttest{
+## ## also applies to lavaan.mi objects (fit model to multiple imputations)
+## library(lavaan.mi)
+## data("HS20imps", package = "lavaan.mi") # example data: 20 imputations
+##
+## ## request robust test statistics
+## mgfit2 <- cfa.mi(HS.model, data = HS20imps, group = "school", estimator = "mlm")
+## mgfit1 <- cfa.mi(HS.model, data = HS20imps, group = "school", estimator = "mlm",
+##                  group.equal = "loadings")
+## mgfit0 <- cfa.mi(HS.model, data = HS20imps, group = "school", estimator = "mlm",
+##                  group.equal = c("loadings","intercepts"))
+##
+## ## request the strictly-positive robust test statistics
+## out2 <- compareFit(scalar = mgfit0, metric = mgfit1, config = mgfit2,
+##                    argsLRT = list(asymptotic = TRUE,
+##                                   method = "satorra.bentler.2010"))
+## ## note that moreFitIndices() does not work for lavaan.mi objects
+## summary(out2, fit.measures = c("crmr","srmr",   "cfi.robust","tli.robust",
+##                                "rmsea.robust",
+##                                "rmsea.ci.lower.robust",
+##                                "rmsea.ci.upper.robust"))
+## }
 ##'
 ##' @export
 compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
@@ -377,6 +369,9 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 	if (inherits(mods[[1]], "lavaan")) {
 	  nonConv <- !sapply(mods, lavInspect, what = "converged")
 	} else if (inherits(mods[[1]], "lavaan.mi")) {
+	  ## attach lavaan.mi to access LRT + fitMeasures
+	  if (!"package:lavaan.mi" %in% search()) attachNamespace("lavaan.mi")
+
 	  nonConv <- !sapply(mods, function(fit) {
 	    any(sapply(fit@convergence, "[", i = "converged"))
 	  })
@@ -392,20 +387,20 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 
 	## grab lavaan.mi options, if relevant
 	if (is.null(argsLRT$pool.robust)) {
-	  pool.robust <- formals(lavTestLRT.mi)$pool.robust # default value
+	  pool.robust <- formals(lavaan.mi::lavTestLRT.mi)$pool.robust # default value
 	} else {
 	  pool.robust <- argsLRT$pool.robust # user-specified value
 	}
-	if (is.null(argsLRT$test)) {
-	  test <- eval(formals(lavTestLRT.mi)$test) # default value
+	if (is.null(argsLRT$pool.method)) {
+	  pool.method <- eval(formals(lavaan.mi::lavTestLRT.mi)$pool.method) # default value
 	} else {
-	  test <- argsLRT$test # user-specified value
+	  pool.method <- argsLRT$pool.method # user-specified value
 	}
 
 	## FIT INDICES
 	if (indices || moreIndices) {
 	  fitList <- lapply(mods, fitMeasures, baseline.model = baseline.model,
-	                    pool.robust = pool.robust, test = test)
+	                    pool.robust = pool.robust, pool.method = pool.method)
 	  if (moreIndices && modClass == "lavaan") {
 	    moreFitList <- lapply(mods, moreFitIndices, nPrior = nPrior)
 	    fitList <- mapply(c, fitList, moreFitList, SIMPLIFY = FALSE)
@@ -424,7 +419,7 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 
 	} else {
 	  fitList <- lapply(mods, fitMeasures, fit.measures = "df",
-	                    pool.robust = pool.robust, test = test)
+	                    pool.robust = pool.robust, pool.method = pool.method)
 	  ## check for scaled tests
 	  nDF <- sapply(fitList, length)
 	  if (any(nDF != nDF[1])) stop('Some (but not all) models have robust tests,',
@@ -442,39 +437,13 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 	## TEST STATISTICS
 	if (nested) {
 
+	  argsLRT$model.names <- names(mods)
+	  argsLRT$object <- mods[[1]]
+
 	  if (inherits(mods[[1]], "lavaan")) {
-	    argsLRT$model.names <- names(mods)
-	    argsLRT$object <- mods[[1]]
 	    nestedout <- do.call(lavTestLRT, c(mods[-1], argsLRT))
-	  } else if (inherits(mods[[1]], "lavaan.mi")) { #FIXME: generalize to lavaan.pool
-
-	    modsA <- mods[-1]
-	    modsB <- mods[-length(mods)]
-	    fitDiff <- list()
-
-	    for (i in seq_along(modsA)) {
-	      fitA <- modsA[[i]]
-	      fitB <- modsB[[i]]
-	      if (is.null(argsLRT$asymptotic))
-	        argsLRT$asymptotic <- any(lavListInspect(fitA, "options")$test %in%
-	                                    c("satorra.bentler","yuan.bentler",
-	                                      "yuan.bentler.mplus","scaled.shifted",
-	                                      "mean.var.adjusted","satterthwaite"))
-	      tempDiff <- do.call(lavTestLRT.mi, c(list(fitA, h1 = fitB), argsLRT))
-
-	      if (names(tempDiff)[1] == "F") {
-	        statNames <- c("F", "df1", "df2", "pvalue")
-	      } else statNames <- c("chisq", "df", "pvalue")
-	      ## check for scaled
-	      if (any(grepl(pattern = "scaled", x = names(tempDiff)))) {
-	        statNames <- paste0(statNames, ".scaled")
-	      }
-
-	      diffName <- paste(names(modsA)[i], "-", names(modsB)[i])
-	      fitDiff[[diffName]] <- tempDiff[statNames]
-	    }
-
-	    nestedout <- as.data.frame(do.call(rbind, fitDiff))
+	  } else if (inherits(mods[[1]], "lavaan.mi")) {
+	    nestedout <- do.call(lavaan.mi::lavTestLRT.mi, c(mods[-1], argsLRT))
 	  }
 
 	  ## not nested

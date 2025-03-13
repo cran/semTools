@@ -46,17 +46,17 @@ kurtosis(1:5)
 
 }
 \references{
-Weisstein, Eric W. (n.d.). \emph{Kurtosis.} Retrived from
+Weisstein, Eric W. (n.d.). \emph{Kurtosis.} Retrieved from
 \emph{MathWorld}--A Wolfram Web Resource:
 \url{http://mathworld.wolfram.com/Kurtosis.html}
 }
 \seealso{
 \itemize{
-  \item \code{\link{skew}} Find the univariate skewness of a variable
-  \item \code{\link{mardiaSkew}} Find the Mardia's multivariate
-   skewness of a set of variables
-  \item \code{\link{mardiaKurtosis}} Find the Mardia's multivariate kurtosis
-   of a set of variables
+\item \code{\link[=skew]{skew()}} Find the univariate skewness of a variable
+\item \code{\link[=mardiaSkew]{mardiaSkew()}} Find the Mardia's multivariate
+skewness of a set of variables
+\item \code{\link[=mardiaKurtosis]{mardiaKurtosis()}} Find the Mardia's multivariate kurtosis
+of a set of variables
 }
 }
 \author{

@@ -1,5 +1,5 @@
 ### Sunthud Pornprasertmanit, Yves Rosseel, & Terrence D. Jorgensen
-### Last updated: 10 January 2021
+### Last updated: 12 March 2025
 ### automate measurement invariance tests for categorical indicators
 
 
@@ -28,7 +28,7 @@
 ##'
 ##' However, if all items have two items (dichotomous), scalar invariance and
 ##' weak invariance cannot be separated because thresholds need to be equal
-##' across groups for scale identification. Users can specify \code{strict}
+##' across groups for scale identification. Users can specify `strict`
 ##' option to include the strict invariance model for the invariance testing.
 ##' See the further details of scale identification and different
 ##' parameterization in Millsap and Yun-Tein (2004).
@@ -36,21 +36,21 @@
 ##' @importFrom lavaan lavInspect parTable
 ##'
 ##' @param ... The same arguments as for any lavaan model.  See
-##'   \code{\link{cfa}} for more information.
-##' @param std.lv If \code{TRUE}, the fixed-factor method of scale
-##'   identification is used. If \code{FALSE}, the first variable for each
+##'   [lavaan::cfa()] for more information.
+##' @param std.lv If `TRUE`, the fixed-factor method of scale
+##'   identification is used. If `FALSE`, the first variable for each
 ##'   factor is used as marker variable.
-##' @param strict If \code{TRUE}, the sequence requires `strict' invariance.
+##' @param strict If `TRUE`, the sequence requires `strict' invariance.
 ##'   See details for more information.
-##' @param quiet If \code{FALSE} (default), a summary is printed out containing
+##' @param quiet If `FALSE` (default), a summary is printed out containing
 ##'   an overview of the different models that are fitted, together with some
-##'   model comparison tests. If \code{TRUE}, no summary is printed.
+##'   model comparison tests. If `TRUE`, no summary is printed.
 ##' @param fit.measures Fit measures used to calculate the differences between
 ##'   nested models.
 ##' @param baseline.model custom baseline model passed to
-##'   \code{\link[lavaan]{fitMeasures}}
+##'   [lavaan::fitMeasures()]
 ##' @param method The method used to calculate likelihood ratio test. See
-##'   \code{\link[lavaan]{lavTestLRT}} for available options
+##'   [lavaan::lavTestLRT()] for available options
 ##'
 ##' @return Invisibly, all model fits in the sequence are returned as a list.
 ##'
@@ -61,12 +61,12 @@
 ##'  Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 ##'
 ##' @references Millsap, R. E., & Yun-Tein, J. (2004). Assessing factorial
-##'   invariance in ordered-categorical measures. \emph{Multivariate Behavioral
-##'   Research, 39}(3), 479--515. \doi{10.1207/S15327906MBR3903_4}
+##'   invariance in ordered-categorical measures. *Multivariate Behavioral
+##'   Research, 39*(3), 479--515. \doi{10.1207/S15327906MBR3903_4}
 ##'
 ##' @examples
 ##'
-##' \dontrun{
+##' \donttest{
 ##' syntax <- ' f1 =~ u1 + u2 + u3 + u4'
 ##'
 ##' measurementInvarianceCat(model = syntax, data = datCat, group = "g",
@@ -79,7 +79,7 @@
 ##' measurementInvarianceCat(..., std.lv = FALSE, strict = FALSE,
 ##'                          quiet = FALSE, fit.measures = "default",
 ##'                          baseline.model = NULL, method = "default")
-##' @seealso \code{\link{semTools-deprecated}}
+##' @seealso [semTools-deprecated()]
 ##' @keywords internal
 NULL
 

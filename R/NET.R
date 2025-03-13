@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 10 January 2021
+### Last updated: 12 March 2025
 ### semTools functions for Nesting and Equivalence Testing
 
 
@@ -17,24 +17,24 @@
 ##' @aliases Net-class show,Net-method summary,Net-method
 ##' @docType class
 ##'
-##' @slot test Logical \code{matrix} indicating nesting/equivalence among models
+##' @slot test Logical `matrix` indicating nesting/equivalence among models
 ##' @slot df The degrees of freedom of tested models
 ##'
 ##' @section Objects from the Class: Objects can be created via the
-##' \code{\link{net}} function.
+##' [net()] function.
 ##'
-##' @param object An object of class \code{Net}.
+##' @param object An object of class `Net`.
 ##'
 ##' @return
-##' \item{show}{\code{signature(object = "Net")}: prints the logical matrix of
-##'   test results. \code{NA} indicates a model did not converge.}
-##' \item{summary}{\code{signature(object = "Net")}: prints a narrative
-##'   description of results. The original \code{object} is invisibly returned.}
+##' \item{show}{`signature(object = "Net")`: prints the logical matrix of
+##'   test results. `NA` indicates a model did not converge.}
+##' \item{summary}{`signature(object = "Net")`: prints a narrative
+##'   description of results. The original `object` is invisibly returned.}
 ##'
 ##' @author
 ##'   Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@@gmail.com})
 ##'
-##' @seealso \code{\link{net}}
+##' @seealso [net()]
 ##'
 ##' @examples
 ##'
@@ -82,6 +82,9 @@ function(object) {
   DFs <- object@df
   x <- object@test
   mods <- colnames(x)
+
+  ## keep track of how many are printed
+  nPrinted <- 0L
   for (R in 2:nrow(x)) {
     for (C in (R - 1):1) {
       ## if model didn't converge (logical value is missing), go to next iteration
@@ -91,12 +94,15 @@ function(object) {
       ## choose message based on whether models are equivalent or nested
       if (identical(DFs[R], DFs[C])) {
         rel <- "equivalent to"
+        nPrinted <- nPrinted + 1L
       } else {
         rel <- "nested within"
+        nPrinted <- nPrinted + 1L
       }
       cat("Model \"", mods[R], "\" is ", rel, " model \"", mods[C], "\"\n", sep = "")
     }
   }
+  if (nPrinted == 0L) cat('No models were determined as nested/equivalent.\n')
   invisible(object)
 })
 
@@ -113,7 +119,7 @@ function(object) {
 ##' The concept of nesting/equivalence should be the same regardless of
 ##' estimation method. However, the particular method of testing
 ##' nesting/equivalence (as described in Bentler & Satorra, 2010) employed by
-##' the \code{net} function analyzes summary statistics (model-implied means and
+##' the `net` function analyzes summary statistics (model-implied means and
 ##' covariance matrices, not raw data). In the case of robust methods like MLR,
 ##' the raw data is only utilized for the robust adjustment to SE and chi-sq,
 ##' and the net function only checks the unadjusted chi-sq for the purposes of
@@ -124,13 +130,13 @@ function(object) {
 ##'
 ##' @importFrom lavaan lavInspect
 ##'
-##' @param \dots The \code{lavaan} objects used for test of nesting and
+##' @param \dots The `lavaan` objects used for test of nesting and
 ##'   equivalence
 ##' @param crit The upper-bound criterion for testing the equivalence of models.
 ##'   Models are considered nested (or equivalent) if the difference between
 ##'   their \eqn{\chi^2} fit statistics is less than this criterion.
 ##'
-##' @return The \linkS4class{Net} object representing the outputs for nesting
+##' @return The [Net-class] object representing the outputs for nesting
 ##'   and equivalent testing, including a logical matrix of test results and a
 ##'   vector of degrees of freedom for each model.
 ##'
@@ -140,15 +146,14 @@ function(object) {
 ##' @references
 ##'
 ##' Bentler, P. M., & Satorra, A. (2010). Testing model nesting and equivalence.
-##' \emph{Psychological Methods, 15}(2), 111--123. \doi{10.1037/a0019625}
+##' *Psychological Methods, 15*(2), 111--123. \doi{10.1037/a0019625}
 ##'
 ##' Asparouhov, T., & Muthen, B. (2019). Nesting and equivalence testing for
-##' structural equation models. \emph{Structural Equation Modeling, 26}(2),
+##' structural equation models. *Structural Equation Modeling, 26*(2),
 ##' 302--309. \doi{10.1080/10705511.2018.1513795}
 ##'
 ##' @examples
 ##'
-##' \dontrun{
 ##' m1 <- ' visual  =~ x1 + x2 + x3
 ##' 	       textual =~ x4 + x5 + x6
 ##' 	       speed   =~ x7 + x8 + x9 '
@@ -166,6 +171,7 @@ function(object) {
 ##' fit2 <- cfa(m2, data = HolzingerSwineford1939) # Not equivalent to or nested in fit1
 ##' fit3 <- cfa(m3, data = HolzingerSwineford1939) # Nested in fit1 and fit1a
 ##'
+##' \donttest{
 ##' tests <- net(fit1, fit1a, fit2, fit3)
 ##' tests
 ##' summary(tests)
@@ -253,11 +259,14 @@ net <- function(..., crit = .0001) {
 ## Hidden Function to test whether model "x" is nested within model "y"
 ## --------------------------------------------------------------------
 
-#' @importFrom lavaan lavInspect lavNames
+#' @importFrom lavaan lavInspect lavNames parTable
 x.within.y <- function(x, y, crit = .0001) {
   if (!lavInspect(x, "converged")) return(NA)
   if (!lavInspect(y, "converged")) return(NA)
 
+  ## not possible for clustered data
+  if (length(lavInspect(x, "cluster")) || length(lavInspect(y, "cluster")))
+    stop('The net() function does not work with models for clustered data.')
   ## not currently implemented unless all variables are considered random
   exoX <- lavInspect(x, "options")$fixed.x & length(lavNames(x, "ov.x"))
   exoY <- lavInspect(y, "options")$fixed.x & length(lavNames(y, "ov.x"))
@@ -292,7 +301,9 @@ x.within.y <- function(x, y, crit = .0001) {
     stop("x cannot be nested within y because y is more restricted than x")
   ## check sample sizes
   N <- lavInspect(x, "nobs")
-  if (!all(N == lavInspect(y, "nobs"))) stop("Sample sizes differ. Models must apply to the same data")
+  if (!all(N == lavInspect(y, "nobs"))) {
+    stop("Sample sizes differ. Models must apply to the same data")
+  }
 
   ## model-implied moments
   Sigma <- lavInspect(x, "cov.ov")
@@ -325,16 +336,24 @@ x.within.y <- function(x, y, crit = .0001) {
   }
 
   ## fit model and check that chi-squared < crit
+  PT <- parTable(y)
+  PT$start <- PT$est
+  PT$est <- PT$se <- NULL
+  CALL <- lavInspect(y, "call")
+  CALL$model       <- PT
+  CALL$data        <- NULL
+  CALL$sample.cov  <- Sigma
+  CALL$sample.mean <- Mu
+  CALL$sample.nobs <- N
+  CALL$sample.th   <- Thr
+  CALL$estimator   <- estimator
+  CALL$WLS.V       <- WLS.V
+  CALL$NACOV       <- NACOV
+  CALL$se          <- "none" # to save time
+  CALL$test        <- "standard"
+  CALL$group.label <- NULL # unnecessary, and causes an error when is.integer()
 
-  suppressWarnings(try(newFit <- lavaan::update(y, data = NULL,
-                                                sample.cov = Sigma,
-                                                sample.mean = Mu,
-                                                sample.nobs = N,
-                                                sample.th = Thr,
-                                                estimator = estimator,
-                                                WLS.V = WLS.V, NACOV = NACOV,
-                                                se = "none", # to save time
-                                                test = "standard")))
+  suppressWarnings(try( newFit <- eval(as.call(CALL)) ))
   if (!lavInspect(newFit, "converged")) return(NA) else {
     result <- lavInspect(newFit, "fit")[["chisq"]] < crit
     if (lavInspect(x, "fit")["df"] ==

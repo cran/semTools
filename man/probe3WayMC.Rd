@@ -9,8 +9,8 @@ probe3WayMC(fit, nameX, nameY, modVar, valProbe1, valProbe2, group = 1L,
   omit.imps = c("no.conv", "no.se"))
 }
 \arguments{
-\item{fit}{A fitted \code{\linkS4class{lavaan}} or
-\code{\linkS4class{lavaan.mi}} object with a latent 2-way interaction.}
+\item{fit}{A fitted \link[lavaan:lavaan-class]{lavaan::lavaan} or
+\link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object with a latent 2-way interaction.}
 
 \item{nameX}{\code{character} vector of all 7 factor names used as the
 predictors. The 3 lower-order factors must be listed first, followed by
@@ -24,8 +24,8 @@ interaction.}
 \item{nameY}{The name of factor that is used as the dependent variable.}
 
 \item{modVar}{The name of two factors that are used as the moderators. The
-effect of the independent factor on each combination of the moderator
-variable values will be probed.}
+effect of the independent factor will be probed at each combination of
+the moderator variables' chosen values.}
 
 \item{valProbe1}{The values of the first moderator that will be used to
 probe the effect of the independent factor.}
@@ -35,11 +35,11 @@ probe the effect of the independent factor.}
 
 \item{group}{In multigroup models, the label of the group for which the
 results will be returned. Must correspond to one of
-\code{\link[lavaan]{lavInspect}(fit, "group.label")}.}
+\code{lavInspect(fit, "group.label")}.}
 
 \item{omit.imps}{\code{character} vector specifying criteria for omitting
 imputations from pooled results. Ignored unless \code{fit} is of
-class \code{\linkS4class{lavaan.mi}}. Can include any of
+class \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi}. Can include any of
 \code{c("no.conv", "no.se", "no.npd")}, the first 2 of which are the
 default setting, which excludes any imputations that did not
 converge or for which standard errors could not be computed.  The
@@ -56,19 +56,19 @@ imputations warrant further investigation.}
 \value{
 A list with two elements:
 \enumerate{
- \item \code{SimpleIntercept}: The intercepts given each combination of
-  moderator values. This element will be shown only if the factor intercept
-  is estimated (e.g., not fixed at 0).
- \item \code{SimpleSlope}: The slopes given each combination of moderator
-  values.
+\item \code{SimpleIntercept}: The model-implied intercepts given each
+combination of moderator values.
+\item \code{SimpleSlope}: The model-implied slopes given each combination
+of moderator values.
 }
 In each element, the first column represents values of the first moderator
 specified in the \code{valProbe1} argument. The second column represents
 values of the second moderator specified in the \code{valProbe2} argument.
 The third column is the simple intercept or simple slope. The fourth column
 is the standard error of the simple intercept or simple slope. The fifth
-column is the Wald (\emph{z}) statistic. The sixth column is the \emph{p}
-value testing whether the simple intercepts or slopes are different from 0.
+column is the Wald (\emph{z}) statistic, and the sixth column is its
+associated \emph{p} value to test the null hypothesis that each simple
+intercept or simple slope equals 0.
 }
 \description{
 Probing interaction for simple intercept and simple slope for the
@@ -79,7 +79,7 @@ Before using this function, researchers need to make the products of the
 indicators between the first-order factors using mean centering (Marsh, Wen,
 & Hau, 2004). Note that the double-mean centering may not be appropriate for
 probing interaction if researchers are interested in simple intercepts. The
-mean or double-mean centering can be done by the \code{\link{indProd}}
+mean or double-mean centering can be done by the \code{\link[=indProd]{indProd()}}
 function. The indicator products can be made for all possible combination or
 matched-pair approach (Marsh et al., 2004). Next, the hypothesized model
 with the regression with latent interaction will be used to fit all original
@@ -88,7 +88,7 @@ term below. Once the lavaan result is obtained, this function will be used
 to probe the interaction.
 
 Let that the latent interaction model regressing the dependent variable
-(\eqn{Y}) on the independent varaible (\eqn{X}) and two moderators (\eqn{Z}
+(\eqn{Y}) on the independent variable (\eqn{X}) and two moderators (\eqn{Z}
 and \eqn{W}) be \deqn{ Y = b_0 + b_1X + b_2Z + b_3W + b_4XZ + b_5XW + b_6ZW
 + b_7XZW + r, } where \eqn{b_0} is the estimated intercept or the expected
 value of \eqn{Y} when \eqn{X}, \eqn{Z}, and \eqn{W} are 0, \eqn{b_1} is the
@@ -101,32 +101,34 @@ effect between \eqn{Z} and \eqn{W} when \eqn{X} is 0, \eqn{b_7} is the
 three-way interaction effect between \eqn{X}, \eqn{Z}, and \eqn{W}, and
 \eqn{r} is the residual term.
 
-For probing three-way interaction, the simple intercept of the independent
+To probe a three-way interaction, the simple intercept of the independent
 variable at the specific values of the moderators (Aiken & West, 1991) can
-be obtained by \deqn{ b_{0|X = 0, Z, W} = b_0 + b_2Z + b_3W + b_6ZW. }
+be obtained by
+\deqn{ b_{0|X = 0, Z, W} = b_0 + b_2Z + b_3W + b_6ZW. }
+The simple slope of the independent variable at the specific values of the
+moderators can be obtained by
+\deqn{ b_{X|Z, W} = b_1 + b_3Z + b_4W + b_7ZW.}
+The variance of the simple intercept formula is
+\deqn{ Var\left(b_{0|X = 0, Z, W}\right) =
+    Var\left(b_0\right) + Z^2Var\left(b_2\right) + W^2Var\left(b_3\right) +
+    Z^2W^2Var\left(b_6\right)}
+\deqn{+ 2ZCov\left(b_0, b_2\right)    + 2WCov\left(b_0, b_3\right)  +
+        2ZWCov\left(b_0, b_6\right)   + 2ZWCov\left(b_2, b_3\right) +
+        2Z^2WCov\left(b_2, b_6\right) + 2ZW^2Cov\left(b_3, b_6\right), }
+where \eqn{Var} denotes the variance of a parameter estimate and \eqn{Cov}
+denotes the covariance of two parameter estimates.
 
-The simple slope of the independent varaible at the specific values of the
-moderators can be obtained by \deqn{ b_{X|Z, W} = b_1 + b_3Z + b_4W + b_7ZW.
-}
+The variance of the simple slope formula is
+\deqn{ Var\left(b_{X|Z, W}\right) =
+      Var\left(b_1\right) + Z^2Var\left(b_4\right) + W^2Var\left(b_5\right)
+      + Z^2W^2Var\left(b_7\right) }
+\deqn{+ 2ZCov\left(b_1, b_4\right)    + 2WCov\left(b_1, b_5\right)  +
+        2ZWCov\left(b_1, b_7\right)   + 2ZWCov\left(b_4, b_5\right) +
+        2Z^2WCov\left(b_4, b_7\right) + 2ZW^2Cov\left(b_5, b_7\right). }
 
-The variance of the simple intercept formula is \deqn{ Var\left(b_{0|X = 0,
-Z, W}\right) = Var\left(b_0\right) + Z^2Var\left(b_2\right) +
-W^2Var\left(b_3\right) + Z^2W^2Var\left(b_6\right) + 2ZCov\left(b_0,
-b_2\right) + 2WCov\left(b_0, b_3\right) + 2ZWCov\left(b_0, b_6\right) +
-2ZWCov\left(b_2, b_3\right) + 2Z^2WCov\left(b_2, b_6\right) +
-2ZW^2Cov\left(b_3, b_6\right) } where \eqn{Var} denotes the variance of a
-parameter estimate and \eqn{Cov} denotes the covariance of two parameter
-estimates.
-
-The variance of the simple slope formula is \deqn{ Var\left(b_{X|Z,
-W}\right) = Var\left(b_1\right) + Z^2Var\left(b_4\right) +
-W^2Var\left(b_5\right) + Z^2W^2Var\left(b_7\right) + 2ZCov\left(b_1,
-b_4\right) + 2WCov\left(b_1, b_5\right) + 2ZWCov\left(b_1, b_7\right) +
-2ZWCov\left(b_4, b_5\right) + 2Z^2WCov\left(b_4, b_7\right) +
-2ZW^2Cov\left(b_5, b_7\right) }
-
-Wald \emph{z} statistic is used for test statistic (even for objects of
-class \code{\linkS4class{lavaan.mi}}).
+Wald \emph{z} statistics are calculated (even for objects of class
+\link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi}) to test null hypotheses that simple
+intercepts or slopes are 0.
 }
 \examples{
 
@@ -149,21 +151,18 @@ f4 =~ x10 + x11 + x12
 f4 ~ b1*f1 + b2*f2 + b3*f3 + b12*f12 + b13*f13 + b23*f23 + b123*f123
 
 ## orthogonal terms among predictors
+## (not necessary, but implied by double mean centering)
 f1 ~~ 0*f12 + 0*f13 + 0*f123
 f2 ~~ 0*f12 + 0*f23 + 0*f123
 f3 ~~ 0*f13 + 0*f23 + 0*f123
 f12 + f13 + f23 ~~ 0*f123
-
-## identify latent means
-x1 + x4 + x7 + x1.x4 + x1.x7 + x4.x7 + x1.x4.x7 + x10 ~ 0*1
-f1 + f2 + f3 + f12 + f13 + f23 + f123 + f4 ~ NA*1
 "
 
 fitMC3way <- sem(model3, data = dat3wayMC, meanstructure = TRUE)
 summary(fitMC3way)
 
 probe3WayMC(fitMC3way, nameX = c("f1" ,"f2" ,"f3",
-                                 "f12","f13","f23", # the order matters!
+                                 "f12","f13","f23", # this order matters!
                                  "f123"),           # 3-way interaction
             nameY = "f4", modVar = c("f1", "f2"),
             valProbe1 = c(-1, 0, 1), valProbe2 = c(-1, 0, 1))
@@ -188,16 +187,16 @@ indicator construction. \emph{Psychological Methods, 9}(3), 275--300.
 }
 \seealso{
 \itemize{
- \item \code{\link{indProd}} For creating the indicator products with no
-  centering, mean centering, double-mean centering, or residual centering.
- \item \code{\link{probe2WayMC}} For probing the two-way latent interaction
-  when the results are obtained from mean-centering, or double-mean centering
- \item \code{\link{probe2WayRC}} For probing the two-way latent interaction
-  when the results are obtained from residual-centering approach.
- \item \code{\link{probe3WayRC}} For probing the two-way latent interaction
-  when the results are obtained from residual-centering approach.
- \item \code{\link{plotProbe}} Plot the simple intercepts and slopes of the
-  latent interaction.
+\item \code{\link[=indProd]{indProd()}} For creating the indicator products with no
+centering, mean centering, double-mean centering, or residual centering.
+\item \code{\link[=probe2WayMC]{probe2WayMC()}} For probing the two-way latent interaction
+when the results are obtained from mean-centering, or double-mean centering
+\item \code{\link[=probe2WayRC]{probe2WayRC()}} For probing the two-way latent interaction
+when the results are obtained from residual-centering approach.
+\item \code{\link[=probe3WayRC]{probe3WayRC()}} For probing the two-way latent interaction
+when the results are obtained from residual-centering approach.
+\item \code{\link[=plotProbe]{plotProbe()}} Plot the simple intercepts and slopes of the
+latent interaction.
 }
 }
 \author{

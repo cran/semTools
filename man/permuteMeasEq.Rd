@@ -34,7 +34,7 @@ have already been identified as DIF items).}
 parameters specified in \code{param} are freely estimated in all groups.
 When \code{modelType = "mgcfa"}, only in the case of testing
 \emph{configural} invariance should \code{uncon = NULL}. When
-\code{modelType = "mimic"}, any non-\code{NULL uncon} is silently set to
+\code{modelType = "mimic"}, any non-\verb{NULL uncon} is silently set to
 \code{NULL}.}
 
 \item{null}{Optional.  A \code{lavaan} object, in which an alternative null
@@ -57,7 +57,7 @@ groups in \code{con} and are unconstrained in \code{uncon}. Parameter names
 must match those returned by \code{names(coef(con))}, but omitting any
 group-specific suffixes (e.g., \code{"f1~1"} rather than \code{"f1~1.g2"})
 or user-specified labels (that is, the parameter names must follow the rules
-of lavaan's \code{\link[lavaan]{model.syntax}}). Alternatively (or
+of lavaan's \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}}). Alternatively (or
 additionally), to test all constraints of a certain type (or multiple types)
 of parameter in \code{con}, \code{param} may take any combination of the
 following values: \code{"loadings"}, \code{"intercepts"},
@@ -65,7 +65,7 @@ following values: \code{"loadings"}, \code{"intercepts"},
 \code{"means"}, \code{"lv.variances"}, and/or \code{"lv.covariances"}. When
 \code{modelType = "mimic"}, \code{param} must be a vector of individual
 parameters or a list of character strings to be passed one-at-a-time to
-\code{\link[lavaan]{lavTestScore}}\code{(object = con, add = param[i])},
+\code{lavaan::lavTestScore(object = con, add = param[i])},
 indicating which (sets of) regression paths fixed to zero in \code{con} that
 the user would consider freeing (i.e., exclude anchor items). If
 \code{modelType = "mimic"} and \code{param} is a list of character strings,
@@ -87,7 +87,7 @@ not need to be specified in \code{freeParam}. Parameter names must match
 those returned by \code{names(coef(con))}, but omitting any group-specific
 suffixes (e.g., \code{"f1~1"} rather than \code{"f1~1.g2"}) or
 user-specified labels (that is, the parameter names must follow the rules of
-lavaan \code{\link[lavaan]{model.syntax}}).}
+lavaan \code{\link[lavaan:model.syntax]{lavaan::model.syntax()}}).}
 
 \item{covariates}{An optional character vector, only applicable when
 \code{modelType = "mimic"}. The observed data are partitioned into columns
@@ -103,13 +103,13 @@ searching \code{param} for predictors (i.e., variables appearing after the
 \item{AFIs}{A character vector indicating which alternative fit indices (or
 chi-squared itself) are to be used to test the multiparameter omnibus null
 hypothesis that the constraints specified in \code{con} hold in the
-population. Any fit measures returned by \code{\link[lavaan]{fitMeasures}}
+population. Any fit measures returned by \code{\link[lavaan:fitMeasures]{lavaan::fitMeasures()}}
 may be specified (including constants like \code{"df"}, which would be
 nonsensical). If both \code{AFIs} and \code{moreAFIs} are \code{NULL}, only
 \code{"chisq"} will be returned.}
 
 \item{moreAFIs}{Optional. A character vector indicating which (if any)
-alternative fit indices returned by \code{\link[semTools]{moreFitIndices}}
+alternative fit indices returned by \code{\link[=moreFitIndices]{moreFitIndices()}}
 are to be used to test the multiparameter omnibus null hypothesis that the
 constraints specified in \code{con} hold in the population.}
 
@@ -136,7 +136,7 @@ printed when using \code{show} or \code{summary}.}
 while permuting. Silently set to \code{FALSE} when using parallel options.}
 
 \item{warn}{Sets the handling of warning messages when fitting model(s) to
-permuted data sets. See \code{\link[base]{options}}.}
+permuted data sets. See \code{\link[base:options]{base::options()}}.}
 
 \item{datafun}{An optional function that can be applied to the data
 (extracted from \code{con}) after each permutation, but before fitting the
@@ -179,32 +179,31 @@ default is \code{"none"}. Forking is not possible on Windows, so if
 changed to \code{"snow"} with a message.}
 
 \item{ncpus}{Integer: number of processes to be used in parallel operation.
-If \code{NULL} (the default) and \code{parallelType %in%
-c("multicore","snow")}, the default is one less than the maximum number of
-processors detected by \code{\link[parallel]{detectCores}}. This default is
+If \code{NULL} (the default) and \code{parallelType \%in\% c("multicore","snow")}, the default is one less than the maximum number of
+processors detected by \code{\link[parallel:detectCores]{parallel::detectCores()}}. This default is
 also silently set if the user specifies more than the number of processors
 detected.}
 
 \item{cl}{An optional \pkg{parallel} or \pkg{snow} cluster for use when
 \code{parallelType = "snow"}.  If \code{NULL}, a \code{"PSOCK"} cluster on
 the local machine is created for the duration of the \code{permuteMeasEq}
-call. If a valid \code{\link[parallel]{makeCluster}} object is supplied,
+call. If a valid \code{\link[parallel:makeCluster]{parallel::makeCluster()}} object is supplied,
 \code{parallelType} is silently set to \code{"snow"}, and \code{ncpus} is
 silently set to \code{length(cl)}.}
 
 \item{iseed}{Integer: Only used to set the states of the RNG when using
-parallel options, in which case \code{\link[base]{RNGkind}} is set to
+parallel options, in which case \code{\link[base:Random]{base::RNGkind()}} is set to
 \code{"L'Ecuyer-CMRG"} with a message. See
-\code{\link[parallel]{clusterSetRNGStream}} and Section 6 of
+\code{\link[parallel:RngStream]{parallel::clusterSetRNGStream()}} and Section 6 of
 \code{vignette("parallel", "parallel")} for more details. If user supplies
 an invalid value, \code{iseed} is silently set to the default (12345). To
 set the state of the RNG when not using parallel options, call
-\code{\link[base]{set.seed}} before calling \code{permuteMeasEq}.}
+\code{\link[base:Random]{base::set.seed()}} before calling \code{permuteMeasEq}.}
 }
 \value{
 The \linkS4class{permuteMeasEq} object representing the results of
-  testing measurement equivalence (the multiparameter omnibus test) and DIF
-  (modification indices), as well as diagnostics and any \code{extra} output.
+testing measurement equivalence (the multiparameter omnibus test) and DIF
+(modification indices), as well as diagnostics and any \code{extra} output.
 }
 \description{
 The function \code{permuteMeasEq} provides tests of hypotheses involving
@@ -215,37 +214,37 @@ models.
 The function \code{permuteMeasEq} provides tests of hypotheses involving
 measurement equivalence, in one of two frameworks:
 \enumerate{
-  \item{1} For multiple-group CFA models, provide a pair of nested lavaan objects,
-  the less constrained of which (\code{uncon}) freely estimates a set of
-  measurement parameters (e.g., factor loadings, intercepts, or thresholds;
-  specified in \code{param}) in all groups, and the more constrained of which
-  (\code{con}) constrains those measurement parameters to equality across
-  groups. Group assignment is repeatedly permuted and the models are fit to
-  each permutation, in order to produce an empirical distribution under the
-  null hypothesis of no group differences, both for (a) changes in
-  user-specified fit measures (see \code{AFIs} and \code{moreAFIs}) and for
-  (b) the maximum modification index among the user-specified equality
-  constraints. Configural invariance can also be tested by providing that
-  fitted lavaan object to \code{con} and leaving \code{uncon = NULL}, in which
-  case \code{param} must be \code{NULL} as well.
+\item{1} For multiple-group CFA models, provide a pair of nested lavaan objects,
+the less constrained of which (\code{uncon}) freely estimates a set of
+measurement parameters (e.g., factor loadings, intercepts, or thresholds;
+specified in \code{param}) in all groups, and the more constrained of which
+(\code{con}) constrains those measurement parameters to equality across
+groups. Group assignment is repeatedly permuted and the models are fit to
+each permutation, in order to produce an empirical distribution under the
+null hypothesis of no group differences, both for (a) changes in
+user-specified fit measures (see \code{AFIs} and \code{moreAFIs}) and for
+(b) the maximum modification index among the user-specified equality
+constraints. Configural invariance can also be tested by providing that
+fitted lavaan object to \code{con} and leaving \code{uncon = NULL}, in which
+case \code{param} must be \code{NULL} as well.
 
-  \item{2} In MIMIC models, one or a set of continuous and/or discrete
-  \code{covariates} can be permuted, and a constrained model is fit to each
-  permutation in order to provide a distribution of any fit measures (namely,
-  the maximum modification index among fixed parameters in \code{param}) under
-  the null hypothesis of measurement equivalence across levels of those
-  covariates.
+\item{2} In MIMIC models, one or a set of continuous and/or discrete
+\code{covariates} can be permuted, and a constrained model is fit to each
+permutation in order to provide a distribution of any fit measures (namely,
+the maximum modification index among fixed parameters in \code{param}) under
+the null hypothesis of measurement equivalence across levels of those
+covariates.
 }
 
 In either framework, modification indices for equality constraints or fixed
 parameters specified in \code{param} are calculated from the constrained
-model (\code{con}) using the function \code{\link[lavaan]{lavTestScore}}.
+model (\code{con}) using the function \code{\link[lavaan:lavTestScore]{lavaan::lavTestScore()}}.
 
 For multiple-group CFA models, the multiparameter omnibus null hypothesis of
 measurement equivalence/invariance is that there are no group differences in
 any measurement parameters (of a particular type). This can be tested using
 the \code{anova} method on nested \code{lavaan} objects, as seen in the
-output of \code{\link[semTools]{measurementInvariance}}, or by inspecting
+output of \code{\link[=measurementInvariance]{measurementInvariance()}}, or by inspecting
 the change in alternative fit indices (AFIs) such as the CFI. The
 permutation randomization method employed by \code{permuteMeasEq} generates
 an empirical distribution of any \code{AFIs} under the null hypothesis, so
@@ -273,13 +272,13 @@ parameters are constrained or unconstrained across groups, the MIMIC
 approach is only for testing null hypotheses about the effects of
 \code{covariates} on indicators, controlling for common factors.
 
-In either framework, \code{\link[lavaan]{lavaan}}'s \code{group.label}
+In either framework, \code{\link[lavaan:lavaan]{lavaan::lavaan()}}'s \code{group.label}
 argument is used to preserve the order of groups seen in \code{con} when
 permuting the data.
 }
 \examples{
 
-\dontrun{
+\donttest{
 
 ########################
 ## Multiple-Group CFA ##
@@ -463,7 +462,7 @@ summary(perm.mimic)
 
 }
 \references{
-\bold{Papers about permutation tests of measurement equivalence:}
+\strong{Papers about permutation tests of measurement equivalence:}
 
 Jorgensen, T. D., Kite, B. A., Chen, P.-Y., & Short, S. D. (2018).
 Permutation randomization methods for testing measurement equivalence and
@@ -481,7 +480,7 @@ modification indices to configurally invariant models that need
 respecification. \emph{Frontiers in Psychology, 8}(1455).
 \doi{10.3389/fpsyg.2017.01455}
 
-\bold{Additional reading:}
+\strong{Additional reading:}
 
 Chen, F. F. (2007). Sensitivity of goodness of fit indexes to
 lack of measurement invariance.  \emph{Structural Equation Modeling, 14}(3),
@@ -500,9 +499,9 @@ incremental fit indices in structural equation modeling. \emph{Psychological
 Methods, 8}(1), 16--37. \doi{10.1037/1082-989X.8.1.16}
 }
 \seealso{
-\code{\link[stats]{TukeyHSD}}, \code{\link[lavaan]{lavTestScore}},
-  \code{\link[semTools]{measurementInvariance}},
-  \code{\link[semTools]{measurementInvarianceCat}}
+\code{\link[stats:TukeyHSD]{stats::TukeyHSD()}}, \code{\link[lavaan:lavTestScore]{lavaan::lavTestScore()}},
+\code{\link[=measurementInvariance]{measurementInvariance()}},
+\code{\link[=measurementInvarianceCat]{measurementInvarianceCat()}}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam;

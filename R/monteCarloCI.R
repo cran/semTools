@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 9 May 2022
+### Last updated: 12 March 2025
 
 ## from http://www.da.ugent.be/cvs/pages/en/Presentations/Presentation%20Yves%20Rosseel.pdf
 # dd <- read.table("http://www.statmodel.com/examples/shortform/4cat%20m.dat",
@@ -35,13 +35,18 @@
 ##' based on empirical sampling distributions of estimated model parameters.
 ##'
 ##' This function implements the Monte Carlo method of obtaining an empirical
-##' sampling distriution of estimated model parameters, as described by
+##' sampling distribution of estimated model parameters, as described by
 ##' MacKinnon et al. (2004) for testing indirect effects in mediation models.
+##' This is essentially a parametric bootstrap method, which (re)samples
+##' parameters (rather than raw data) from a multivariate-normal distribution
+##' with mean vector equal to estimates in `coef()` and covariance matrix
+##' equal to the asymptotic covariance matrix `vcov()` of estimated parameters.
+##'
 ##' The easiest way to use the function is to fit a SEM to data with
-##' \code{\link[lavaan]{lavaan}}, using the \code{:=} operator in the
-##' \code{\link[lavaan]{model.syntax}} to specify user-defined parameters.
+##' [lavaan::lavaan()], using the `:=` operator in the
+##' [lavaan::model.syntax()] to specify user-defined parameters.
 ##' All information is then available in the resulting
-##' \code{\linkS4class{lavaan}} object.  Alternatively (especially when using
+##' [lavaan::lavaan-class] object.  Alternatively (especially when using
 ##' external SEM software to fit the model), the expression(s) can be explicitly
 ##' passed to the function, along with the vector of estimated model parameters
 ##' and their associated asymptotic sampling covariance matrix (ACOV).
@@ -51,13 +56,13 @@
 ##' The asymptotic covariance matrix can be obtained easily from many popular
 ##' SEM software packages.
 ##' \itemize{
-##'  \item LISREL: Including the EC option on the OU line will print the ACM
+##'  \item{LISREL: Including the EC option on the OU line will print the ACM
 ##'    to a seperate file. The file contains the lower triangular elements of
-##'    the ACM in free format and scientific notation
-##'  \item Mplus Include the command TECH3; in the OUTPUT section. The ACM will
-##'    be printed in the output.
-##'  \item \code{lavaan}: Use the \code{vcov} method on the fitted
-##'    \code{\linkS4class{lavaan}} object to return the ACM.
+##'    the ACM in free format and scientific notation.}
+##'  \item{M*plus*: Include the command TECH3; in the OUTPUT section.
+##'    The ACM will be printed in the output.}
+##'  \item{`lavaan`: Use the [vcov()] method on the fitted [lavaan::lavaan-class]
+##'    object to return the ACM.}
 ##' }
 ##'
 ##'
@@ -65,56 +70,55 @@
 ##' @importFrom methods getMethod
 ##' @importFrom lavaan parTable lavInspect
 ##'
-##' @param object A object of class \code{\linkS4class{lavaan}} in which
-##'   functions of parameters have already been defined using the \code{:=}
-##'   operator in \code{lavaan}'s \code{\link[lavaan]{model.syntax}}. When
-##'   \code{NULL}, users must specify \code{expr}, \code{coefs}, and \code{ACM}.
-##' @param expr Optional \code{character} vector specifying functions of model
+##' @param object A object of class [lavaan::lavaan-class] in which
+##'   functions of parameters have already been defined using the `:=`
+##'   operator in `lavaan`'s [lavaan::model.syntax()]. When
+##'   `NULL`, users must specify `expr`, `coefs`, and `ACM`.
+##' @param expr Optional `character` vector specifying functions of model
 ##'   parameters (e.g., an indirect effect). Ideally, the vector should have
 ##'   names, which is necessary if any user-defined parameters refer to other
 ##'   user-defined parameters defined earlier in the vector (order matters!).
-##'   All parameters appearing in the vector must be provided in \code{coefs},
-##'   or defined (as functions of \code{coefs}) earlier in \code{expr}. If
-##'   \code{length(expr) > 1L}, \code{nRep} samples will be drawn
+##'   All parameters appearing in the vector must be provided in `coefs`,
+##'   or defined (as functions of `coefs`) earlier in `expr`. If
+##'   `length(expr) > 1L`, `nRep` samples will be drawn
 ##'   simultaneously from a single multivariate distribution; thus,
-##'   \code{ACM} must include all parameters in \code{coefs}.
-##' @param coefs \code{numeric} vector of parameter estimates used in
-##'   \code{expr}. Ignored when \code{object} is used.
-##' @param ACM Symmetric \code{matrix} representing the asymptotic sampling
-##'   covariance matrix (ACOV) of the parameter estimates in \code{coefs}.
-##'   Ignored when \code{object} is used. Information on how to obtain the ACOV
-##'   in popular SEM software is described in \strong{Details}.
-##' @param nRep \code{integer}. The number of samples to draw, to obtain an
+##'   `ACM` must include all parameters in `coefs`.
+##' @param coefs `numeric` vector of parameter estimates used in
+##'   `expr`. Ignored when `object` is used.
+##' @param ACM Symmetric `matrix` representing the asymptotic sampling
+##'   covariance matrix (ACOV) of the parameter estimates in `coefs`.
+##'   Ignored when `object` is used. Information on how to obtain the ACOV
+##'   in popular SEM software is described in **Details**.
+##' @param nRep `integer`. The number of samples to draw, to obtain an
 ##'   empirical sampling distribution of model parameters. Many thousand are
 ##'   recommended to minimize Monte Carlo error of the estimated CIs.
-##' @param standardized \code{logical} indicating whether to obtain CIs for the
-##'   fully standardized (\code{"std.all"}) estimates, using their asymptotic
-##'   sampling covariance matrix.  Only valid when \code{object} is of class
-##'   \code{\linkS4class{lavaan}}, not \code{\linkS4class{lavaan.mi}}.
-##' @param fast \code{logical} indicating whether to use a fast algorithm that
-##'   assumes all functions of parameters (in \code{object} or \code{expr}) use
-##'   standard operations. Set to \code{FALSE} if using (e.g.) \code{\link{c}()}
+##' @param standardized `logical` indicating whether to obtain CIs for the
+##'   fully standardized (`"std.all"`) estimates, using their asymptotic
+##'   sampling covariance matrix.
+##' @param fast `logical` indicating whether to use a fast algorithm that
+##'   assumes all functions of parameters (in `object` or `expr`) use
+##'   standard operations. Set to `FALSE` if using (e.g.) [c()]
 ##'   to concatenate parameters in the definition, which would have unintended
-##'   consequences when vectorizing functions in \code{expr} across sampled
+##'   consequences when vectorizing functions in `expr` across sampled
 ##'   parameters.
-##' @param level \code{numeric} confidence level, between 0--1
-##' @param na.rm \code{logical} passed to \code{\link[stats]{quantile}}
-##' @param append.samples \code{logical} indicating whether to return the
-##'   simulated empirical sampling distribution of parameters (in \code{coefs})
-##'   and functions (in \code{expr}) in a \code{list} with the results. This
+##' @param level `numeric` confidence level, between 0--1
+##' @param na.rm `logical` passed to [stats::quantile()]
+##' @param append.samples `logical` indicating whether to return the
+##'   simulated empirical sampling distribution of parameters (in `coefs`)
+##'   and functions (in `expr`) in a `list` with the results. This
 ##'   could be useful to calculate more precise highest-density intervals (see
 ##'   examples).
-##' @param plot \code{logical} indicating whether to plot the empirical sampling
-##'   distribution of each function in \code{expr}
+##' @param plot `logical` indicating whether to plot the empirical sampling
+##'   distribution of each function in `expr`
 ##' @param ask whether to prompt user before printing each plot
-##' @param \dots arguments passed to \code{\link[graphics]{hist}} when
-##'   \code{plot = TRUE}.
+##' @param \dots arguments passed to [graphics::hist()] when
+##'   `plot = TRUE`.
 ##'
-##' @return A \code{lavaan.data.frame} (to use lavaan's \code{print} method)
+##' @return A `lavaan.data.frame` (to use lavaan's `print` method)
 ##'   with point estimates and confidence limits of each requested function of
-##'   parameters in \code{expr} is returned. If \code{append.samples = TRUE},
-##'   output will be a \code{list} with the same \code{$Results} along with a
-##'   second \code{data.frame} with the \code{$Samples} (in rows) of each
+##'   parameters in `expr` is returned. If `append.samples = TRUE`,
+##'   output will be a `list` with the same `$Results` along with a
+##'   second `data.frame` with the `$Samples` (in rows) of each
 ##'   parameter (in columns), and an additional column for each requested
 ##'   function of those parameters.
 ##'
@@ -123,22 +127,22 @@
 ##' @references
 ##' MacKinnon, D. P., Lockwood, C. M., & Williams, J. (2004). Confidence limits
 ##' for the indirect effect: Distribution of the product and resampling methods.
-##' \emph{Multivariate Behavioral Research, 39}(1) 99--128.
+##' *Multivariate Behavioral Research, 39*(1) 99--128.
 ##' \doi{10.1207/s15327906mbr3901_4}
 ##'
 ##' Preacher, K. J., & Selig, J. P. (2010, July). Monte Carlo method
 ##' for assessing multilevel mediation: An interactive tool for creating
-##' confidence intervals for indirect effects in 1-1-1 multilevel models
-##' [Computer software]. Available from \url{http://quantpsy.org/}.
+##' confidence intervals for indirect effects in 1-1-1 multilevel models.
+##' Computer software available from <http://quantpsy.org/>.
 ##'
 ##' Preacher, K. J., & Selig, J. P. (2012). Advantages of Monte Carlo confidence
-##' intervals for indirect effects. \emph{Communication Methods and Measures,
-##' 6}(2), 77--98. \doi{10.1080/19312458.2012.679848}
+##' intervals for indirect effects. *Communication Methods and Measures, 6*(2),
+##' 77--98. \doi{10.1080/19312458.2012.679848}
 ##'
 ##' Selig, J. P., & Preacher, K. J. (2008, June). Monte Carlo method for
 ##' assessing mediation: An interactive tool for creating confidence intervals
-##' for indirect effects [Computer software]. Available from
-##' \url{http://quantpsy.org/}.
+##' for indirect effects. Computer software available from
+##' <http://quantpsy.org/>.
 ##'
 ##' @aliases monteCarloCI monteCarloMed
 ##'
@@ -152,15 +156,16 @@
 ##' M <- 0.5*X + rnorm(100)
 ##' Y <- 0.7*M + rnorm(100)
 ##' dat <- data.frame(X = X, Y = Y, M = M)
+##'
 ##' mod <- ' # direct effect
-##' Y ~ c*X
-##' # mediator
-##' M ~ a*X
-##' Y ~ b*M
-##' # indirect effect (a*b)
-##' ind := a*b
-##' # total effect
-##' total := ind + c
+##'   Y ~ c*X
+##'   # mediator
+##'   M ~ a*X
+##'   Y ~ b*M
+##'   # indirect effect (a*b)
+##'   ind := a*b
+##'   # total effect
+##'   total := ind + c
 ##' '
 ##' fit <- sem(mod, data = dat)
 ##' summary(fit, ci = TRUE) # print delta-method CIs
@@ -169,14 +174,19 @@
 ##' set.seed(1234)
 ##' monteCarloCI(fit) # CIs more robust than delta method in smaller samples
 ##'
+##' ## delta method for standardized solution
+##' standardizedSolution(fit)
+##' ## compare to Monte Carlo CIs:
+##' set.seed(1234)
+##' monteCarloCI(fit, standardized = TRUE)
+##'
+##' \donttest{
 ##' ## save samples to calculate more precise intervals:
-##' \dontrun{
 ##' set.seed(1234)
 ##' foo <- monteCarloCI(fit, append.samples = TRUE)
-##' library(HDInterval)
-##' hdi(fit$Samples)
+##' # library(HDInterval) # not a dependency; must be installed
+##' # hdi(foo$Samples)
 ##' }
-##'
 ##' ## Parameters can also be obtained from an external analysis
 ##' myParams <- c("a","b","c")
 ##' (coefs <- coef(fit)[myParams]) # names must match those in the "expression"
@@ -220,12 +230,29 @@ monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e4,
       coefs <- STD$est.std[coefRows]
       names(coefs) <- lavaan::lav_partable_labels(STD[coefRows, ])
     } else coefs <- lavaan::coef(object)
+
   } else if (inherits(object, "lavaan.mi")) {
-    coefs <- getMethod("coef", "lavaan.mi")(object)
+    if (!"package:lavaan.mi" %in% search()) attachNamespace("lavaan.mi")
+
+    if (standardized) {
+      ## only available after this lavaan version:
+      if ( utils::packageDescription("lavaan", fields = "Version") < "0.6-19" ||
+          (utils::packageDescription("lavaan", fields = "Version") > "0.6-19" &&
+           utils::packageDescription("lavaan", fields = "Version") < "0.6-19.2148") ) {
+        stop("standardized=TRUE for a lavaan.mi-class object requires lavaan ",
+             "version >= 0.6-19 from CRAN, or development version >= ",
+             "0.6-19.2148 from GitHub")
+      }
+      STD <- lavaan.mi::standardizedSolution.mi(object)
+      coefRows <- !(STD$op %in% c(":=","==","<",">","<=",">="))
+      coefs <- STD$est.std[coefRows]
+      names(coefs) <- lavaan::lav_partable_labels(STD[coefRows, ])
+    } else coefs <- getMethod(f = "coef", signature = "lavaan.mi",
+                              where = getNamespace("lavaan.mi"))(object)
   }
   sampVars <- intersect(names(coefs), funcVars)
 
-  ## If a lavaan object is provided, extract coefs and ACM
+  ## If a lavaan(.mi) object is provided, extract coefs and ACM
   if (inherits(object, "lavaan")) {
     coefs <- coefs[sampVars]
     if (standardized) {
@@ -233,35 +260,60 @@ monteCarloCI <- function(object = NULL, expr, coefs, ACM, nRep = 2e4,
     } else {
       ACM <- lavaan::vcov(object)[sampVars, sampVars]
     }
+
   } else if (inherits(object, "lavaan.mi")) {
     coefs <- coefs[sampVars]
-    ACM <- getMethod("vcov", "lavaan.mi")(object)[sampVars, sampVars]
+    if (standardized) {
+      ACM <- lavaan.mi::standardizedSolution.mi(object, return.vcov = TRUE,
+                                                type = "std.all")[sampVars, sampVars]
+    } else {
+      ACM <- getMethod(f = "vcov", signature = "lavaan.mi",
+                       where = getNamespace("lavaan.mi"))(object)[sampVars, sampVars]
+    }
   }
 
   ## Apply the expression(s) to POINT ESTIMATES
-  estList <- within(as.list(coefs), expr = {
-    for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
-  })[names(expr)]
-  EST <- data.frame(est = do.call("c", estList))
+  estList <- as.list(coefs)
+  for (i in seq_along(expr)) {
+    estList[names(expr[i])] <- eval(parse(text = expr[i]), envir = estList)
+  }
+  EST <- data.frame(est = do.call("c", estList[names(expr)]))
+  ## old, buggy code (see issue #142)
+  # estList <- within(as.list(coefs), expr = {
+  #   for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
+  # })[names(expr)]
+  # EST <- data.frame(est = do.call("c", estList))
   rownames(EST) <- names(expr)
   if (standardized && inherits(object, "lavaan")) colnames(EST) <- "est.std"
 
   ## Matrix of sampled values
-  dat <- data.frame(MASS::mvrnorm(n = nRep, mu = coefs, Sigma = ACM))
+  # dat <-
+  samples <- data.frame(mnormt::rmnorm(n = nRep, mean = coefs, varcov = ACM))
   ## Apply the expression(s) to VECTORS of ESTIMATES
   if (fast) {
-    samples <- within(dat, expr = {
-      for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
-    })[c(sampVars, names(expr))]
+    for (i in seq_along(expr)) {
+      samples[names(expr[i])] <- eval(parse(text = expr[i]), envir = samples)
+    }
+    ## old, buggy code (see issue #142)
+    # samples <- within(dat, expr = {
+    #   for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
+    # })[c(sampVars, names(expr))]
   } else {
     ## SLOWER: only necessary if expr creates objects using (e.g.) c(), which
     ##         would concatenate parameters ACROSS samples as well as WITHIN
-    datList <- lapply(1:nRep, function(Rep) dat[Rep,])
+    datList <- lapply(1:nRep, function(Rep) {
+      samples[Rep,] # dat[Rep,]
+    })
     samples <- do.call(rbind, lapply(datList, function(Rep) {
-      within(Rep, expr = {
-        for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
-      })
-    }))[c(sampVars, names(expr))]
+      for (i in seq_along(expr)) {
+        Rep[names(expr[i])] <- eval(parse(text = expr[i]), envir = Rep)
+      }
+      ## old, buggy code (see issue #142)
+      #   within(Rep, expr = {
+      #     for (i in seq_along(expr)) assign(names(expr[i]), eval(parse(text = expr[i])))
+      #   })
+      Rep
+    })) # [c(sampVars, names(expr))]
   }
 
   ## Get the CI(s)

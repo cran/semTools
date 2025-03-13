@@ -9,9 +9,7 @@ chisqSmallN(fit0, fit1 = NULL, smallN.method = if (is.null(fit1))
   "no.se"))
 }
 \arguments{
-\item{fit0, fit1}{\linkS4class{lavaan} object(s) provided after running the
-\code{cfa}, \code{sem}, \code{growth}, or \code{lavaan} functions.
-\linkS4class{lavaan.mi} object(s) also accepted.}
+\item{fit0, fit1}{\link[lavaan:lavaan-class]{lavaan::lavaan} or \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object(s)}
 
 \item{smallN.method}{\code{character} indicating the small-\emph{N}
 correction method to use. Multiple may be chosen (all of which assume
@@ -19,22 +17,22 @@ normality), as described in Shi et al. (2018):
 \code{c("swain","yuan.2015","yuan.2005","bartlett")}. Users may also
 simply select \code{"all"}.}
 
-\item{\dots}{Additional arguments to the \code{\link[lavaan]{lavTestLRT}} or
-\code{\link{lavTestLRT.mi}} functions. Ignored when \code{is.null(fit1)}.}
+\item{\dots}{Additional arguments to the \code{\link[lavaan:lavTestLRT]{lavaan::lavTestLRT()}} or
+\code{\link[lavaan.mi:lavTestLRT.mi]{lavaan.mi::lavTestLRT.mi()}} functions. Ignored when \code{is.null(fit1)}.}
 
 \item{omit.imps}{\code{character} vector specifying criteria for omitting
 imputations from pooled results. Ignored unless \code{fit0} (and
-optionally \code{fit1}) is a \linkS4class{lavaan.mi} object. See
-\code{\link{lavTestLRT.mi}} for a description of options and defaults.}
+optionally \code{fit1}) is a \link[lavaan.mi:lavaan.mi-class]{lavaan.mi::lavaan.mi} object. See
+\code{\link[lavaan.mi:lavTestLRT.mi]{lavaan.mi::lavTestLRT.mi()}} for a description of options and defaults.}
 }
 \value{
 A \code{list} of \code{numeric} vectors: one for the originally
-  requested statistic(s), along with one per requested \code{smallN.method}.
-  All include the the (un)adjusted test statistic, its \emph{df}, and the
-  \emph{p} value for the test under the null hypothesis that the model fits
-  perfectly (or that the 2 models have equivalent fit).
-  The adjusted chi-squared statistic(s) also include(s) the scaling factor
-  for the small-\emph{N} adjustment.
+requested statistic(s), along with one per requested \code{smallN.method}.
+All include the the (un)adjusted test statistic, its \emph{df}, and the
+\emph{p} value for the test under the null hypothesis that the model fits
+perfectly (or that the 2 models have equivalent fit).
+The adjusted chi-squared statistic(s) also include(s) the scaling factor
+for the small-\emph{N} adjustment.
 }
 \description{
 Calculate small-\emph{N} corrections for \eqn{chi^2} model-fit test
@@ -70,14 +68,14 @@ chisqSmallN(fit1, fit0)
 }
 \references{
 Deng, L., Yang, M., & Marcoulides, K. M. (2018). Structural equation
-  modeling with many variables: A systematic review of issues and
-  developments. \emph{Frontiers in Psychology, 9}, 580.
-  \doi{10.3389/fpsyg.2018.00580}
+modeling with many variables: A systematic review of issues and
+developments. \emph{Frontiers in Psychology, 9}, 580.
+\doi{10.3389/fpsyg.2018.00580}
 
-  Shi, D., Lee, T., & Terry, R. A. (2018). Revisiting the model
-  size effect in structural equation modeling.
-  \emph{Structural Equation Modeling, 25}(1), 21--40.
-  \doi{10.1080/10705511.2017.1369088}
+Shi, D., Lee, T., & Terry, R. A. (2018). Revisiting the model
+size effect in structural equation modeling.
+\emph{Structural Equation Modeling, 25}(1), 21--40.
+\doi{10.1080/10705511.2017.1369088}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})

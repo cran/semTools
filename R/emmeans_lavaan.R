@@ -1,33 +1,36 @@
-### Mattan S. Ben-Shachar
-### Last updated: 27 May 2020
+### Mattan S. Ben-Shachar & Terrence D. Jorgensen
+### Last updated: 11 February 2025
 ### emmeans support for lavaan objects
 
 
-##' \code{emmeans} Support Functions for \code{lavaan} Models
+##' `emmeans` Support Functions for `lavaan` Models
 ##'
 ##' @description Provide emmeans support for lavaan objects
 ##'
-##' @param object An object of class \code{\link[lavaan]{lavaan}}.
-##'   See \strong{Details}.
-##' @param lavaan.DV \code{character} string maming the variable(s) for which
+##' @param object An object of class [lavaan::lavaan()].
+##'   See **Details**.
+##' @param lavaan.DV `character` string naming the variable(s) for which
 ##'   expected marginal means / trends should be produced.
 ##'   A vector of names indicates a multivariate outcome, treated by default
 ##'   as repeated measures.
-##' @param trms,xlev,grid See \code{emmeans::emm_basis}
-##' @param ... Further arguments passed to \code{emmeans::recover_data.lm} or
-##'   \code{emmeans::emm_basis.lm}
+##' @param data An optional `data.frame` without missing values, to be passed
+##'   when `missing="FIML"` estimation was useed, thus avoiding a reference-grid
+##'   with missing values.
+##' @param trms,xlev,grid See `emmeans::emm_basis`
+##' @param ... Further arguments passed to `emmeans::recover_data.lm` or
+##'   `emmeans::emm_basis.lm`
 ##'
 ##' @details
 ##'
 ##' \subsection{Supported DVs}{
-##'   \code{lavaan.DV} must be an \emph{endogenous variable}, by appearing on
-##'   the left-hand side of either a regression operator (\code{"~"})
-##'   or an intercept operator (\code{"~1"}), or both.
+##'   `lavaan.DV` must be an *endogenous variable*, by appearing on
+##'   the left-hand side of either a regression operator (`"~"`)
+##'   or an intercept operator (`"~1"`), or both.
 ##'   \cr\cr
-##'   \code{lavaan.DV} can also be a vector of endogenous variable, in which
-##'   case they will be treated by \code{emmeans} as a multivariate outcome
+##'   `lavaan.DV` can also be a vector of endogenous variable, in which
+##'   case they will be treated by `emmeans` as a multivariate outcome
 ##'   (often, this indicates repeated measures) represented by an additional
-##'   factor named \code{rep.meas} by default.  The \code{rep.meas=} argument
+##'   factor named `rep.meas` by default.  The `mult.name=` argument
 ##'   can be used to overwrite this default name.
 ##' }
 ##'
@@ -35,21 +38,21 @@
 ##'   This functionality does not support the following models:
 ##'   \itemize{
 ##'     \item Multi-level models are not supported.
-##'     \item Models not fit to a \code{data.frame} (i.e., models fit to a
+##'     \item Models not fit to a `data.frame` (i.e., models fit to a
 ##'           covariance matrix).
 ##'   }
 ##' }
 ##'
 ##' \subsection{Dealing with Fixed Parameters}{
-##' Fixed parameters (set with \code{lavaan}'s modifiers) are treated as-is:
-##' their values are set by the users, and they have a \emph{SE} of 0 (as such,
+##' Fixed parameters (set with `lavaan`'s modifiers) are treated as-is:
+##' their values are set by the users, and they have a *SE* of 0 (as such,
 ##' they do not co-vary with any other parameter).
 ##' }
 ##'
 ##' \subsection{Dealing with Multigroup Models}{
 ##' If a multigroup model is supplied, a factor is added to the reference grid,
-##' the name matching the \code{group} argument supplied when fitting the model.
-##' \emph{Note that you must set} \code{nesting = NULL}.
+##' the name matching the `group` argument supplied when fitting the model.
+##' *Note that you must set* `nesting = NULL`.
 ##' }
 ##'
 ##' \subsection{Dealing with Missing Data}{
@@ -58,7 +61,7 @@
 ##' }
 ##'
 ##' \subsection{Dealing with Factors}{
-##' By default \code{emmeans} recognizes binary variables (0,1) as a "factor"
+##' By default `emmeans` recognizes binary variables (0,1) as a "factor"
 ##' with two levels (and not a continuous variable). With some clever contrast
 ##' defenitions it should be possible to get the desired emmeans / contasts.
 ##' See example below.
@@ -73,7 +76,7 @@
 NULL
 
 ##' @rdname lavaan2emmeans
-recover_data.lavaan <- function(object, lavaan.DV, ...){
+recover_data.lavaan <- function(object, lavaan.DV, data = NULL, ...){
   if (!requireNamespace("emmeans", quietly = TRUE)){
     stop("'emmeans' is not installed.")
   }
@@ -81,6 +84,8 @@ recover_data.lavaan <- function(object, lavaan.DV, ...){
   .emlav_test_DV(object, lavaan.DV)
   ## testing multi-group requires access to ...
   dots <- list(...)
+  #FIXME: the nesting= argument is not passed to ... here, so the warning is
+  #       annoyingly printed even when nesting = NULL is specified.
   if (lavInspect(object, 'ngroups') > 1L && !("nesting" %in% names(dots))) {
     warning(
       "For multi-group models, don't forget to set 'nesting = NULL'.\n",
@@ -91,11 +96,11 @@ recover_data.lavaan <- function(object, lavaan.DV, ...){
 
 
   # Fake it
-  recovered <- emmeans::recover_data(.emlav_fake_fit(object, lavaan.DV),
-                                     ...)
+  lavaan_data <- .emlav_recover_data(object, data)
+  recovered <- emmeans::recover_data(.emlav_fake_fit(object, lavaan.DV, lavaan_data),
+                                     data = lavaan_data, ...)
 
   # Make it
-  lavaan_data <- .emlav_recover_data(object)
   lavaan_data <- lavaan_data[, colnames(recovered), drop = FALSE]
 
   # Fill attributes (but keep lavaan_data in case of missing data)
@@ -130,8 +135,7 @@ emm_basis.lavaan <- function(object,trms, xlev, grid, lavaan.DV, ...){
   # re-shape to deal with any missing estimates
   temp_bhat <- rep(0, length = length(emmb$bhat))
   temp_bhat[seq_len(nrow(pars))] <- pars$est
-  names(temp_bhat) <- c(par_names,
-                        colnames(emmb$V)[!colnames(emmb$V) %in% par_names])
+  names(temp_bhat) <- .emlab_find_term_names(par_names, colnames(emmb$V))
 
   # re-order
   b_ind <- match(colnames(emmb$V), names(temp_bhat))
@@ -167,9 +171,8 @@ emm_basis.lavaan <- function(object,trms, xlev, grid, lavaan.DV, ...){
   # re-shape to deal with any missing estimates
   temp_vcov <- matrix(0, nrow = nrow(emmb$V), ncol = ncol(emmb$V))
   temp_vcov[seq_len(ncol(lavVCOV)), seq_len(ncol(lavVCOV))] <- lavVCOV
-  colnames(temp_vcov) <-
-    rownames(temp_vcov) <- c(par_names,
-                             colnames(emmb$V)[!colnames(emmb$V) %in% par_names])
+  colnames(temp_vcov) <- .emlab_find_term_names(par_names, colnames(emmb$V))
+  rownames(temp_vcov) <- .emlab_find_term_names(par_names, colnames(emmb$V))
 
   # re-order
   v_ind <- match(colnames(emmb$V), colnames(temp_vcov))
@@ -187,6 +190,25 @@ emm_basis.lavaan <- function(object,trms, xlev, grid, lavaan.DV, ...){
   # emmb$misc <- list()
 
   return(emmb)
+}
+
+##' @keywords internal
+.emlab_find_term_names <- function(terms, candidates) {
+  terms_split <- strsplit(terms, split = ":")
+  candidates_split <- strsplit(candidates, split = ":")
+
+  is_in <- matrix(NA,
+                  nrow = length(terms_split),
+                  ncol = length(candidates_split))
+  for (i in seq_along(terms_split)) {
+    for (j in seq_along(candidates_split)) {
+      is_in[i,j] <-
+        all(candidates_split[[j]] %in% terms_split[[i]]) &&
+        all(terms_split[[i]] %in% candidates_split[[j]])
+    }
+  }
+  if (length(terms) > 1L) is_in <- apply(is_in, 2, any)
+  c(terms, if (any(!is_in)) candidates[!is_in])
 }
 
 ##' @keywords internal
@@ -231,32 +253,59 @@ emm_basis.lavaan <- function(object,trms, xlev, grid, lavaan.DV, ...){
 
 ##' @keywords internal
 ##' @importFrom lavaan lavInspect
-.emlav_recover_data <- function(object){
-  data_obs <- lavInspect(object, "data")
-  data_lat <- lavaan::lavPredict(object, type = "lv")
+.emlav_recover_data <- function(object, data = NULL, silent = FALSE){
+  ##This function  was contributed by TDJ
+  dat <- lavaan::lavPredict(object, newdata = data,
+                            type = "lv",
+                            assemble = TRUE,
+                            append.data = TRUE)
+  ## convert to data.frame, if necessary (single group)
+  dat <- as.data.frame(dat)
+  if (anyNA(dat)) {
+    ## mean-impute any NAs
+    if (!silent) {
+      warning("'data' contains missing value. Mean-imputing them.", call. = FALSE)
+    }
 
-  # If multi group
-  if (lavInspect(object, 'ngroups') > 1L) {
-    # make single data frame + add group labels
-    group_labels <- sapply(seq_along(names(data_obs)), function(i) {
-      label_ <- names(data_obs)[i]
-      nobs_ <- nrow(data_obs[[i]])
-      rep(label_, times = nobs_)
+    dat[] <- lapply(dat, function(v) {
+      if (is.numeric(v) && (ix <- length(which(is.na(v))))) {
+        v[ix] <- mean(v, na.rm = TRUE)
+      }
+      v
     })
-
-    data_obs <- data.frame(do.call(rbind, data_obs))
-    data_obs[[lavInspect(object, "group")]] <- unlist(group_labels)
-    data_lat <- do.call(rbind, data_lat)
   }
 
-  data_full <- cbind(data_obs, data_lat)
-  return(data.frame(data_full))
+  dat
 }
+#TODO: delete old function after verifying the new one (above) works
+# function(object){
+#   data_obs <- lavInspect(object, "data")
+#   data_lat <- lavaan::lavPredict(object, type = "lv")
+#
+#   # If multi group
+#   if (lavInspect(object, 'ngroups') > 1L) {
+#     # make single data frame + add group labels
+#     group_labels <- sapply(seq_along(names(data_obs)), function(i) {
+#       label_ <- names(data_obs)[i]
+#       nobs_ <- nrow(data_obs[[i]])
+#       rep(label_, times = nobs_)
+#     }, simplify = FALSE)
+#
+#     data_obs <- data.frame(do.call(rbind, data_obs))
+#     data_obs[[lavInspect(object, "group")]] <- unlist(group_labels)
+#     data_lat <- do.call(rbind, data_lat)
+#   }
+#
+#   data_full <- cbind(data_obs, data_lat)
+#   return(data.frame(data_full))
+# }
 
 ##' @keywords internal
 ##' @importFrom lavaan lavInspect
-.emlav_fake_fit <- function(object, lavaan.DV){
-  lavaan_data <- .emlav_recover_data(object)
+.emlav_fake_fit <- function(object, lavaan.DV, lavaan_data = NULL){
+  if (is.null(lavaan_data)) {
+    lavaan_data <- .emlav_recover_data(object, silent = TRUE)
+  }
 
   # Fake it
   pars <- lavaan::parameterEstimates(object)
@@ -503,6 +552,32 @@ grade ~ ageyr
     rg <- suppressWarnings(emmeans::ref_grid(semFit, lavaan.DV = c("LAT3", "grade")))
     testthat::expect_s4_class(rg, "emmGrid")
   })
+
+
+  testthat::test_that("missing data", {
+    raw_mtcars <- mtcars_na <- datasets::mtcars
+    mtcars_na$hp[1] <- NA
+
+    model <- " mpg ~ hp + drat + hp:drat "
+
+    fit <- lavaan::sem(model, mtcars_na, missing = "fiml.x")
+
+    testthat::expect_warning(
+      rg <- emmeans::ref_grid(fit, lavaan.DV = "mpg"),
+      regexp = "missing")
+
+    testthat::expect_false(anyNA(rg@grid))
+    testthat::expect_equal(rg@grid$hp, 147.871, tolerance = 0.01)
+
+
+    testthat::expect_warning(
+      rg2 <- emmeans::ref_grid(fit, lavaan.DV = "mpg",
+                               data = raw_mtcars),
+      regexp = NA)
+
+    testthat::expect_equal(rg2@grid$hp, mean(raw_mtcars$hp), tolerance = 0.01)
+  })
+
 
   message("All good!")
 

@@ -16,9 +16,9 @@
 }
 \value{
 \item{show}{\code{signature(object = "Net")}: prints the logical matrix of
-  test results. \code{NA} indicates a model did not converge.}
+test results. \code{NA} indicates a model did not converge.}
 \item{summary}{\code{signature(object = "Net")}: prints a narrative
-  description of results. The original \code{object} is invisibly returned.}
+description of results. The original \code{object} is invisibly returned.}
 }
 \description{
 This class contains the results of nesting and equivalence testing among
@@ -34,7 +34,7 @@ multiple models
 
 \section{Objects from the Class}{
  Objects can be created via the
-\code{\link{net}} function.
+\code{\link[=net]{net()}} function.
 }
 
 \examples{
@@ -43,7 +43,7 @@ multiple models
 
 }
 \seealso{
-\code{\link{net}}
+\code{\link[=net]{net()}}
 }
 \author{
 Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})

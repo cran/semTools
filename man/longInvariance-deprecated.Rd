@@ -34,21 +34,21 @@ auto-\emph{covariance} to be equal within the same item across factors.
 For example, the covariance of item 1 in time 1 and time 2 is equal to
 the covariance of item 1 in time 2 and time 3.}
 
-\item{fixed.x}{See \code{\link[lavaan]{lavaan}.}}
+\item{fixed.x}{See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 
-\item{std.lv}{See \code{\link[lavaan]{lavaan}.}}
+\item{std.lv}{See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 
-\item{group}{See \code{\link[lavaan]{lavaan}.}}
+\item{group}{See \code{\link[lavaan:lavaan]{lavaan::lavaan()}}.}
 
-\item{group.equal}{See \code{\link[lavaan]{lavaan}.}}
+\item{group.equal}{See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 
-\item{group.partial}{See \code{\link[lavaan]{lavaan}.}}
+\item{group.partial}{See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 
 \item{strict}{If \code{TRUE}, the sequence requires strict invariance. See}
 
-\item{warn}{See \code{\link[lavaan]{lavaan}.}}
+\item{warn}{See See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}.}
 
-\item{debug}{See \code{\link[lavaan]{lavaan}.} details for more information.}
+\item{debug}{See See \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}. details for more information.}
 
 \item{quiet}{If \code{FALSE} (default), a summary is printed out containing
 an overview of the different models that are fitted, together with some
@@ -58,13 +58,13 @@ model comparison tests. If \code{TRUE}, no summary is printed.}
 nested models.}
 
 \item{baseline.model}{custom baseline model passed to
-\code{\link[lavaan]{fitMeasures}}}
+\code{\link[lavaan:fitMeasures]{lavaan::fitMeasures()}}}
 
 \item{method}{The method used to calculate likelihood ratio test. See
-\code{\link[lavaan]{lavTestLRT}} for available options}
+\code{\link[lavaan:lavTestLRT]{lavaan::lavTestLRT()}} for available options}
 
-\item{...}{Additional arguments in the \code{\link[lavaan]{lavaan}}
-function. See also \code{\link[lavaan]{lavOptions}}}
+\item{...}{Additional arguments in the \code{\link[lavaan:lavaan]{lavaan::lavaan()}}
+function. See also \code{\link[lavaan:lavOptions]{lavaan::lavOptions()}}}
 }
 \value{
 Invisibly, all model fits in the sequence are returned as a list.
@@ -80,13 +80,13 @@ works with only one scale, and only with continuous indicators.
 If \code{strict = FALSE}, the following four models are tested in order:
 \enumerate{
 \item Model 1: configural invariance. The same factor structure is
-  imposed on all units.
+imposed on all units.
 \item Model 2: weak invariance. The factor loadings are constrained to be
- equal across units.
+equal across units.
 \item Model 3: strong invariance. The factor loadings and intercepts are
- constrained to be equal across units.
+constrained to be equal across units.
 \item Model 4: The factor loadings, intercepts and means are constrained to
- be equal across units.
+be equal across units.
 }
 
 Each time a more restricted model is fitted, a \eqn{\Delta\chi^2} test is
@@ -98,15 +98,15 @@ If \code{strict = TRUE}, the following five models are tested in order:
 
 \enumerate{
 \item Model 1: configural invariance. The same factor structure is imposed
- on all units.
+on all units.
 \item Model 2: weak invariance. The factor loadings are constrained to be
- equal across units.
+equal across units.
 \item Model 3: strong invariance. The factor loadings and intercepts are
- constrained to be equal across units.
+constrained to be equal across units.
 \item Model 4: strict invariance. The factor loadings, intercepts and
- residual variances are constrained to be equal across units.
+residual variances are constrained to be equal across units.
 \item Model 5: The factor loadings, intercepts, residual variances and
- means are constrained to be equal across units.
+means are constrained to be equal across units.
 }
 
 Note that if the \eqn{\chi^2} test statistic is scaled (eg. a Satorra-Bentler
@@ -137,19 +137,19 @@ longInvariance(model, auto = 1, constrainAuto = TRUE,
 }
 \references{
 Vandenberg, R. J., and Lance, C. E. (2000). A review and
-  synthesis of the measurement invariance literature: Suggestions,
-  practices, and recommendations for organizational research.
-  \emph{Organizational Research Methods, 3}(1), 4--70.
-  \doi{10.1177/109442810031002}
+synthesis of the measurement invariance literature: Suggestions,
+practices, and recommendations for organizational research.
+\emph{Organizational Research Methods, 3}(1), 4--70.
+\doi{10.1177/109442810031002}
 }
 \seealso{
-\code{\link{semTools-deprecated}}
+\code{\link[=semTools-deprecated]{semTools-deprecated()}}
 }
 \author{
 Sunthud Pornprasertmanit (\email{psunthud@gmail.com})
 
- Yves Rosseel (Ghent University; \email{Yves.Rosseel@UGent.be})
+Yves Rosseel (Ghent University; \email{Yves.Rosseel@UGent.be})
 
- Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
+Terrence D. Jorgensen (University of Amsterdam; \email{TJorgensen314@gmail.com})
 }
 \keyword{internal}

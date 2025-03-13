@@ -6,18 +6,22 @@
 \alias{emm_basis.lavaan}
 \title{\code{emmeans} Support Functions for \code{lavaan} Models}
 \usage{
-recover_data.lavaan(object, lavaan.DV, ...)
+recover_data.lavaan(object, lavaan.DV, data = NULL, ...)
 
 emm_basis.lavaan(object, trms, xlev, grid, lavaan.DV, ...)
 }
 \arguments{
-\item{object}{An object of class \code{\link[lavaan]{lavaan}}.
+\item{object}{An object of class \code{\link[lavaan:lavaan]{lavaan::lavaan()}}.
 See \strong{Details}.}
 
-\item{lavaan.DV}{\code{character} string maming the variable(s) for which
+\item{lavaan.DV}{\code{character} string naming the variable(s) for which
 expected marginal means / trends should be produced.
 A vector of names indicates a multivariate outcome, treated by default
 as repeated measures.}
+
+\item{data}{An optional \code{data.frame} without missing values, to be passed
+when \code{missing="FIML"} estimation was useed, thus avoiding a reference-grid
+with missing values.}
 
 \item{...}{Further arguments passed to \code{emmeans::recover_data.lm} or
 \code{emmeans::emm_basis.lm}}
@@ -29,24 +33,24 @@ Provide emmeans support for lavaan objects
 }
 \details{
 \subsection{Supported DVs}{
-  \code{lavaan.DV} must be an \emph{endogenous variable}, by appearing on
-  the left-hand side of either a regression operator (\code{"~"})
-  or an intercept operator (\code{"~1"}), or both.
-  \cr\cr
-  \code{lavaan.DV} can also be a vector of endogenous variable, in which
-  case they will be treated by \code{emmeans} as a multivariate outcome
-  (often, this indicates repeated measures) represented by an additional
-  factor named \code{rep.meas} by default.  The \code{rep.meas=} argument
-  can be used to overwrite this default name.
+\code{lavaan.DV} must be an \emph{endogenous variable}, by appearing on
+the left-hand side of either a regression operator (\code{"~"})
+or an intercept operator (\code{"~1"}), or both.
+\cr\cr
+\code{lavaan.DV} can also be a vector of endogenous variable, in which
+case they will be treated by \code{emmeans} as a multivariate outcome
+(often, this indicates repeated measures) represented by an additional
+factor named \code{rep.meas} by default.  The \verb{mult.name=} argument
+can be used to overwrite this default name.
 }
 
 \subsection{Unsupported Models}{
-  This functionality does not support the following models:
-  \itemize{
-    \item Multi-level models are not supported.
-    \item Models not fit to a \code{data.frame} (i.e., models fit to a
-          covariance matrix).
-  }
+This functionality does not support the following models:
+\itemize{
+\item Multi-level models are not supported.
+\item Models not fit to a \code{data.frame} (i.e., models fit to a
+covariance matrix).
+}
 }
 
 \subsection{Dealing with Fixed Parameters}{
@@ -246,5 +250,5 @@ See example below.
 }
 \author{
 Mattan S. Ben-Shachar (Ben-Gurion University of the Negev;
-  \email{matanshm@post.bgu.ac.il})
+\email{matanshm@post.bgu.ac.il})
 }

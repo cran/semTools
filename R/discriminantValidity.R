@@ -1,5 +1,5 @@
-### Mikko Rönkkö
-### Last updated: 10 January 2020
+### Mikko Rönkkö   (Roxygen edits by TDJ)
+### Last updated: 12 February 2025
 
 
 ##' Calculate discriminant validity statistics
@@ -11,18 +11,18 @@
 ##' below one (in absolute value) that the latent variables can be thought of
 ##' representing two distinct constructs.
 ##'
-##' \code{discriminantValidity} function calculates two sets of statistics that
+##' `discriminantValidity` function calculates two sets of statistics that
 ##' are commonly used in discriminant validity evaluation. The first set are
 ##' factor correlation estimates and their confidence intervals. The second set
 ##' is a series of nested model tests, where the baseline model is compared
 ##' against a set of constrained models that are constructed by constraining
 ##' each factor correlation to the specified cutoff one at a time.
 ##'
-##' The function assume that the \code{object} is set of confirmatory
+##' The function assume that the `object` is set of confirmatory
 ##' factor analysis results where the latent variables are scaled by fixing their
 ##' variances to 1s. If the model is not a CFA model, the function will calculate
 ##' the statistics for the correlations among exogenous latent variables, but
-##' for the \emph{residual} variances with endogenous variables. If the
+##' for the *residual* variances with endogenous variables. If the
 ##' latent variables are scaled in some other way (e.g. fixing the first loadings),
 ##' the function issues a warning and re-estimates the model by fixing latent
 ##' variances to 1 (and estimating all loadings) so that factor covariances are
@@ -41,28 +41,29 @@
 ##' is used in the constrained model.
 ##'
 ##' Another alternative is to do a nested model comparison against a model where
-##' two factors are merged as one by setting the \code{merge} argument to
-##' \code{TRUE}. In this comparison, the constrained model is constructed by
+##' two factors are merged as one by setting the `merge` argument to
+##' `TRUE`. In this comparison, the constrained model is constructed by
 ##' removing one of the correlated factors from the model and assigning its
 ##' indicators to the factor that remains in the model.
 ##'
 ##'
 ##' @importFrom lavaan lavInspect lavNames parTable
 ##'
-##' @param object The \code{\linkS4class{lavaan}} model object returned by
-##'   the \code{\link[lavaan]{cfa}} function.
+##' @param object The [lavaan::lavaan-class] model object returned by
+##'   the [lavaan::cfa()] function.
 ##' @param cutoff A cutoff to be used in the constrained models in likelihood
 ##'   ratio tests.
 ##' @param merge Whether the constrained models should be constructed by merging
-##'   two factors as one. Implies \code{cutoff} = 1.
-##' @param level The confidence level required.
+##'   two factors as one. Implies `cutoff` = 1.
 ##'
-##' @return A \code{data.frame} of latent variable correlation estimates, their
+##' @inheritParams lavaan::parameterEstimates
+##'
+##' @return A `data.frame` of latent variable correlation estimates, their
 ##' confidence intervals, and a likelihood ratio tests against constrained models.
 ##' with the following attributes:
 ##' \describe{
 ##'  \item{baseline}{The baseline model after possible rescaling.}
-##'  \item{constrained}{A \code{list} of the fitted constrained models
+##'  \item{constrained}{A `list` of the fitted constrained models
 ##'  used in the likelihood ratio test.}
 ##' }
 ##'
@@ -70,8 +71,8 @@
 ##'  Mikko Rönkkö (University of Jyväskylä; \email{mikko.ronkko@jyu.fi}):
 ##' @references
 ##'
-##' Rönkkö, M., & Cho, E. (2020). An updated guideline for assessing
-##' discriminant validity. \emph{Organizational Research Methods}.
+##' Rönkkö, M., & Cho, E. (2022). An updated guideline for assessing
+##' discriminant validity. *Organizational Research Methods*, 25(1), 6–14.
 ##' \doi{10.1177/1094428120968614}
 ##'
 ##' @examples
@@ -87,7 +88,8 @@
 ##' discriminantValidity(fit, merge = TRUE)
 ##'
 ##' @export
-discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95) {
+discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95,
+                                 boot.ci.type = "perc") {
 
   free <- lavInspect(object, "free", add.class = FALSE)
   #FIXME: adapt for multiple blocks by looping over groups/levels
@@ -96,16 +98,16 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
 
   # Identify the latent variables that we will use
   lvs <- lavNames(object,"lv")
-  if (cutoff <=0 | cutoff >1) stop("The cutoff must be between (0,1]")
-  if (merge & ! missing(cutoff) & cutoff != 1)
+  if (cutoff <= 0 | cutoff > 1) stop("The cutoff must be between (0,1]")
+  if (merge & !missing(cutoff) & cutoff != 1)
     message("Merging factors imply constraining factor correlation to 1. ",
             "Cutoff will be ignored.")
-  if (length(lvs)==0) stop("The model does not have any exogenous latent variables.")
-  if (length(lvs)==1) stop("The model has only one exogenous latent variable. ",
-                           "At least two are required for assessing discriminant validity.")
+  if (length(lvs) == 0) stop("The model does not have any exogenous latent variables.")
+  if (length(lvs) == 1) stop("The model has only one exogenous latent variable. ",
+                             "At least two are required for assessing discriminant validity.")
   if (length(lavNames(object, "lv.y")) > 0)
     warning("The model has at least one endogenous latent variable (",
-            paste(lavNames(object, "lv.y"), collapse=", "),
+            paste(lavNames(object, "lv.y"), collapse = ", "),
             "). The correlations of these variables will be estimated after ",
             "conditioning on their predictors.")
 
@@ -114,8 +116,8 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
 
   # Identify exogenous variances and covariances
   pt <- parTable(object)
-  varIndices <- which(pt$lhs == pt$rhs & pt$lhs %in% lvs & pt$op =="~~")
-  covIndices <- which(pt$lhs != pt$rhs & pt$lhs %in% lvs & pt$rhs %in% lvs & pt$op =="~~")
+  varIndices <- which(pt$lhs == pt$rhs & pt$lhs %in% lvs & pt$op == "~~")
+  covIndices <- which(pt$lhs != pt$rhs & pt$lhs %in% lvs & pt$rhs %in% lvs & pt$op == "~~")
 
   # Check that the diagonal of psi is all zeros
   if (any(diag(psi) != 0)) {
@@ -131,8 +133,9 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
     pt$ustart[i] <- 1
     pt$user[i] <- 1
 
-    # Free all factor loadings corresponding of lvs where the covariances were just freed
-    i <- which(pt$lhs %in% pt$lhs[i] & pt$op =="=~")
+    # Free all factor loadings corresponding of lvs where the covariances were
+    # just freed
+    i <- which(pt$lhs %in% pt$lhs[i] & pt$op == "=~")
     pt$free[i] <- -1
     pt$ustart[i] <- NA
 
@@ -140,7 +143,9 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
     i <- which(pt$free != 0)
     pt$free[i] <- seq_along(i)
 
-    object <- lavaan::update(object, model = pt[,1:12]) # Leave out starting values, estimates and ses from pt
+    object <- lavaan::update(object, model = pt[,1:12]) # Leave out starting
+    # values, estimates, and
+    # ses from pt
 
     # Update pt based on the new model
     pt <- parTable(object)
@@ -158,7 +163,9 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
 
     # constrain the exogenous variances to 1
     pt$ustart[varIndices] <- 1
-    object <- lavaan::update(object, model = pt[,1:12]) # Leave out starting values, estimates and ses from pt
+    object <- lavaan::update(object, model = pt[,1:12]) # Leave out starting
+    # values, estimates, and
+    # ses from pt
 
     # Update pt based on the new estimates
     pt <- parTable(object)
@@ -168,9 +175,10 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
   # fixed to ones and can start constructing the matrix to be returned
 
   ret <-  lavaan::parameterEstimates(object, ci = TRUE,
-                                     level = level)[covIndices,
-                                                    c("lhs","op","rhs","est",
-                                                      "ci.lower","ci.upper")]
+                                     level = level,
+                                     boot.ci.type = boot.ci.type)[covIndices,
+                                                                  c("lhs","op","rhs","est",
+                                                                    "ci.lower","ci.upper")]
   rownames(ret) <- seq_len(nrow(ret))
 
 
@@ -194,11 +202,13 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
       thisPt$id <- seq_len(nrow(thisPt))
     } else {
 
-      # If the correlation is estimated to be greater than the cuttof, constrain it to the estimated alue
+      # If the correlation is estimated to be greater than the cuttof, constrain
+      # it to the estimated alue
+
       if (abs(pt$est[i]) > cutoff) {
         thisCutoff <- pt$est[i]
       } else {
-        thisCutoff <- ifelse(pt$est[i] <0, - cutoff, cutoff)
+        thisCutoff <- ifelse(pt$est[i] < 0, - cutoff, cutoff)
       }
       thisPt$free[i] <- 0
       thisPt$ustart[i] <- thisCutoff
@@ -208,11 +218,13 @@ discriminantValidity <- function(object, cutoff = .9, merge = FALSE, level = .95
     j <- which(thisPt$free != 0)
     thisPt$free[j] <- seq_along(j)
 
-    lavaan::update(object, model = thisPt[,1:12])
+    lavaan::update(object, model = thisPt[,1:12],
+                   se = "none") # Disable SEs to save computational time
   })
 
   lrTests <- lapply(constrainedModels, function(constrained) {
-    lavaan::lavTestLRT(object,constrained)[2,] # Return the second row of the test
+    lavaan::lavTestLRT(object,constrained)[2,] # Return the second row of the
+    # test
   })
 
   ret <- cbind(ret,do.call(rbind,lrTests))

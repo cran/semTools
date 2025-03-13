@@ -1,5 +1,5 @@
-### Sunthud Pornprasertmanit
-### Last updated: 10 January 2021
+### Sunthud Pornprasertmanit & Terrence D. Jorgensen
+### Last updated: 2 October 2024
 ### Higher-order moments. Initial version from the simsem package.
 
 
@@ -9,7 +9,7 @@
 ##' Finding skewness (\eqn{g_{1}}) of an object
 ##'
 ##' The skewness computed by default is \eqn{g_{1}}, the third standardized
-##' moment of the empirical distribution of \code{object}.
+##' moment of the empirical distribution of `object`.
 ##' The population parameter skewness \eqn{\gamma_{1}} formula is
 ##'
 ##' \deqn{\gamma_{1} = \frac{\mu_{3}}{\mu^{3/2}_{2}},}
@@ -20,7 +20,7 @@
 ##'
 ##' \deqn{g_{1} = \frac{k_{3}}{k^{2}_{2}},}
 ##'
-##' where \eqn{k_{i}} are the \eqn{i} order \emph{k}-statistic.
+##' where \eqn{k_{i}} are the \eqn{i} order *k*-statistic.
 ##'
 ##' The standard error of the skewness is
 ##'
@@ -32,22 +32,22 @@
 ##' @importFrom stats pnorm
 ##'
 ##' @param object A vector used to find a skewness
-##' @param population \code{TRUE} to compute the parameter formula. \code{FALSE}
+##' @param population `TRUE` to compute the parameter formula. `FALSE`
 ##' to compute the sample statistic formula.
 ##' @return A value of a skewness with a test statistic if the population is
-##' specified as \code{FALSE}
+##' specified as `FALSE`
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @seealso \itemize{
-##'   \item \code{\link{kurtosis}} Find the univariate excessive kurtosis
+##'   \item [kurtosis()] Find the univariate excessive kurtosis
 ##'    of a variable
-##'   \item \code{\link{mardiaSkew}} Find Mardia's multivariate skewness
+##'   \item [mardiaSkew()] Find Mardia's multivariate skewness
 ##'    of a set of variables
-##'   \item \code{\link{mardiaKurtosis}} Find the Mardia's multivariate
+##'   \item [mardiaKurtosis()] Find the Mardia's multivariate
 ##'    kurtosis of a set of variables
 ##'  }
-##' @references Weisstein, Eric W. (n.d.). \emph{Skewness}. Retrived from
-##'  \emph{MathWorld}--A Wolfram Web Resource:
-##'  \url{http://mathworld.wolfram.com/Skewness.html}
+##' @references Weisstein, Eric W. (n.d.). *Skewness*. Retrived from
+##'  *MathWorld*--A Wolfram Web Resource:
+##'  <http://mathworld.wolfram.com/Skewness.html>
 ##' @examples
 ##'
 ##' skew(1:5)
@@ -59,14 +59,17 @@ skew <- function(object, population = FALSE) {
 		warning("Missing observations are removed from a vector.")
 	}
 	if(population) {
-		return(centralMoment(object, 3)/(centralMoment(object, 2)^(3/2)))
+	  out <- centralMoment(object, 3) / (centralMoment(object, 2)^(3/2))
 	} else {
-		est <- kStat(object, 3)/(kStat(object, 2)^(3/2))
+		est <- kStat(object, 3) / (kStat(object, 2)^(3/2))
 		se <- sqrt(6/length(object))
 		z <- est/se
 		p <- (1 - pnorm(abs(z)))*2
-		return(c("skew (g1)"=est, se=se, z=z, p=p))
+		out <- c("skew (g1)"=est, se=se, z=z, p=p)
 	}
+
+  class(out) <- c("lavaan.vector", "numeric")
+  out
 }
 
 
@@ -76,7 +79,7 @@ skew <- function(object, population = FALSE) {
 ##' Finding excessive kurtosis (\eqn{g_{2}}) of an object
 ##'
 ##' The excessive kurtosis computed by default is \eqn{g_{2}}, the fourth
-##' standardized moment of the empirical distribution of \code{object}.
+##' standardized moment of the empirical distribution of `object`.
 ##' The population parameter excessive kurtosis \eqn{\gamma_{2}} formula is
 ##'
 ##' \deqn{\gamma_{2} = \frac{\mu_{4}}{\mu^{2}_{2}} - 3,}
@@ -87,7 +90,7 @@ skew <- function(object, population = FALSE) {
 ##'
 ##' \deqn{g_{2} = \frac{k_{4}}{k^{2}_{2}} - 3,}
 ##'
-##' where \eqn{k_{i}} are the \eqn{i} order \emph{k}-statistic.
+##' where \eqn{k_{i}} are the \eqn{i} order *k*-statistic.
 ##'
 ##' The standard error of the excessive kurtosis is
 ##'
@@ -99,21 +102,22 @@ skew <- function(object, population = FALSE) {
 ##' @importFrom stats pnorm
 ##'
 ##' @param object A vector used to find a excessive kurtosis
-##' @param population \code{TRUE} to compute the parameter formula. \code{FALSE}
+##' @param population `TRUE` to compute the parameter formula. `FALSE`
 ##' to compute the sample statistic formula.
 ##' @return A value of an excessive kurtosis with a test statistic if the
-##' population is specified as \code{FALSE}
+##' population is specified as `FALSE`
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @seealso \itemize{
-##'   \item \code{\link{skew}} Find the univariate skewness of a variable
-##'   \item \code{\link{mardiaSkew}} Find the Mardia's multivariate
+##'   \item [skew()] Find the univariate skewness of a variable
+##'   \item [mardiaSkew()] Find the Mardia's multivariate
 ##'    skewness of a set of variables
-##'   \item \code{\link{mardiaKurtosis}} Find the Mardia's multivariate kurtosis
+##'   \item [mardiaKurtosis()] Find the Mardia's multivariate kurtosis
 ##'    of a set of variables
 ##' }
-##' @references Weisstein, Eric W. (n.d.). \emph{Kurtosis.} Retrived from
-##' \emph{MathWorld}--A Wolfram Web Resource:
-##' \url{http://mathworld.wolfram.com/Kurtosis.html}
+##' @references Weisstein, Eric W. (n.d.). *Kurtosis.* Retrieved from
+##' *MathWorld*--A Wolfram Web Resource:
+##' <http://mathworld.wolfram.com/Kurtosis.html>
+##'
 ##' @examples
 ##'
 ##' kurtosis(1:5)
@@ -125,14 +129,17 @@ kurtosis <- function(object, population = FALSE) {
 		warning("Missing observations are removed from a vector.")
 	}
 	if(population) {
-		return((centralMoment(object, 4)/(centralMoment(object, 2)^2)) - 3)
+	  out <- (centralMoment(object, 4) / (centralMoment(object, 2)^2)) - 3
 	} else {
-		est <- kStat(object, 4)/(kStat(object, 2)^(2))
+		est <- kStat(object, 4) / (kStat(object, 2)^(2))
 		se <- sqrt(24/length(object))
 		z <- est/se
 		p <- (1 - pnorm(abs(z)))*2
-		return(c("Excess Kur (g2)"=est, se=se, z=z, p=p))
+		out <- c("Excess Kur (g2)"=est, se=se, z=z, p=p)
 	}
+
+  class(out) <- c("lavaan.vector", "numeric")
+  out
 }
 
 
@@ -157,19 +164,19 @@ kurtosis <- function(object, population = FALSE) {
 ##' @importFrom stats cov pchisq
 ##'
 ##' @param dat The target matrix or data frame with multiple variables
-##' @param use Missing data handling method from the \code{\link[stats]{cov}}
+##' @param use Missing data handling method from the [stats::cov()]
 ##' function.
 ##' @return A value of a Mardia's multivariate skewness with a test statistic
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @seealso \itemize{
-##'   \item \code{\link{skew}} Find the univariate skewness of a variable
-##'   \item \code{\link{kurtosis}} Find the univariate excessive
+##'   \item [skew()] Find the univariate skewness of a variable
+##'   \item [kurtosis()] Find the univariate excessive
 ##'     kurtosis of a variable
-##'   \item \code{\link{mardiaKurtosis}} Find the Mardia's multivariate
+##'   \item [mardiaKurtosis()] Find the Mardia's multivariate
 ##'     kurtosis of a set of variables
 ##' }
 ##' @references Mardia, K. V. (1970). Measures of multivariate skewness and
-##'   kurtosis with applications. \emph{Biometrika, 57}(3), 519--530.
+##'   kurtosis with applications. *Biometrika, 57*(3), 519--530.
 ##'   \doi{10.2307/2334770}
 ##' @examples
 ##'
@@ -186,13 +193,18 @@ mardiaSkew <- function(dat, use = "everything") {
 	FUN2 <- function(vec1, listVec2, invS) {
 		sapply(listVec2, FUN, vec1=vec1, invS=invS)
 	}
-	indivTerm <- sapply(as.list(data.frame(t(centeredDat))), FUN2, listVec2=as.list(data.frame(t(centeredDat))), invS=invS)
-	b1d <- sum(indivTerm^3)/(nrow(dat)^2)
+	indivTerm <- sapply(as.list(data.frame(t(centeredDat))), FUN2,
+	                    listVec2=as.list(data.frame(t(centeredDat))), invS=invS)
+
+	b1d <- sum(indivTerm^3, na.rm = TRUE) / (nrow(dat)^2)
 	d <- ncol(dat)
 	chi <- nrow(dat) * b1d / 6
 	df <- d * (d + 1) * (d + 2) / 6
 	p <- pchisq(chi, df = df, lower.tail = FALSE)
-	return(c(b1d = b1d, chi = chi, df=df, p=p))
+
+	out <- c(b1d = b1d, chi = chi, df=df, p=p)
+	class(out) <- c("lavaan.vector", "numeric")
+	return(out)
 }
 
 
@@ -217,19 +229,19 @@ mardiaSkew <- function(dat, use = "everything") {
 ##' @importFrom stats cov pnorm
 ##'
 ##' @param dat The target matrix or data frame with multiple variables
-##' @param use Missing data handling method from the \code{\link[stats]{cov}}
+##' @param use Missing data handling method from the [stats::cov()]
 ##' function.
 ##' @return A value of a Mardia's multivariate kurtosis with a test statistic
 ##' @author Sunthud Pornprasertmanit (\email{psunthud@@gmail.com})
 ##' @seealso \itemize{
-##'  \item \code{\link{skew}} Find the univariate skewness of a variable
-##'  \item \code{\link{kurtosis}} Find the univariate excessive kurtosis
+##'  \item [skew()] Find the univariate skewness of a variable
+##'  \item [kurtosis()] Find the univariate excessive kurtosis
 ##'   of a variable
-##'  \item \code{\link{mardiaSkew}} Find the Mardia's multivariate skewness
+##'  \item [mardiaSkew()] Find the Mardia's multivariate skewness
 ##'   of a set of variables
 ##' }
 ##' @references Mardia, K. V. (1970). Measures of multivariate skewness and
-##'  kurtosis with applications. \emph{Biometrika, 57}(3), 519--530.
+##'  kurtosis with applications. *Biometrika, 57*(3), 519--530.
 ##'  \doi{10.2307/2334770}
 ##' @examples
 ##'
@@ -244,13 +256,17 @@ mardiaKurtosis <- function(dat, use = "everything") {
 		as.numeric(t(as.matrix(vec)) %*% invS %*% as.matrix(vec))
 	}
 	indivTerm <- sapply(as.list(data.frame(t(centeredDat))), FUN, invS=invS)
-	b2d <- sum(indivTerm^2)/nrow(dat)
+
+	b2d <- sum(indivTerm^2, na.rm = TRUE) / nrow(dat)
 	d <- ncol(dat)
 	m <- d * (d + 2)
 	v <- 8 * d * (d + 2) / nrow(dat)
 	z <- (b2d - m)/sqrt(v)
 	p <- pnorm(-abs(z)) * 2
-	return(c(b2d = b2d, z = z, p=p))
+
+	out <- c(b2d = b2d, z = z, p=p)
+	class(out) <- c("lavaan.vector", "numeric")
+	return(out)
 }
 
 

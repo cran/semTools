@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 5 May 2022
+### Last updated: 10 June 2024
 ### package documentation, along with convenience documentation (e.g., imports)
 
 
@@ -9,75 +9,71 @@
 ##' useful for statistical analysis involving SEM in R.  Many functions extend
 ##' the funtionality of the \pkg{lavaan} package.  Some sets of functions in
 ##' \pkg{semTools} correspond to the same theme. We call such a collection of
-##' functions a \emph{suite}. Our suites include:
+##' functions a *suite*. Our suites include:
 ##' \itemize{
 ##' \item{Model Fit Evaluation:
-##'   \code{\link{moreFitIndices}},
-##'   \code{\link{nullRMSEA}},
-##'   \code{\link{singleParamTest}},
-##'   \code{\link{miPowerFit}}, and
-##'   \code{\link{chisqSmallN}}}
+##'   [moreFitIndices()],
+##'   [nullRMSEA()],
+##'   [singleParamTest()],
+##'   [miPowerFit()], and
+##'   [chisqSmallN()]}
 ##' \item{Measurement Invariance:
-##'   \code{\link{measEq.syntax}},
-##'   \code{\link{partialInvariance}},
-##'   \code{\link{partialInvarianceCat}}, and
-##'   \code{\link{permuteMeasEq}}}
+##'   [measEq.syntax()],
+##'   [partialInvariance()],
+##'   [partialInvarianceCat()], and
+##'   [permuteMeasEq()]}
 ##' \item{Power Analysis:
-##'   \code{\link{SSpower}},
-##'   \code{\link{findRMSEApower}},
-##'   \code{\link{plotRMSEApower}},
-##'   \code{\link{plotRMSEAdist}},
-##'   \code{\link{findRMSEAsamplesize}},
-##'   \code{\link{findRMSEApowernested}},
-##'   \code{\link{plotRMSEApowernested}}, and
-##'   \code{\link{findRMSEAsamplesizenested}}}
+##'   [SSpower()],
+##'   [findRMSEApower()],
+##'   [plotRMSEApower()],
+##'   [plotRMSEAdist()],
+##'   [findRMSEAsamplesize()],
+##'   [findRMSEApowernested()],
+##'   [plotRMSEApowernested()], and
+##'   [findRMSEAsamplesizenested()]}
 ##' \item{Missing Data Analysis:
-##'   \code{\link{runMI}},
-##'   \code{\link{auxiliary}},
-##'   \code{\link{twostage}},
-##'   \code{\link{fmi}},
-##'   \code{\link{bsBootMiss}},
-##'   \code{\link{quark}}, and
-##'   \code{\link{combinequark}}}
+##                     [runMI()],   # DEPRECATE
+##'   [auxiliary()],
+##'   [twostage()],
+##'   [fmi()],
+##'   [bsBootMiss()],
+##'   [quark()], and
+##'   [combinequark()]}
 ##' \item{Latent Interactions:
-##'   \code{\link{indProd}},
-##'   \code{\link{orthogonalize}},
-##'   \code{\link{probe2WayMC}},
-##'   \code{\link{probe3WayMC}},
-##'   \code{\link{probe2WayRC}},
-##'   \code{\link{probe3WayRC}}, and
-##'   \code{\link{plotProbe}}}
+##'   [indProd()],
+##'   [orthogonalize()],
+##'   [probe2WayMC()],
+##'   [probe3WayMC()],
+##'   [probe2WayRC()],
+##'   [probe3WayRC()], and
+##'   [plotProbe()]}
 ##' \item{Exploratory Factor Analysis (EFA):
-##'   \code{\link{efa.ekc}},
-##'   \code{\link{efaUnrotate}},
-##'   \code{\link{orthRotate}},
-##'   \code{\link{oblqRotate}}, and
-##'   \code{\link{funRotate}}}
+##'   [efa.ekc()]}
 ##' \item{Reliability Estimation:
-##'   \code{\link{compRelSEM}} and
-##'   \code{\link{maximalRelia}}
-##'   (see also \code{\link{AVE}})}
+##'   [compRelSEM()] and
+##'   [maximalRelia()]
+##'   (see also [AVE()])}
 ##' \item{Parceling:
-##'   \code{\link{parcelAllocation}},
-##'   \code{\link{PAVranking}}, and
-##'   \code{\link{poolMAlloc}}}
+##'   [parcelAllocation()],
+##'   [PAVranking()], and
+##'   [poolMAlloc()]}
 ##' \item{Non-Normality:
-##'   \code{\link{skew}},
-##'   \code{\link{kurtosis}},
-##'   \code{\link{mardiaSkew}},
-##'   \code{\link{mardiaKurtosis}}, and
-##'   \code{\link{mvrnonnorm}}}
+##'   [skew()],
+##'   [kurtosis()],
+##'   [mardiaSkew()],
+##'   [mardiaKurtosis()], and
+##'   [mvrnonnorm()]}
 ##' }
 ##' All users of R (or SEM) are invited to submit functions or ideas for
 ##' functions by contacting the maintainer, Terrence Jorgensen
 ##' (\email{TJorgensen314@gmail.com}). Contributors are encouraged to use
-##' \code{Roxygen} comments to document their contributed code, which is
+##' `Roxygen` comments to document their contributed code, which is
 ##' consistent with the rest of \pkg{semTools}.  Read the vignette from the
 ##' \pkg{roxygen2} package for details:
-##' \code{vignette("rd", package = "roxygen2")}
+##' `vignette("rd", package = "roxygen2")`
 ##'
-##' @docType package
 ##' @name semTools
+##' @aliases semTools-package
 NULL
 
 

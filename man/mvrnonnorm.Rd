@@ -4,7 +4,8 @@
 \alias{mvrnonnorm}
 \title{Generate Non-normal Data using Vale and Maurelli (1983) method}
 \usage{
-mvrnonnorm(n, mu, Sigma, skewness = NULL, kurtosis = NULL, empirical = FALSE)
+mvrnonnorm(n, mu, Sigma, skewness = NULL, kurtosis = NULL,
+  empirical = FALSE)
 }
 \arguments{
 \item{n}{Sample size}
@@ -20,8 +21,7 @@ unnamed), those will be used as variable names in the returned data matrix.}
 
 \item{kurtosis}{A vector of excessive kurtosis of the variables}
 
-\item{empirical}{If \code{TRUE}, \code{mu} and \code{Sigma} specify the
-empirical rather than population mean and covariance matrix}
+\item{empirical}{deprecated, ignored.}
 }
 \value{
 A data matrix
@@ -50,7 +50,7 @@ nonormal distributions. \emph{Psychometrika, 48}(3), 465--471.
 \doi{10.1007/BF02293687}
 }
 \author{
-The original function is the \code{\link[lavaan]{simulateData}}
+The original function is the \code{\link[lavaan:simulateData]{lavaan::simulateData()}}
 function written by Yves Rosseel in the \code{lavaan} package. The function
 is adjusted for a convenient usage by Sunthud Pornprasertmanit
 (\email{psunthud@gmail.com}). Terrence D. Jorgensen added the feature to
