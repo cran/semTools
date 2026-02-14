@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen & Sunthud Pornprasertmanit
-### Last updated: 12 March 2025
+### Last updated: 31 January 2026
 ### source code for compareFit() function and FitDiff class
 
 
@@ -386,24 +386,32 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 
 
 	## grab lavaan.mi options, if relevant
-	if (is.null(argsLRT$pool.robust)) {
-	  pool.robust <- formals(lavaan.mi::lavTestLRT.mi)$pool.robust # default value
-	} else {
-	  pool.robust <- argsLRT$pool.robust # user-specified value
-	}
-	if (is.null(argsLRT$pool.method)) {
-	  pool.method <- eval(formals(lavaan.mi::lavTestLRT.mi)$pool.method) # default value
-	} else {
-	  pool.method <- argsLRT$pool.method # user-specified value
+	if (inherits(mods[[1]], "lavaan.mi")) {
+  	if (is.null(argsLRT$pool.robust)) {
+  	  pool.robust <- formals(lavaan.mi::lavTestLRT.mi)$pool.robust # default value
+  	} else {
+  	  pool.robust <- argsLRT$pool.robust # user-specified value
+  	}
+  	if (is.null(argsLRT$pool.method)) {
+  	  pool.method <- eval(formals(lavaan.mi::lavTestLRT.mi)$pool.method) # default value
+  	} else {
+  	  pool.method <- argsLRT$pool.method # user-specified value
+  	}
 	}
 
 	## FIT INDICES
 	if (indices || moreIndices) {
-	  fitList <- lapply(mods, fitMeasures, baseline.model = baseline.model,
-	                    pool.robust = pool.robust, pool.method = pool.method)
-	  if (moreIndices && modClass == "lavaan") {
-	    moreFitList <- lapply(mods, moreFitIndices, nPrior = nPrior)
-	    fitList <- mapply(c, fitList, moreFitList, SIMPLIFY = FALSE)
+	  if (inherits(mods[[1]], "lavaan.mi")) {
+	    fitList <- lapply(mods, fitMeasures, baseline.model = baseline.model,
+	                      ## extra arguments about pooling
+	                      pool.robust = pool.robust, pool.method = pool.method)
+	  } else {
+	    ## must be a lavaan-class object
+	    fitList <- lapply(mods, fitMeasures, baseline.model = baseline.model)
+	    if (moreIndices) {
+	      moreFitList <- lapply(mods, moreFitIndices, nPrior = nPrior)
+	      fitList <- mapply(c, fitList, moreFitList, SIMPLIFY = FALSE)
+	    }
 	  }
 
 	  if (length(unique(sapply(fitList, length))) > 1L) {
@@ -418,14 +426,23 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 	  fit <- as.data.frame(do.call(rbind, fitList))
 
 	} else {
-	  fitList <- lapply(mods, fitMeasures, fit.measures = "df",
-	                    pool.robust = pool.robust, pool.method = pool.method)
+	  ## No fit indices requested, but still call fitMeasures() for df?
+	  if (inherits(mods[[1]], "lavaan.mi")) {
+	    #FIXME: This seems terribly inefficient.  Only need df to sort below.
+	    fitList <- lapply(mods, fitMeasures, fit.measures = "df",
+	                      pool.robust = pool.robust, pool.method = pool.method)
+	  } else {
+	    fitList <- lapply(mods, fitMeasures, fit.measures = "df")
+	  }
 	  ## check for scaled tests
 	  nDF <- sapply(fitList, length)
 	  if (any(nDF != nDF[1])) stop('Some (but not all) models have robust tests,',
 	                               ' so they cannot be compared as nested models.')
-	  fit <- data.frame(df = sapply(fitList, "[",
-	                                i = if (any(nDF > 1L)) 2L else 1L))
+	  ## started failing with R 4.6.0:
+	  # fit <- data.frame(df = sapply(fitList, "[", i = if (any(nDF > 1L)) 2L else 1L))
+	  fit <- data.frame(df = mapply(function(x, i) x[[i]],
+	                                x = fitList,
+	                                i = ifelse(nDF > 1L, 2L, 1L)))
 	}
 
 
@@ -457,7 +474,7 @@ compareFit <- function(..., nested = TRUE, argsLRT = list(), indices = TRUE,
 	  diffTab <- as.data.frame(do.call(cbind, lapply(fitTab, diff)))
 	  rownames(diffTab) <- paste(names(mods)[-1], "-", names(mods)[-length(names(mods))])
 
-	} else diffTab <- data.frame(df = diff(fit))
+	} else diffTab <- data.frame(df = diff(fit$df))
 
 	new("FitDiff", name = names(mods), model.class = modClass,
 	    nested = nestedout, fit = fit, fit.diff = diffTab)

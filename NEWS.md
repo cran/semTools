@@ -1,4 +1,45 @@
-# semTools 0.5-7 (in development)
+# semTools 0.5-8 (submitted to CRAN 9 February 2026)
+
+## New Features:
+
+- `compRelSEM()` and its documentation received a massive overhaul:
+    - New argument `W=` available for users to supply custom weights via `lavaan` syntax
+    - `omit.indicators=` argument deprecated in favor of using `W=`
+    - All common-factor variance contributed to items in a composite is now (by default) considered true-score variance.
+    - `higher=` argument deprecated.  New general formula (see documentation **Details**) assumes any higher-order factor(s) to be the source of true-score variance.
+    - New argument `true=` available for users to indicate which common factor(s) should be considered true-score variance
+    - `omit.factors=` argument deprecated in favor of using `true=`
+    - `return.df=` argument replaced by `simplify=`
+    - Coefficients now returned (by default) in a list, with headers indicating how to appropriately interpret each coefficient. 
+      The verbose headers can be suppressed (mimicking old behavior) by setting `simplify = -1L`
+- `miPowerFit()` has been renamed to `epcEquivFit()` and its functionality has been substantially extended
+   (see [PR #151](https://github.com/simsem/semTools/pull/151)).
+    - The output of `epcEquivFit()` now has its own class, `epcequivfit.data.frame`. A dedicated `summary()` method is provided, which reports both local classifications of fixed parameters and the resulting global equivalence decision.
+    - By default, `epcEquivFit()` focuses on equivalence testing based on expected parameter changes (EPCs). The Saris, Satorra, and van der Veld (2009) decision rule based on modification indices and power is retained but is no longer treated as the primary result, as simulation results favor the EPC equivalence-testing approach.
+    - The equivalence-testing procedure has been extended to include an underpowered classification when the EPC confidence interval (CI) is wider than the smallest effect size of interest (SESOI) region.
+    - The arguments and the resulting column names with `target.epc` has been renamed to reflect the smallest effect size of interest (SESOI), consistent with terminology in the equivalence-testing literature.
+    - Standardized EPCs for indicator residual covariances are now computed by scaling residual covariances by residual variances, rather than by total indicator variances as in `lavaan` and other SEM packages, providing a more appropriate effect-size representation for residual relationships.
+    - A new function, `epcEquivCheck()`, is introduced to assess whether trivial misspecification is difficult to establish for a given model under the EPC equivalence-testing framework.
+    - Clipboard utilities have been updated to accommodate these changes, and all relevant documentation has been revised to reflect the transition from `miPowerFit()` to `epcEquivFit()`.
+
+## Removed Features:
+
+- `runMI()` was deprecated in 2024, now removed. Use the new R package `lavaan.mi`
+- `efaUnrotate()`, `orthRotate()`, `oblqRotate()`, and `funRotate()`
+  have been deprecated since 2022 and are now removed.
+- `measurementInvariance()`, `measurementInvarianceCat()`, and `longInvariance()`
+  have been deprecated since 2022 and are now removed.
+
+## Bug Fixes:
+
+- `compareFit()` would throw an error if `lavaan.mi` package was not installed
+  ([fixed](https://github.com/simsem/semTools/issues/147).
+- `monteCarloCI()` would lose parameter names in `coefs=` argument if there were
+  no `dimnames` in `ACM=` argument. Fixed by [PR #149](https://github.com/simsem/semTools/pull/149).
+
+
+
+# semTools 0.5-7 (on CRAN 13 March 2025)
 
 ## New Features:
 

@@ -1,6 +1,6 @@
 Encoding: UTF-8
 Package: semTools
-Version: 0.5-7
+Version: 0.5-8
 Title: Useful Tools for Structural Equation Modeling
 Description: Provides miscellaneous tools for structural equation modeling, 
              many of which extend the 'lavaan' package. For example, latent
@@ -10,7 +10,7 @@ Description: Provides miscellaneous tools for structural equation modeling,
              <doi:10.3758/s13428-020-01479-0>); and scale reliability
              can be estimated based on estimated factor-model parameters.
 Authors@R: c(person(given = c("Terrence","D."), family = "Jorgensen", role = c("aut","cre"), email="TJorgensen314@gmail.com", comment = c(ORCID = "0000-0001-5111-6773")),
-		person(given = "Sunthud", family = "Pornprasertmanit", role = "aut", email = "psunthud@gmail.com"),
+		person(given = "Sunthud", family = "Pornprasertmanit", role = "aut", email = "psunthud@gmail.com", comment = c(ORCID = "0009-0006-6887-9930")),
 		person(given = c("Alexander","M."), family = "Schoemann", role = "aut", email="schoemanna@ecu.edu", comment = c(ORCID = "0000-0002-8479-8798")),
 		person(given = "Yves", family = "Rosseel", role = "aut", email="Yves.Rosseel@UGent.be", comment = c(ORCID = "0000-0002-4129-4477")),
 		person(given = "Patrick", family = "Miller", role = "ctb", email="pmille13@nd.edu"),
@@ -37,48 +37,53 @@ Authors@R: c(person(given = c("Terrence","D."), family = "Jorgensen", role = c("
 		person(given = "Andrew R.", family = "Johnson", role = "ctb", email = "andrew.johnson@curtin.edu.au", comment = c(ORCID = "0000-0001-7000-8065")),
 		person(given = "Leonard", family = "Vanbrabant", role = "ctb", email = "L.Vanbrabant@ggdwestbrabant.nl")
 		)
-Depends: R(>= 4.0), lavaan(>= 0.6-12), methods
+Depends: R(>= 4.0), lavaan(>= 0.6-21), methods
 Imports: graphics, pbivnorm, stats, utils
-Suggests: Amelia, blavaan, emmeans, lavaan.mi, MASS, mice, mnormt,
-        parallel, restriktor, testthat, GPArotation
+Suggests: blavaan, emmeans, lavaan.mi, MASS, mice, mnormt, parallel,
+        restriktor, testthat
 License: GPL (>= 2)
 LazyData: yes
 LazyLoad: yes
 URL: https://github.com/simsem/semTools/wiki
 BugReports: https://github.com/simsem/semTools/issues
-Date: 2025-03-12
-RoxygenNote: 7.3.2
+Date: 2026-02-14
+RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2025-03-12 21:15:08 UTC; terrence
-Author: Terrence D. Jorgensen [aut, cre]
-    (<https://orcid.org/0000-0001-5111-6773>),
-  Sunthud Pornprasertmanit [aut],
-  Alexander M. Schoemann [aut] (<https://orcid.org/0000-0002-8479-8798>),
-  Yves Rosseel [aut] (<https://orcid.org/0000-0002-4129-4477>),
+Packaged: 2026-02-14 06:36:27 UTC; terrence
+Author: Terrence D. Jorgensen [aut, cre] (ORCID:
+    <https://orcid.org/0000-0001-5111-6773>),
+  Sunthud Pornprasertmanit [aut] (ORCID:
+    <https://orcid.org/0009-0006-6887-9930>),
+  Alexander M. Schoemann [aut] (ORCID:
+    <https://orcid.org/0000-0002-8479-8798>),
+  Yves Rosseel [aut] (ORCID: <https://orcid.org/0000-0002-4129-4477>),
   Patrick Miller [ctb],
   Corbin Quick [ctb],
-  Mauricio Garnier-Villarreal [ctb]
-    (<https://orcid.org/0000-0002-2951-6647>),
+  Mauricio Garnier-Villarreal [ctb] (ORCID:
+    <https://orcid.org/0000-0002-2951-6647>),
   James Selig [ctb],
   Aaron Boulton [ctb],
   Kristopher Preacher [ctb],
   Donna Coffman [ctb],
-  Mijke Rhemtulla [ctb] (<https://orcid.org/0000-0003-2572-2424>),
-  Alexander Robitzsch [ctb] (<https://orcid.org/0000-0002-8226-3132>),
+  Mijke Rhemtulla [ctb] (ORCID: <https://orcid.org/0000-0003-2572-2424>),
+  Alexander Robitzsch [ctb] (ORCID:
+    <https://orcid.org/0000-0002-8226-3132>),
   Craig Enders [ctb],
-  Ruben Arslan [ctb] (<https://orcid.org/0000-0002-6670-5658>),
+  Ruben Arslan [ctb] (ORCID: <https://orcid.org/0000-0002-6670-5658>),
   Bell Clinton [ctb],
   Pavel Panko [ctb],
-  Edgar Merkle [ctb] (<https://orcid.org/0000-0001-7158-0653>),
+  Edgar Merkle [ctb] (ORCID: <https://orcid.org/0000-0001-7158-0653>),
   Steven Chesnut [ctb],
   Jarrett Byrnes [ctb],
   Jason D. Rights [ctb],
   Ylenio Longo [ctb],
-  Maxwell Mansolf [ctb] (<https://orcid.org/0000-0001-6861-8657>),
-  Mattan S. Ben-Shachar [ctb] (<https://orcid.org/0000-0002-4287-4801>),
-  Mikko Rönkkö [ctb] (<https://orcid.org/0000-0001-7988-7609>),
-  Andrew R. Johnson [ctb] (<https://orcid.org/0000-0001-7000-8065>),
+  Maxwell Mansolf [ctb] (ORCID: <https://orcid.org/0000-0001-6861-8657>),
+  Mattan S. Ben-Shachar [ctb] (ORCID:
+    <https://orcid.org/0000-0002-4287-4801>),
+  Mikko Rönkkö [ctb] (ORCID: <https://orcid.org/0000-0001-7988-7609>),
+  Andrew R. Johnson [ctb] (ORCID:
+    <https://orcid.org/0000-0001-7000-8065>),
   Leonard Vanbrabant [ctb]
 Maintainer: Terrence D. Jorgensen <TJorgensen314@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-03-13 08:40:02 UTC
+Date/Publication: 2026-02-14 07:40:02 UTC

@@ -1,7 +1,7 @@
 ### Title: Compute more fit indices
 ### Authors: Terrence D. Jorgensen, Sunthud Pornprasertmanit,
 ###          Aaron Boulton, Ruben Arslan, Mauricio Garnier-Villarreal
-### Last updated: 7 February 2025
+### Last updated: 9 February 2026
 ### Description: Calculations for promising alternative fit indices
 
 
@@ -152,8 +152,8 @@
 ##'
 ##' @seealso
 ##' \itemize{
-##' \item [miPowerFit()] For the modification indices and their
-##'        power approach for model fit evaluation
+##' \item [epcEquivFit()] For the equivalence testing based on expected
+##'   parameter changes for model fit evaluation
 ##' \item [nullRMSEA()] For RMSEA of the default independence model
 ##' }
 ##'
@@ -347,7 +347,7 @@ moreFitIndices <- function(object, fit.measures = "all", nPrior = 1) {
 ##' RMSEA for the null model is less than 0.158, an incremental measure of fit
 ##' may not be that informative."
 ##'
-##' See also <http://davidakenny.net/cm/fit.htm>
+##' See also the paper cited in **References**.
 ##'
 ##'
 ##' @importFrom lavaan lavInspect
@@ -499,12 +499,12 @@ sic <- function(f, lresults = NULL) {
 ##'     textual =~ x4 + b2*x5 + x6
 ##'     speed   =~ x7 + b3*x8 + x9
 ##' '
-##' fit1 <- cfa(HS.model, data = HolzingerSwineford1939[1:50,])
+##' fit1 <- cfa(HS.model, data = HolzingerSwineford1939[101:150,])
 ##' ## test a single model (implicitly compared to a saturated model)
 ##' chisqSmallN(fit1)
 ##'
 ##' ## fit a more constrained model
-##' fit0 <- cfa(HS.model, data = HolzingerSwineford1939[1:50,],
+##' fit0 <- cfa(HS.model, data = HolzingerSwineford1939[101:150,],
 ##'             orthogonal = TRUE)
 ##' ## compare 2 models
 ##' chisqSmallN(fit1, fit0)
@@ -540,10 +540,17 @@ chisqSmallN <- function(fit0, fit1 = NULL,
                                     ' cannot compare lavaan objects to lavaan.mi)')
 
     ## check order of DF
-    suppressMessages(DF0 <- getMethod("fitMeasures", class(fit0))(fit0, fit.measures = "df",
-                                                                  omit.imps = omit.imps)[1])
-    suppressMessages(DF1 <- getMethod("fitMeasures", class(fit1))(fit1, fit.measures = "df",
-                                                                  omit.imps = omit.imps)[1])
+    # suppressMessages(DF0 <- getMethod("fitMeasures", class(fit0))(fit0, fit.measures = "df",
+    #                                                               omit.imps = omit.imps)[1])
+    # suppressMessages(DF1 <- getMethod("fitMeasures", class(fit1))(fit1, fit.measures = "df",
+    #                                                               omit.imps = omit.imps)[1])
+    if (inherits(fit0, "lavaan.mi")) {
+      DF0 <- fitMeasures(fit0, fit.measures = "df", omit.imps = omit.imps)[1]
+      DF1 <- fitMeasures(fit1, fit.measures = "df", omit.imps = omit.imps)[1]
+    } else {
+      DF0 <- fitMeasures(fit0, fit.measures = "df")[1]
+      DF1 <- fitMeasures(fit1, fit.measures = "df")[1]
+    }
     if (DF0 == DF1) stop("Models have the same degrees of freedom.")
     parent <- which.min(c(DF0, DF1))
     if (parent == 1L) {
@@ -587,13 +594,19 @@ chisqSmallN <- function(fit0, fit1 = NULL,
   K <- length(lavNames(fit0, type = "lv")) # count latent factors
 
   if (is.null(fit1)) {
-    FIT <- getMethod("fitMeasures", class(fit0))(fit0,
-                                                 ## lavaan.mi arguments ignored
-                                                 ## for lavaan objects
-                                                 omit.imps = omit.imps,
-                                                 asymptotic = TRUE,
-                                                 fit.measures = c("npar","chisq",
-                                                                  "df","pvalue"))
+    # FIT <- getMethod("fitMeasures", class(fit0))(fit0,
+    #                                              ## lavaan.mi arguments ignored
+    #                                              ## for lavaan objects
+    #                                              omit.imps = omit.imps,
+    #                                              asymptotic = TRUE,
+    #                                              fit.measures = c("npar","chisq",
+    #                                                               "df","pvalue"))
+    if (inherits(fit0, "lavaan.mi")) {
+      FIT <- fitMeasures(fit0, fit.measures = c("npar","chisq","df","pvalue"),
+                         omit.imps = omit.imps, asymptotic = TRUE)
+    } else {
+      FIT <- fitMeasures(fit0, fit.measures = c("npar","chisq","df","pvalue"))
+    }
     scaled <- any(grepl(pattern = "scaled", x = names(FIT)))
     if (scaled) warning('Small-N corrections developed assuming normality, but',
                         ' a scaled test was requested. Applying correction(s) ',

@@ -1,5 +1,5 @@
 ### Terrence D. Jorgensen
-### Last updated: 12 March 2025
+### Last updated: 9 February 2026
 ### function to draw plausible values of factor scores from lavPredict
 
 
@@ -88,7 +88,7 @@
 ##'
 ##' @return A `list` of length `nDraws`, each of which is a
 ##'   `data.frame` containing plausible values, which can be treated as
-##'   a `list` of imputed data sets to be passed to [runMI()]
+##'   a `list` of imputed data sets to be passed to the `lavaan.mi` package
 ##'   (see **Examples**). If `object` is of class
 ##'   [lavaan.mi::lavaan.mi-class], the `list` will be of length
 ##'   `nDraws*m`, where `m` is the number of imputations.
@@ -170,7 +170,7 @@
 ##' nPVs <- 5
 ##' nImps <- 20
 ##'
-##' if(requireNamespace("lavaan.mi")){
+##' if (requireNamespace("lavaan.mi")) {
 ##'   data(HS20imps, package = "lavaan.mi")
 ##'
 ##'   ## specify CFA model from lavaan's ?cfa help page
